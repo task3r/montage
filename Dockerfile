@@ -1,4 +1,4 @@
-ARG BASE="mumak:3.8"
+ARG BASE="mumak:1.8"
 FROM ${BASE}
 
 RUN apt install -y libhwloc-dev libjemalloc-dev uuid-dev libgomp1 libelf-dev \
