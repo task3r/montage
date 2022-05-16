@@ -1,137 +1,147 @@
 #ifndef PRIORITY_QUEUE
 #define PRIORITY_QUEUE
 
-#include <iostream>
-#include <atomic>
 #include <algorithm>
+#include <atomic>
+#include <iostream>
 #include <memory>
-#include "HarnessUtils.hpp"
+
 #include "ConcurrentPrimitives.hpp"
-#include "RCUTracker.hpp"
 #include "CustomTypes.hpp"
-#include "Recoverable.hpp"
+#include "HarnessUtils.hpp"
 #include "HeapQueue.hpp"
+#include "RCUTracker.hpp"
+#include "Recoverable.hpp"
 
-//Wentao: TODO to fix later
-template<typename K, typename V>
-class PriorityQueue : public HeapQueue<K,V>, public Recoverable{
-public: 
-  class Payload : public pds::PBlk{
-    GENERATE_FIELD(K, key, Payload);
-    GENERATE_FIELD(V, val, Payload);
-    GENERATE_FIELD(uint64_t, sn, Payload);
-  public:
-    Payload(){}
-    Payload(K k, V v):m_key(k),  m_val(v), m_sn(0){}
-    Payload(const Payload& oth): pds::PBlk(oth), m_key(oth.m_key), m_val(oth.m_val), m_sn(oth.m_sn){}
-    void persist(){}
-  };
+// Wentao: TODO to fix later
+template <typename K, typename V>
+class PriorityQueue : public HeapQueue<K, V>, public Recoverable {
+   public:
+    class Payload : public pds::PBlk {
+        GENERATE_FIELD(K, key, Payload);
+        GENERATE_FIELD(V, val, Payload);
+        GENERATE_FIELD(uint64_t, sn, Payload);
 
-private:
-  struct Node{
-    PriorityQueue* ds;
-    K key;
-    Node* next;
-    Payload* payload;
+       public:
+        Payload() {}
+        Payload(K k, V v) : m_key(k), m_val(v), m_sn(0) {}
+        Payload(const Payload& oth)
+            : pds::PBlk(oth),
+              m_key(oth.m_key),
+              m_val(oth.m_val),
+              m_sn(oth.m_sn) {}
+        void persist() {}
+    };
 
-    Node():key(0), next(nullptr), payload(nullptr){};
-    Node(PriorityQueue* ds_, K k, V val):
-      ds(ds_), key(k), next(nullptr), payload(ds->pnew<Payload>(k, val)){};
+   private:
+    struct Node {
+        PriorityQueue* ds;
+        K key;
+        Node* next;
+        Payload* payload;
 
-    V get_val(){
-      assert(payload != nullptr && "payload shouldn't be null");
-      return (V)payload->get_val(ds);
-    }
+        Node() : key(0), next(nullptr), payload(nullptr){};
+        Node(PriorityQueue* ds_, K k, V val)
+            : ds(ds_),
+              key(k),
+              next(nullptr),
+              payload(ds->pnew<Payload>(k, val)){};
 
-    void set_sn(uint64_t s){
-      assert(payload != nullptr && "payload shouldn't be null");
-      payload->set_sn(ds,s);
-    }
+        V get_val() {
+            assert(payload != nullptr && "payload shouldn't be null");
+            return (V)payload->get_val(ds);
+        }
 
-    ~Node(){
-      ds->pdelete(payload);
-    }
-  };
+        void set_sn(uint64_t s) {
+            assert(payload != nullptr && "payload shouldn't be null");
+            payload->set_sn(ds, s);
+        }
 
-public:
-  std::atomic<uint64_t> global_sn;
+        ~Node() { ds->pdelete(payload); }
+    };
 
-private:
-  std::mutex mtx;
-  Node* head;
+   public:
+    std::atomic<uint64_t> global_sn;
 
-public:
-  PriorityQueue(int task_num): global_sn(0){
-    head = new Node();
-  }
-  ~PriorityQueue(){};
+   private:
+    std::mutex mtx;
+    Node* head;
 
-  void enqueue(K key, V val, int tid);
-  optional<V> dequeue(int tid);
+   public:
+    PriorityQueue(int task_num) : global_sn(0) { head = new Node(); }
+    ~PriorityQueue(){};
+
+    void enqueue(K key, V val, int tid);
+    optional<V> dequeue(int tid);
 };
 
-template<typename K, typename V>
-void PriorityQueue<K,V>::enqueue(K key, V val, int tid){
-  Node* new_node = new Node(this, key, val);
-  std::unique_lock<std::mutex> lock(mtx);
-  if(head->next == nullptr){
-    head->next = new_node;
-  }else{
-    if(key >= head->next->key){
-      new_node->next = head->next;
-      head->next = new_node;
-    }else{
-      Node* tmp = head->next;
-      while(tmp->next != nullptr && key < tmp->next->key){
-        tmp = tmp->next;
-      }
-      new_node->next = tmp->next;
-      tmp->next = new_node;
+template <typename K, typename V>
+void PriorityQueue<K, V>::enqueue(K key, V val, int tid) {
+    Node* new_node = new Node(this, key, val);
+    std::unique_lock<std::mutex> lock(mtx);
+    if (head->next == nullptr) {
+        head->next = new_node;
+    } else {
+        if (key >= head->next->key) {
+            new_node->next = head->next;
+            head->next = new_node;
+        } else {
+            Node* tmp = head->next;
+            while (tmp->next != nullptr && key < tmp->next->key) {
+                tmp = tmp->next;
+            }
+            new_node->next = tmp->next;
+            tmp->next = new_node;
+        }
     }
-  }
-  uint64_t s = global_sn.fetch_add(1);
-  begin_op();
-  new_node->set_sn(s);
-  end_op();
-}
-
-template<typename K, typename V>
-optional<V> PriorityQueue<K,V>::dequeue(int tid){
-  std::unique_lock<std::mutex> lock(mtx);
-  optional<V> res = {};
-  if(head->next == nullptr){
-    res.reset();
-  }else{
-    Node* target = head->next;
-    head->next = target->next;
+    uint64_t s = global_sn.fetch_add(1);
     begin_op();
-    res = (V)target->payload->get_val();
-    delete(target);
+    new_node->set_sn(s);
     end_op();
-  }
-  return res;
 }
 
-template <class T> 
-class PriorityQueueFactory : public RideableFactory{
-    Rideable* build(GlobalTestConfig* gtc){
-        return new PriorityQueue<T,T>(gtc->task_num);
+template <typename K, typename V>
+optional<V> PriorityQueue<K, V>::dequeue(int tid) {
+    std::unique_lock<std::mutex> lock(mtx);
+    optional<V> res = {};
+    if (head->next == nullptr) {
+        res.reset();
+    } else {
+        Node* target = head->next;
+        head->next = target->next;
+        begin_op();
+        res = (V)target->payload->get_val();
+        delete (target);
+        end_op();
+    }
+    return res;
+}
+
+template <class T>
+class PriorityQueueFactory : public RideableFactory {
+    Rideable* build(GlobalTestConfig* gtc) {
+        return new PriorityQueue<T, T>(gtc->task_num);
     }
 };
-
 
 #include <string>
-#include "InPlaceString.hpp"
-template<>
-class PriorityQueue<std::string, std::string>::Payload : public pds::PBlk{
-  GENERATE_FIELD(pds::InPlaceString<TESTS_KEY_SIZE>, key, Payload);
-  GENERATE_FIELD(pds::InPlaceString<TESTS_VAL_SIZE>, val, Payload);
-  GENERATE_FIELD(uint64_t, sn, Payload);
 
-public:
-  Payload(std::string k, std::string v):m_key(this, k),  m_val(this, v), m_sn(0){}
-  Payload(const Payload& oth): pds::PBlk(oth), m_key(this, oth.m_key),  m_val(this, oth.m_val), m_sn(oth.m_sn){}
-  void persist(){}
+#include "InPlaceString.hpp"
+template <>
+class PriorityQueue<std::string, std::string>::Payload : public pds::PBlk {
+    GENERATE_FIELD(pds::InPlaceString<TESTS_KEY_SIZE>, key, Payload);
+    GENERATE_FIELD(pds::InPlaceString<TESTS_VAL_SIZE>, val, Payload);
+    GENERATE_FIELD(uint64_t, sn, Payload);
+
+   public:
+    Payload(std::string k, std::string v)
+        : m_key(this, k), m_val(this, v), m_sn(0) {}
+    Payload(const Payload& oth)
+        : pds::PBlk(oth),
+          m_key(this, oth.m_key),
+          m_val(this, oth.m_val),
+          m_sn(oth.m_sn) {}
+    void persist() {}
 };
 
 #endif

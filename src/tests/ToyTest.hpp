@@ -4,10 +4,10 @@
 #ifndef TOYTEST_HPP
 #define TOYTEST_HPP
 
+#include "ConcurrentPrimitives.hpp"
+#include "PersistFunc.hpp"
 #include "TestConfig.hpp"
 #include "Toy.hpp"
-#include "PersistFunc.hpp"
-#include "ConcurrentPrimitives.hpp"
 
 class ToyTest : public Test{
     Toy* t;
@@ -217,8 +217,6 @@ class ToyTest : public Test{
         delete t;
     }
 };
-
-
 
 #endif
 

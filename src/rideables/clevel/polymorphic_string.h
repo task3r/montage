@@ -36,177 +36,138 @@
 #include <libpmemobj++/p.hpp>
 #include <string>
 
+namespace pmdk_montage {
 
-namespace pmdk_montage
-{
-	
 class polymorphic_string {
-public:
-	using pmem_string = pmem::obj::string;
-	polymorphic_string()
-	{
-		construct();
-	}
+   public:
+    using pmem_string = pmem::obj::string;
+    polymorphic_string() { construct(); }
 
-	polymorphic_string(const char *data, std::size_t size)
-	{
-		construct(data, size);
-	}
+    polymorphic_string(const char *data, std::size_t size) {
+        construct(data, size);
+    }
 
-	polymorphic_string(const std::string &s)
-	{
-		construct(s);
-	}
+    polymorphic_string(const std::string &s) { construct(s); }
 
-	polymorphic_string(const pmem_string &s)
-	{
-		construct(s.c_str(), s.size());
-	}
+    polymorphic_string(const pmem_string &s) { construct(s.c_str(), s.size()); }
 
-	// polymorphic_string(string_view s)
-	// {
-	// 	construct(s.data(), s.size());
-	// }
+    // polymorphic_string(string_view s)
+    // {
+    // 	construct(s.data(), s.size());
+    // }
 
-	polymorphic_string(const polymorphic_string &s)
-	{
-		construct(s.c_str(), s.size());
-	}
+    polymorphic_string(const polymorphic_string &s) {
+        construct(s.c_str(), s.size());
+    }
 
-	polymorphic_string &operator=(const std::string &s)
-	{
-		if (is_pmem.get_ro()) {
-			pstr = s;
-		} else {
-			str = s;
-		}
+    polymorphic_string &operator=(const std::string &s) {
+        if (is_pmem.get_ro()) {
+            pstr = s;
+        } else {
+            str = s;
+        }
 
-		return *this;
-	}
+        return *this;
+    }
 
-	polymorphic_string &operator=(const pmem_string &s)
-	{
-		assert(is_pmem.get_ro());
-		pstr = s;
+    polymorphic_string &operator=(const pmem_string &s) {
+        assert(is_pmem.get_ro());
+        pstr = s;
 
-		return *this;
-	}
+        return *this;
+    }
 
-	polymorphic_string &operator=(const polymorphic_string &s)
-	{
-		if (s.is_pmem.get_ro()) {
-			this->operator=(s.pstr);
-		} else {
-			this->operator=(s.str);
-		}
+    polymorphic_string &operator=(const polymorphic_string &s) {
+        if (s.is_pmem.get_ro()) {
+            this->operator=(s.pstr);
+        } else {
+            this->operator=(s.str);
+        }
 
-		return *this;
-	}
+        return *this;
+    }
 
-	// polymorphic_string &operator=(string_view s)
-	// {
-	// 	if (is_pmem.get_ro()) {
-	// 		pstr.assign(s.data(), s.size());
-	// 	} else {
-	// 		str.assign(s.data(), s.size());
-	// 	}
+    // polymorphic_string &operator=(string_view s)
+    // {
+    // 	if (is_pmem.get_ro()) {
+    // 		pstr.assign(s.data(), s.size());
+    // 	} else {
+    // 		str.assign(s.data(), s.size());
+    // 	}
 
-	// 	return *this;
-	// }
+    // 	return *this;
+    // }
 
-	~polymorphic_string()
-	{
-		if (is_pmem.get_ro()) {
-			pstr.~basic_string();
-		} else {
-			str.~basic_string();
-		}
-	}
+    ~polymorphic_string() {
+        if (is_pmem.get_ro()) {
+            pstr.~basic_string();
+        } else {
+            str.~basic_string();
+        }
+    }
 
-	char &operator[](size_t n)
-	{
-		return is_pmem.get_ro() ? pstr[n] : str[n];
-	}
+    char &operator[](size_t n) { return is_pmem.get_ro() ? pstr[n] : str[n]; }
 
-	const char &operator[](size_t n) const
-	{
-		return is_pmem.get_ro() ? pstr[n] : str[n];
-	}
+    const char &operator[](size_t n) const {
+        return is_pmem.get_ro() ? pstr[n] : str[n];
+    }
 
-	const char *c_str() const
-	{
-		return is_pmem.get_ro() ? pstr.c_str() : str.c_str();
-	}
+    const char *c_str() const {
+        return is_pmem.get_ro() ? pstr.c_str() : str.c_str();
+    }
 
-	size_t size() const
-	{
-		return is_pmem.get_ro() ? pstr.size() : str.size();
-	}
+    size_t size() const { return is_pmem.get_ro() ? pstr.size() : str.size(); }
 
-	size_t length() const
-	{
-		return size();
-	}
+    size_t length() const { return size(); }
 
-	bool empty() const
-	{
-		return size() == 0;
-	}
+    bool empty() const { return size() == 0; }
 
-	bool operator==(const polymorphic_string &rhs) const
-	{
-		return compare(0U, size(), rhs.c_str(), rhs.size()) == 0;
-	}
+    bool operator==(const polymorphic_string &rhs) const {
+        return compare(0U, size(), rhs.c_str(), rhs.size()) == 0;
+    }
 
-	// bool operator==(string_view rhs) const
-	// {
-	// 	return compare(0U, size(), rhs.data(), rhs.size()) == 0;
-	// }
+    // bool operator==(string_view rhs) const
+    // {
+    // 	return compare(0U, size(), rhs.data(), rhs.size()) == 0;
+    // }
 
-	bool operator==(const std::string &rhs) const
-	{
-		return compare(0U, size(), rhs.c_str(), rhs.size()) == 0;
-	}
+    bool operator==(const std::string &rhs) const {
+        return compare(0U, size(), rhs.c_str(), rhs.size()) == 0;
+    }
 
-	template <typename... Args>
-	int compare(Args &&... args) const
-	{
-		return is_pmem.get_ro() ? pstr.compare(std::forward<Args>(args)...)
-					: str.compare(std::forward<Args>(args)...);
-	}
+    template <typename... Args>
+    int compare(Args &&... args) const {
+        return is_pmem.get_ro() ? pstr.compare(std::forward<Args>(args)...)
+                                : str.compare(std::forward<Args>(args)...);
+    }
 
-private:
-	pmem::obj::p<bool> is_pmem;
-	union {
-		std::string str;
-		pmem_string pstr;
-	};
+   private:
+    pmem::obj::p<bool> is_pmem;
+    union {
+        std::string str;
+        pmem_string pstr;
+    };
 
-	bool check_pmem() const
-	{
-		return pmemobj_pool_by_ptr(this) != nullptr;
-	}
+    bool check_pmem() const { return pmemobj_pool_by_ptr(this) != nullptr; }
 
-	template <typename... Args>
-	void construct(Args &&... args)
-	{
-		is_pmem.get_rw() = check_pmem();
-		if (is_pmem.get_ro()) {
-			new (&pstr) pmem_string(std::forward<Args>(args)...);
-		} else {
-			new (&str) std::string(std::forward<Args>(args)...);
-		}
-	}
-}; // class polymorphic_string
+    template <typename... Args>
+    void construct(Args &&... args) {
+        is_pmem.get_rw() = check_pmem();
+        if (is_pmem.get_ro()) {
+            new (&pstr) pmem_string(std::forward<Args>(args)...);
+        } else {
+            new (&str) std::string(std::forward<Args>(args)...);
+        }
+    }
+};  // class polymorphic_string
 
 // inline bool operator==(string_view lhs, const polymorphic_string &rhs)
 // {
 // 	return rhs == lhs;
 // }
 
-inline bool operator==(const std::string &lhs, const polymorphic_string &rhs)
-{
-	return rhs == lhs;
+inline bool operator==(const std::string &lhs, const polymorphic_string &rhs) {
+    return rhs == lhs;
 }
 
-}
+}  // namespace pmdk_montage

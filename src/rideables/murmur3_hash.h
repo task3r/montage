@@ -7,33 +7,32 @@
 
 //-----------------------------------------------------------------------------
 // Platform-specific functions and macros
-#include <stdint.h>
 #include <stddef.h>
-#include "HarnessUtils.hpp" // for errexit
+#include <stdint.h>
+
 #include "CustomTypes.hpp"
+#include "HarnessUtils.hpp"  // for errexit
 
 //-----------------------------------------------------------------------------
 
-uint32_t MurmurHash3_x86_32(const void *key, size_t length);
+uint32_t MurmurHash3_x86_32(const void* key, size_t length);
 
-
-template<typename K>
-inline uint32_t MurmurHash3(K key){
-	errexit("MurmurHash3 not implemented for current key type.");
+template <typename K>
+inline uint32_t MurmurHash3(K key) {
+    errexit("MurmurHash3 not implemented for current key type.");
     return 0;
 }
-template<>
-inline uint32_t MurmurHash3(int& key){
-	// const char* buffer =_itoa(key);
-	string buffer = std::to_string(key);
-	return MurmurHash3_x86_32(buffer.c_str(), buffer.size());
+template <>
+inline uint32_t MurmurHash3(int& key) {
+    // const char* buffer =_itoa(key);
+    string buffer = std::to_string(key);
+    return MurmurHash3_x86_32(buffer.c_str(), buffer.size());
 }
-template<>
-inline uint32_t MurmurHash3(NumString& key){
-	return MurmurHash3_x86_32(key.c_str(), key.size());
+template <>
+inline uint32_t MurmurHash3(NumString& key) {
+    return MurmurHash3_x86_32(key.c_str(), key.size());
 }
-
 
 //-----------------------------------------------------------------------------
 
-#endif // MURMURHASH3_H
+#endif  // MURMURHASH3_H
