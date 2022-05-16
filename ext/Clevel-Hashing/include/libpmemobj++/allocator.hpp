@@ -38,17 +38,18 @@
 #ifndef LIBPMEMOBJ_CPP_ALLOCATOR_HPP
 #define LIBPMEMOBJ_CPP_ALLOCATOR_HPP
 
-#include <libpmemobj.h>
-
 #include <libpmemobj++/detail/common.hpp>
 #include <libpmemobj++/detail/life.hpp>
 #include <libpmemobj++/persistent_ptr.hpp>
 #include <libpmemobj++/pexceptions.hpp>
 #include <libpmemobj++/pext.hpp>
+#include <libpmemobj.h>
 
-namespace pmem {
+namespace pmem
+{
 
-namespace obj {
+namespace obj
+{
 
 /**
  * Encapsulates object specific allocator functionality. Designed to be used
@@ -56,85 +57,94 @@ namespace obj {
  */
 template <typename T>
 class object_traits {
-   public:
-    /*
-     * Important typedefs.
-     */
-    using value_type = T;
-    using pointer = persistent_ptr<value_type>;
-    using const_pointer = persistent_ptr<const value_type>;
-    using reference = value_type &;
-    using const_reference = const value_type &;
+public:
+	/*
+	 * Important typedefs.
+	 */
+	using value_type = T;
+	using pointer = persistent_ptr<value_type>;
+	using const_pointer = persistent_ptr<const value_type>;
+	using reference = value_type &;
+	using const_reference = const value_type &;
 
-    /**
-     * Rebind to a different type.
-     */
-    template <class U>
-    struct rebind {
-        using other = object_traits<U>;
-    };
+	/**
+	 * Rebind to a different type.
+	 */
+	template <class U>
+	struct rebind {
+		using other = object_traits<U>;
+	};
 
-    /**
-     * Defaulted constructor.
-     */
-    object_traits() = default;
+	/**
+	 * Defaulted constructor.
+	 */
+	object_traits() = default;
 
-    /**
-     * Defaulted destructor.
-     */
-    ~object_traits() = default;
+	/**
+	 * Defaulted destructor.
+	 */
+	~object_traits() = default;
 
-    /**
-     * Type converting constructor.
-     */
-    template <typename U, typename = typename std::enable_if<
-                              std::is_convertible<U *, T *>::value>::type>
-    explicit object_traits(object_traits<U> const &) {}
+	/**
+	 * Type converting constructor.
+	 */
+	template <typename U,
+		  typename = typename std::enable_if<
+			  std::is_convertible<U *, T *>::value>::type>
+	explicit object_traits(object_traits<U> const &)
+	{
+	}
 
-    /**
-     * Create an object at a specific address.
-     *
-     * This should be called only within a transaction.
-     *
-     * @param[in] p the pointer to where the object will be constructed.
-     * @param[in] t the object reference for copy construction.
-     */
-    void construct(pointer p, const_reference t) {
-        /* construct called on newly allocated objects */
-        detail::conditional_add_to_tx(p.get());
-        new (static_cast<void *>(p.get())) value_type(t);
-    }
+	/**
+	 * Create an object at a specific address.
+	 *
+	 * This should be called only within a transaction.
+	 *
+	 * @param[in] p the pointer to where the object will be constructed.
+	 * @param[in] t the object reference for copy construction.
+	 */
+	void
+	construct(pointer p, const_reference t)
+	{
+		/* construct called on newly allocated objects */
+		detail::conditional_add_to_tx(p.get());
+		new (static_cast<void *>(p.get())) value_type(t);
+	}
 
-    /**
-     * Create an object at a specific address.
-     *
-     * This should be called only within a transaction.
-     *
-     * @param[in] p the pointer to where the object will be constructed.
-     * @param[in] args parameters passed to the object's constructor.
-     */
-    template <typename... Args>
-    void construct(pointer p, Args &&... args) {
-        detail::conditional_add_to_tx(p.get());
-        new (static_cast<void *>(p.get()))
-            value_type(std::forward<Args>(args)...);
-    }
+	/**
+	 * Create an object at a specific address.
+	 *
+	 * This should be called only within a transaction.
+	 *
+	 * @param[in] p the pointer to where the object will be constructed.
+	 * @param[in] args parameters passed to the object's constructor.
+	 */
+	template <typename... Args>
+	void
+	construct(pointer p, Args &&... args)
+	{
+		detail::conditional_add_to_tx(p.get());
+		new (static_cast<void *>(p.get()))
+			value_type(std::forward<Args>(args)...);
+	}
 
-    /**
-     * Destroy an object based on a pointer.
-     *
-     * This should be called only within a transaction.
-     *
-     * @param[in] p the pointer to the object to be destroyed.
-     */
-    void destroy(pointer p) {
-        /* XXX should we allow modifications outside of tx? */
-        if (pmemobj_tx_stage() == TX_STAGE_WORK) {
-            pmemobj_tx_add_range_direct((void *)p.get(), sizeof(p));
-        }
+	/**
+	 * Destroy an object based on a pointer.
+	 *
+	 * This should be called only within a transaction.
+	 *
+	 * @param[in] p the pointer to the object to be destroyed.
+	 */
+	void
+	destroy(pointer p)
+	{
+		/* XXX should we allow modifications outside of tx? */
+		if (pmemobj_tx_stage() == TX_STAGE_WORK) {
+			pmemobj_tx_add_range_direct((void *)p.get(), sizeof(p));
+		}
 
-        detail::destroy<value_type>(*p);
-    }
+		detail::destroy<value_type>(*p);
+	}
 };
 
 /**
@@ -143,36 +153,38 @@ class object_traits {
  */
 template <>
 class object_traits<void> {
-   public:
-    /*
-     * Important typedefs.
-     */
-    using value_type = void;
-    using pointer = persistent_ptr<value_type>;
+public:
+	/*
+	 * Important typedefs.
+	 */
+	using value_type = void;
+	using pointer = persistent_ptr<value_type>;
 
-    /**
-     * Rebind to a different type.
-     */
-    template <class U>
-    struct rebind {
-        using other = object_traits<U>;
-    };
+	/**
+	 * Rebind to a different type.
+	 */
+	template <class U>
+	struct rebind {
+		using other = object_traits<U>;
+	};
 
-    /**
-     * Defaulted constructor.
-     */
-    object_traits() = default;
+	/**
+	 * Defaulted constructor.
+	 */
+	object_traits() = default;
 
-    /**
-     * Defaulted destructor.
-     */
-    ~object_traits() = default;
+	/**
+	 * Defaulted destructor.
+	 */
+	~object_traits() = default;
 
-    /**
-     * Type converting constructor.
-     */
-    template <typename U>
-    explicit object_traits(object_traits<U> const &) {}
+	/**
+	 * Type converting constructor.
+	 */
+	template <typename U>
+	explicit object_traits(object_traits<U> const &)
+	{
+	}
 };
 
 /**
@@ -183,90 +195,101 @@ class object_traits<void> {
  */
 template <typename T>
 class standard_alloc_policy {
-   public:
-    /*
-     * Important typedefs.
-     */
-    using value_type = T;
-    using pointer = persistent_ptr<value_type>;
-    using const_void_pointer = persistent_ptr<const void>;
-    using size_type = std::size_t;
-    using bool_type = bool;
+public:
+	/*
+	 * Important typedefs.
+	 */
+	using value_type = T;
+	using pointer = persistent_ptr<value_type>;
+	using const_void_pointer = persistent_ptr<const void>;
+	using size_type = std::size_t;
+	using bool_type = bool;
 
-    /**
-     * Rebind to a different type.
-     */
-    template <class U>
-    struct rebind {
-        using other = standard_alloc_policy<U>;
-    };
+	/**
+	 * Rebind to a different type.
+	 */
+	template <class U>
+	struct rebind {
+		using other = standard_alloc_policy<U>;
+	};
 
-    /**
-     * Defaulted constructor.
-     */
-    standard_alloc_policy() = default;
+	/**
+	 * Defaulted constructor.
+	 */
+	standard_alloc_policy() = default;
 
-    /**
-     * Defaulted destructor.
-     */
-    ~standard_alloc_policy() = default;
+	/**
+	 * Defaulted destructor.
+	 */
+	~standard_alloc_policy() = default;
 
-    /**
-     * Explicit copy constructor.
-     */
-    explicit standard_alloc_policy(standard_alloc_policy const &) {}
+	/**
+	 * Explicit copy constructor.
+	 */
+	explicit standard_alloc_policy(standard_alloc_policy const &)
+	{
+	}
 
-    /**
-     * Type converting constructor.
-     */
-    template <typename U, typename = typename std::enable_if<
-                              std::is_convertible<U *, T *>::value>::type>
-    explicit standard_alloc_policy(standard_alloc_policy<U> const &) {}
+	/**
+	 * Type converting constructor.
+	 */
+	template <typename U,
+		  typename = typename std::enable_if<
+			  std::is_convertible<U *, T *>::value>::type>
+	explicit standard_alloc_policy(standard_alloc_policy<U> const &)
+	{
+	}
 
-    /**
-     * Allocate storage for cnt objects of type T. Does not construct the
-     * objects.
-     *
-     * @param[in] cnt the number of objects to allocate memory for.
-     *
-     * @throw transaction_scope_error if called outside of a transaction.
-     */
-    pointer allocate(size_type cnt, const_void_pointer = 0) {
-        if (pmemobj_tx_stage() != TX_STAGE_WORK)
-            throw pmem::transaction_scope_error(
-                "refusing to allocate memory outside of transaction scope");
+	/**
+	 * Allocate storage for cnt objects of type T. Does not construct the
+	 * objects.
+	 *
+	 * @param[in] cnt the number of objects to allocate memory for.
+	 *
+	 * @throw transaction_scope_error if called outside of a transaction.
+	 */
+	pointer
+	allocate(size_type cnt, const_void_pointer = 0)
+	{
+		if (pmemobj_tx_stage() != TX_STAGE_WORK)
+			throw pmem::transaction_scope_error(
+				"refusing to allocate memory outside of transaction scope");
 
-        /* allocate raw memory, no object construction */
-        return pmemobj_tx_alloc(sizeof(value_type) * cnt,
-                                detail::type_num<T>());
-    }
+		/* allocate raw memory, no object construction */
+		return pmemobj_tx_alloc(sizeof(value_type) * cnt,
+					detail::type_num<T>());
+	}
 
-    /**
-     * Deallocates storage pointed to p, which must be a value returned by
-     * a previous call to allocate that has not been invalidated by an
-     * intervening call to deallocate.
-     *
-     * @param[in] p pointer to the memory to be deallocated.
-     */
-    void deallocate(pointer p, size_type = 0) {
-        if (pmemobj_tx_stage() != TX_STAGE_WORK)
-            throw pmem::transaction_scope_error(
-                "refusing to free memory outside of transaction scope");
+	/**
+	 * Deallocates storage pointed to p, which must be a value returned by
+	 * a previous call to allocate that has not been invalidated by an
+	 * intervening call to deallocate.
+	 *
+	 * @param[in] p pointer to the memory to be deallocated.
+	 */
+	void
+	deallocate(pointer p, size_type = 0)
+	{
+		if (pmemobj_tx_stage() != TX_STAGE_WORK)
+			throw pmem::transaction_scope_error(
+				"refusing to free memory outside of transaction scope");
 
-        if (pmemobj_tx_free(*p.raw_ptr()) != 0)
-            throw pmem::transaction_free_error(
-                "failed to delete persistent memory object")
-                .with_pmemobj_errormsg();
-    }
+		if (pmemobj_tx_free(*p.raw_ptr()) != 0)
+			throw pmem::transaction_free_error(
+				"failed to delete persistent memory object")
+				.with_pmemobj_errormsg();
+	}
 
-    /**
-     * The largest value that can meaningfully be passed to allocate().
-     *
-     * @return largest value that can be passed to allocate.
-     */
-    size_type max_size() const {
-        return PMEMOBJ_MAX_ALLOC_SIZE / sizeof(value_type);
-    }
+	/**
+	 * The largest value that can meaningfully be passed to allocate().
+	 *
+	 * @return largest value that can be passed to allocate.
+	 */
+	size_type
+	max_size() const
+	{
+		return PMEMOBJ_MAX_ALLOC_SIZE / sizeof(value_type);
+	}
 };
 
 /**
@@ -274,87 +297,99 @@ class standard_alloc_policy {
  */
 template <>
 class standard_alloc_policy<void> {
-   public:
-    /*
-     * Important typedefs.
-     */
-    using value_type = void;
-    using pointer = persistent_ptr<value_type>;
-    using const_pointer = persistent_ptr<const value_type>;
-    using reference = value_type;
-    using const_reference = const value_type;
-    using size_type = std::size_t;
-    using bool_type = bool;
+public:
+	/*
+	 * Important typedefs.
+	 */
+	using value_type = void;
+	using pointer = persistent_ptr<value_type>;
+	using const_pointer = persistent_ptr<const value_type>;
+	using reference = value_type;
+	using const_reference = const value_type;
+	using size_type = std::size_t;
+	using bool_type = bool;
 
-    /**
-     * Rebind to a different type.
-     */
-    template <class U>
-    struct rebind {
-        using other = standard_alloc_policy<U>;
-    };
+	/**
+	 * Rebind to a different type.
+	 */
+	template <class U>
+	struct rebind {
+		using other = standard_alloc_policy<U>;
+	};
 
-    /**
-     * Defaulted constructor.
-     */
-    standard_alloc_policy() = default;
+	/**
+	 * Defaulted constructor.
+	 */
+	standard_alloc_policy() = default;
 
-    /**
-     * Defaulted destructor.
-     */
-    ~standard_alloc_policy() = default;
+	/**
+	 * Defaulted destructor.
+	 */
+	~standard_alloc_policy() = default;
 
-    /**
-     * Explicit copy constructor.
-     */
-    explicit standard_alloc_policy(standard_alloc_policy const &) {}
+	/**
+	 * Explicit copy constructor.
+	 */
+	explicit standard_alloc_policy(standard_alloc_policy const &)
+	{
+	}
 
-    /**
-     * Type converting constructor.
-     */
-    template <typename U>
-    explicit standard_alloc_policy(standard_alloc_policy<U> const &) {}
+	/**
+	 * Type converting constructor.
+	 */
+	template <typename U>
+	explicit standard_alloc_policy(standard_alloc_policy<U> const &)
+	{
+	}
 
-    /**
-     * Allocate storage for cnt bytes. Assumes sizeof(void) = 1.
-     *
-     * @param[in] cnt the number of bytes to be allocated.
-     *
-     * @throw transaction_scope_error if called outside of a transaction.
-     */
-    pointer allocate(size_type cnt, const_pointer = 0) {
-        if (pmemobj_tx_stage() != TX_STAGE_WORK)
-            throw pmem::transaction_scope_error(
-                "refusing to allocate memory outside of transaction scope");
+	/**
+	 * Allocate storage for cnt bytes. Assumes sizeof(void) = 1.
+	 *
+	 * @param[in] cnt the number of bytes to be allocated.
+	 *
+	 * @throw transaction_scope_error if called outside of a transaction.
+	 */
+	pointer
+	allocate(size_type cnt, const_pointer = 0)
+	{
+		if (pmemobj_tx_stage() != TX_STAGE_WORK)
+			throw pmem::transaction_scope_error(
+				"refusing to allocate memory outside of transaction scope");
 
-        /* allocate raw memory, no object construction */
-        return pmemobj_tx_alloc(1 /* void size */ * cnt, 0);
-    }
+		/* allocate raw memory, no object construction */
+		return pmemobj_tx_alloc(1 /* void size */ * cnt, 0);
+	}
 
-    /**
-     * Deallocates storage pointed to p, which must be a value returned by
-     * a previous call to allocate that has not been invalidated by an
-     * intervening call to deallocate.
-     *
-     * @param[in] p pointer to the memory to be deallocated.
-     */
-    void deallocate(pointer p, size_type = 0) {
-        if (pmemobj_tx_stage() != TX_STAGE_WORK)
-            throw pmem::transaction_scope_error(
-                "refusing to free memory outside of transaction scope");
+	/**
+	 * Deallocates storage pointed to p, which must be a value returned by
+	 * a previous call to allocate that has not been invalidated by an
+	 * intervening call to deallocate.
+	 *
+	 * @param[in] p pointer to the memory to be deallocated.
+	 */
+	void
+	deallocate(pointer p, size_type = 0)
+	{
+		if (pmemobj_tx_stage() != TX_STAGE_WORK)
+			throw pmem::transaction_scope_error(
+				"refusing to free memory outside of transaction scope");
 
-        if (pmemobj_tx_free(p.raw()) != 0)
-            throw pmem::transaction_free_error(
-                "failed to delete persistent memory object")
-                .with_pmemobj_errormsg();
-    }
+		if (pmemobj_tx_free(p.raw()) != 0)
+			throw pmem::transaction_free_error(
+				"failed to delete persistent memory object")
+				.with_pmemobj_errormsg();
+	}
 
-    /**
-     * The largest value that can meaningfully be passed to allocate().
-     *
-     * @return largest value that can be passed to allocate.
-     */
-    size_type max_size() const { return PMEMOBJ_MAX_ALLOC_SIZE; }
+	/**
+	 * The largest value that can meaningfully be passed to allocate().
+	 *
+	 * @return largest value that can be passed to allocate.
+	 */
+	size_type
+	max_size() const
+	{
+		return PMEMOBJ_MAX_ALLOC_SIZE;
+	}
 };
 
 /**
@@ -363,9 +398,10 @@ class standard_alloc_policy<void> {
  * @return true.
  */
 template <typename T, typename T2>
-inline bool operator==(standard_alloc_policy<T> const &,
-                       standard_alloc_policy<T2> const &) {
-    return true;
+inline bool
+operator==(standard_alloc_policy<T> const &, standard_alloc_policy<T2> const &)
+{
+	return true;
 }
 
 /**
@@ -374,9 +410,10 @@ inline bool operator==(standard_alloc_policy<T> const &,
  * @return false.
  */
 template <typename T, typename OtherAllocator>
-inline bool operator==(standard_alloc_policy<T> const &,
-                       OtherAllocator const &) {
-    return false;
+inline bool
+operator==(standard_alloc_policy<T> const &, OtherAllocator const &)
+{
+	return false;
 }
 
 /**
@@ -387,60 +424,66 @@ inline bool operator==(standard_alloc_policy<T> const &,
  * deallocation primitives.
  */
 template <typename T, typename Policy = standard_alloc_policy<T>,
-          typename Traits = object_traits<T>>
+	  typename Traits = object_traits<T>>
 class allocator : public Policy, public Traits {
-   private:
-    /*
-     * private typedefs
-     */
-    using AllocationPolicy = Policy;
-    using TTraits = Traits;
+private:
+	/*
+	 * private typedefs
+	 */
+	using AllocationPolicy = Policy;
+	using TTraits = Traits;
 
-   public:
-    /*
-     * Important typedefs.
-     */
-    using size_type = typename AllocationPolicy::size_type;
-    using pointer = typename AllocationPolicy::pointer;
-    using value_type = typename AllocationPolicy::value_type;
+public:
+	/*
+	 * Important typedefs.
+	 */
+	using size_type = typename AllocationPolicy::size_type;
+	using pointer = typename AllocationPolicy::pointer;
+	using value_type = typename AllocationPolicy::value_type;
 
-    /**
-     * Rebind to a different type.
-     */
-    template <typename U>
-    struct rebind {
-        using other =
-            allocator<U, typename AllocationPolicy::template rebind<U>::other,
-                      typename TTraits::template rebind<U>::other>;
-    };
+	/**
+	 * Rebind to a different type.
+	 */
+	template <typename U>
+	struct rebind {
+		using other = allocator<
+			U, typename AllocationPolicy::template rebind<U>::other,
+			typename TTraits::template rebind<U>::other>;
+	};
 
-    /**
-     * Defaulted constructor.
-     */
-    allocator() = default;
+	/**
+	 * Defaulted constructor.
+	 */
+	allocator() = default;
 
-    /**
-     * Defaulted destructor.
-     */
-    ~allocator() = default;
+	/**
+	 * Defaulted destructor.
+	 */
+	~allocator() = default;
 
-    /**
-     * Explicit copy constructor.
-     */
-    explicit allocator(allocator const &rhs) : Policy(rhs), Traits(rhs) {}
+	/**
+	 * Explicit copy constructor.
+	 */
+	explicit allocator(allocator const &rhs) : Policy(rhs), Traits(rhs)
+	{
+	}
 
-    /**
-     * Type converting constructor.
-     */
-    template <typename U>
-    explicit allocator(allocator<U> const &) {}
+	/**
+	 * Type converting constructor.
+	 */
+	template <typename U>
+	explicit allocator(allocator<U> const &)
+	{
+	}
 
-    /**
-     * Type converting constructor.
-     */
-    template <typename U, typename P, typename T2>
-    explicit allocator(allocator<U, P, T2> const &rhs)
-        : Policy(rhs), Traits(rhs) {}
+	/**
+	 * Type converting constructor.
+	 */
+	template <typename U, typename P, typename T2>
+	explicit allocator(allocator<U, P, T2> const &rhs)
+	    : Policy(rhs), Traits(rhs)
+	{
+	}
 };
 
 /**
@@ -453,11 +496,12 @@ class allocator : public Policy, public Traits {
  * otherwise.
  */
 template <typename T, typename P, typename Tr, typename T2, typename P2,
-          typename Tr2>
-inline bool operator==(const allocator<T, P, Tr> &lhs,
-                       const allocator<T2, P2, Tr2> &rhs) {
-    return operator==(static_cast<const P &>(lhs),
-                      static_cast<const P2 &>(rhs));
+	  typename Tr2>
+inline bool
+operator==(const allocator<T, P, Tr> &lhs, const allocator<T2, P2, Tr2> &rhs)
+{
+	return operator==(static_cast<const P &>(lhs),
+			  static_cast<const P2 &>(rhs));
 }
 
 /**
@@ -470,9 +514,10 @@ inline bool operator==(const allocator<T, P, Tr> &lhs,
  * otherwise.
  */
 template <typename T, typename P, typename Tr, typename OtherAllocator>
-inline bool operator!=(const allocator<T, P, Tr> &lhs,
-                       const OtherAllocator &rhs) {
-    return !operator==(lhs, rhs);
+inline bool
+operator!=(const allocator<T, P, Tr> &lhs, const OtherAllocator &rhs)
+{
+	return !operator==(lhs, rhs);
 }
 
 } /* namespace obj */

@@ -1,9 +1,10 @@
 #pragma once
 
+#include <mutex> // For std::unique_lock
+#include <shared_mutex>
+
 #include <immer/map.hpp>
 #include <immer/nvm_utils.hpp>
-#include <mutex>  // For std::unique_lock
-#include <shared_mutex>
 
 namespace immer {
 
@@ -11,11 +12,12 @@ namespace immer {
 // it merely takes a persistent map in ctor.
 
 template <typename K, typename T>
-class concurrent_map {
-   public:
+class concurrent_map 
+{
+  public: 
     using size_type = detail::hamts::size_t;
 
-    concurrent_map(immer::map<K, T> **map) : map_(map) {}
+    concurrent_map (immer::map<K, T> **map) : map_ (map) {}
 
     void set(K k, T v) {
         std::unique_lock<std::shared_mutex> lock(mutex_);
@@ -29,7 +31,7 @@ class concurrent_map {
         delete old_map;
     }
 
-    const T *find(const K &k) const {
+    const T* find(const K& k) const {
         std::shared_lock<std::shared_mutex> lock(mutex_);
         return (*map_)->find(k);
     }
@@ -50,9 +52,9 @@ class concurrent_map {
         delete old_map;
     }
 
-   private:
-    mutable std::shared_mutex mutex_;
-    immer::map<K, T> **map_;
+  private:
+      mutable std::shared_mutex mutex_;
+      immer::map<K, T> **map_;
 };
 
-}  // namespace immer
+} // namespace immer

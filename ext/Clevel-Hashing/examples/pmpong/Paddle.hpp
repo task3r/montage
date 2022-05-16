@@ -33,41 +33,41 @@
 #ifndef LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_PADDLE_HPP
 #define LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_PADDLE_HPP
 
+#include "Ball.hpp"
+#include "GameConstants.hpp"
 #include <SFML/Graphics.hpp>
 #include <libpmemobj++/p.hpp>
 #include <libpmemobj++/persistent_ptr.hpp>
 #include <libpmemobj++/pool.hpp>
 
-#include "Ball.hpp"
-#include "GameConstants.hpp"
-
 class Paddle {
-   public:
-    Paddle();
-    Paddle(int x, int y);
-    ~Paddle();
 
-    void moveUp(int velocity);
-    void moveDown(int velocity);
-    void addPoint();
-    void init();
-    void adjustPaddleYtoBall(Ball &ball);
-    void collisionWithBall(Ball &ball, bool increaseBallSpeed);
+public:
+	Paddle();
+	Paddle(int x, int y);
+	~Paddle();
 
-    int getX();
-    int getY();
-    int getPoints();
+	void moveUp(int velocity);
+	void moveDown(int velocity);
+	void addPoint();
+	void init();
+	void adjustPaddleYtoBall(Ball &ball);
+	void collisionWithBall(Ball &ball, bool increaseBallSpeed);
 
-    sf::RectangleShape getPaddleShape();
+	int getX();
+	int getY();
+	int getPoints();
 
-   private:
-    pmem::obj::p<int> y;
-    pmem::obj::p<int> x;
-    pmem::obj::p<int> points;
+	sf::RectangleShape getPaddleShape();
 
-    void setPoints(int pointsArg);
-    void setY(int yArg);
-    void setX(int xArg);
+private:
+	pmem::obj::p<int> y;
+	pmem::obj::p<int> x;
+	pmem::obj::p<int> points;
+
+	void setPoints(int pointsArg);
+	void setY(int yArg);
+	void setX(int xArg);
 };
 
 #endif /* LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_PADDLE_HPP */

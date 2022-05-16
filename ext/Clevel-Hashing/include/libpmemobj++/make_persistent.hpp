@@ -40,8 +40,6 @@
 #ifndef LIBPMEMOBJ_CPP_MAKE_PERSISTENT_HPP
 #define LIBPMEMOBJ_CPP_MAKE_PERSISTENT_HPP
 
-#include <libpmemobj/tx_base.h>
-
 #include <libpmemobj++/allocation_flag.hpp>
 #include <libpmemobj++/detail/check_persistent_ptr_array.hpp>
 #include <libpmemobj++/detail/common.hpp>
@@ -49,12 +47,16 @@
 #include <libpmemobj++/detail/variadic.hpp>
 #include <libpmemobj++/make_persistent_array.hpp>
 #include <libpmemobj++/pexceptions.hpp>
+#include <libpmemobj/tx_base.h>
+
 #include <new>
 #include <utility>
 
-namespace pmem {
+namespace pmem
+{
 
-namespace obj {
+namespace obj
+{
 
 /**
  * Transactionally allocate and construct an object of type T.
@@ -73,29 +75,30 @@ namespace obj {
  * @throw rethrow exception from T constructor
  */
 template <typename T, typename... Args>
-typename detail::pp_if_not_array<T>::type make_persistent(allocation_flag flag,
-                                                          Args &&... args) {
-    if (pmemobj_tx_stage() != TX_STAGE_WORK)
-        throw pmem::transaction_scope_error(
-            "refusing to allocate memory outside of transaction scope");
+typename detail::pp_if_not_array<T>::type
+make_persistent(allocation_flag flag, Args &&... args)
+{
+	if (pmemobj_tx_stage() != TX_STAGE_WORK)
+		throw pmem::transaction_scope_error(
+			"refusing to allocate memory outside of transaction scope");
 
-    persistent_ptr<T> ptr =
-        pmemobj_tx_xalloc(sizeof(T), detail::type_num<T>(), flag.value);
+	persistent_ptr<T> ptr =
+		pmemobj_tx_xalloc(sizeof(T), detail::type_num<T>(), flag.value);
 
-    if (ptr == nullptr) {
-        if (errno == ENOMEM)
-            throw pmem::transaction_out_of_memory(
-                "Failed to allocate persistent memory object")
-                .with_pmemobj_errormsg();
-        else
-            throw pmem::transaction_alloc_error(
-                "Failed to allocate persistent memory object")
-                .with_pmemobj_errormsg();
-    }
+	if (ptr == nullptr) {
+		if (errno == ENOMEM)
+			throw pmem::transaction_out_of_memory(
+				"Failed to allocate persistent memory object")
+				.with_pmemobj_errormsg();
+		else
+			throw pmem::transaction_alloc_error(
+				"Failed to allocate persistent memory object")
+				.with_pmemobj_errormsg();
+	}
 
-    detail::create<T, Args...>(ptr.get(), std::forward<Args>(args)...);
+	detail::create<T, Args...>(ptr.get(), std::forward<Args>(args)...);
 
-    return ptr;
+	return ptr;
 }
 
 /**
@@ -115,11 +118,12 @@ typename detail::pp_if_not_array<T>::type make_persistent(allocation_flag flag,
  */
 template <typename T, typename... Args>
 typename std::enable_if<
-    !detail::is_first_arg_same<allocation_flag, Args...>::value,
-    typename detail::pp_if_not_array<T>::type>::type
-make_persistent(Args &&... args) {
-    return make_persistent<T>(allocation_flag::none(),
-                              std::forward<Args>(args)...);
+	!detail::is_first_arg_same<allocation_flag, Args...>::value,
+	typename detail::pp_if_not_array<T>::type>::type
+make_persistent(Args &&... args)
+{
+	return make_persistent<T>(allocation_flag::none(),
+				  std::forward<Args>(args)...);
 }
 
 /**
@@ -137,23 +141,26 @@ make_persistent(Args &&... args) {
  * @throw transaction_free_error on transactional free failure.
  */
 template <typename T>
-void delete_persistent(typename detail::pp_if_not_array<T>::type ptr) {
-    if (pmemobj_tx_stage() != TX_STAGE_WORK)
-        throw pmem::transaction_scope_error(
-            "refusing to free memory outside of transaction scope");
+void
+delete_persistent(typename detail::pp_if_not_array<T>::type ptr)
+{
+	if (pmemobj_tx_stage() != TX_STAGE_WORK)
+		throw pmem::transaction_scope_error(
+			"refusing to free memory outside of transaction scope");
 
-    if (ptr == nullptr) return;
+	if (ptr == nullptr)
+		return;
 
-    /*
-     * At this point, everything in the object should be tracked
-     * and reverted on transaction abort.
-     */
-    detail::destroy<T>(*ptr);
+	/*
+	 * At this point, everything in the object should be tracked
+	 * and reverted on transaction abort.
+	 */
+	detail::destroy<T>(*ptr);
 
-    if (pmemobj_tx_free(*ptr.raw_ptr()) != 0)
-        throw pmem::transaction_free_error(
-            "failed to delete persistent memory object")
-            .with_pmemobj_errormsg();
+	if (pmemobj_tx_free(*ptr.raw_ptr()) != 0)
+		throw pmem::transaction_free_error(
+			"failed to delete persistent memory object")
+			.with_pmemobj_errormsg();
 }
 
 } /* namespace obj */

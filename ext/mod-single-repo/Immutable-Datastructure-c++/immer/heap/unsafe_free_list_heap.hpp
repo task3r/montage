@@ -8,36 +8,43 @@
 
 #pragma once
 
-#include <cassert>
 #include <immer/config.hpp>
 #include <immer/heap/free_list_node.hpp>
+#include <cassert>
 
 namespace immer {
 namespace detail {
 
 template <typename Heap>
-struct unsafe_free_list_storage {
-    struct head_t {
+struct unsafe_free_list_storage
+{
+    struct head_t
+    {
         free_list_node* data;
         std::size_t count;
     };
 
-    static head_t& head() {
-        static head_t head_{nullptr, 0};
+    static head_t& head()
+    {
+        static head_t head_ {nullptr, 0};
         return head_;
     }
 };
 
-template <template <class> class Storage, std::size_t Size, std::size_t Limit,
+template <template<class>class Storage,
+          std::size_t Size,
+          std::size_t Limit,
           typename Base>
-class unsafe_free_list_heap_impl : Base {
+class unsafe_free_list_heap_impl : Base
+{
     using storage = Storage<unsafe_free_list_heap_impl>;
 
-   public:
+public:
     using base_t = Base;
 
     template <typename... Tags>
-    static void* allocate(std::size_t size, Tags...) {
+    static void* allocate(std::size_t size, Tags...)
+    {
         assert(size <= sizeof(free_list_node) + Size);
         assert(size >= sizeof(free_list_node));
 
@@ -52,7 +59,8 @@ class unsafe_free_list_heap_impl : Base {
     }
 
     template <typename... Tags>
-    static void deallocate(std::size_t size, void* data, Tags...) {
+    static void deallocate(std::size_t size, void* data, Tags...)
+    {
         assert(size <= sizeof(free_list_node) + Size);
         assert(size >= sizeof(free_list_node));
 
@@ -66,18 +74,18 @@ class unsafe_free_list_heap_impl : Base {
         }
     }
 
-    static void clear() {
+    static void clear()
+    {
         while (storage::head().data) {
             auto n = storage::head().data->next;
-            base_t::deallocate(Size + sizeof(free_list_node),
-                               storage::head().data);
+            base_t::deallocate(Size + sizeof(free_list_node), storage::head().data);
             storage::head().data = n;
             --storage::head().count;
         }
     }
 };
 
-}  // namespace detail
+} // namespace detail
 
 /*!
  * Adaptor that does not release the memory to the parent heap but
@@ -90,8 +98,11 @@ class unsafe_free_list_heap_impl : Base {
  * @tparam Base  Type of the parent heap.
  */
 template <std::size_t Size, std::size_t Limit, typename Base>
-struct unsafe_free_list_heap
-    : detail::unsafe_free_list_heap_impl<detail::unsafe_free_list_storage, Size,
-                                         Limit, Base> {};
+struct unsafe_free_list_heap : detail::unsafe_free_list_heap_impl<
+    detail::unsafe_free_list_storage,
+    Size,
+    Limit,
+    Base>
+{};
 
-}  // namespace immer
+} // namespace immer

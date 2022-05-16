@@ -15,31 +15,41 @@
 //
 //  Mostly we're testing string_view here
 
-#include <cassert>
-#include <stdexcept>
 #include <string>
+#include <stdexcept>
+#include <cassert>
 
 #include "min_allocator.h"
+
 #include "test_macros.h"
 
-int sign(int x) {
-    if (x == 0) return 0;
-    if (x < 0) return -1;
+int sign(int x)
+{
+    if (x == 0)
+        return 0;
+    if (x < 0)
+        return -1;
     return 1;
 }
 
 template <class S, class SV>
-void test(const S& s, typename S::size_type pos1, typename S::size_type n1,
-          SV sv, typename S::size_type pos2, typename S::size_type n2, int x) {
+void
+test(const S& s, typename S::size_type pos1, typename S::size_type n1,
+     SV sv,      typename S::size_type pos2, typename S::size_type n2, int x)
+{
     static_assert((!std::is_same<S, SV>::value), "");
     if (pos1 <= s.size() && pos2 <= sv.size())
         assert(sign(s.compare(pos1, n1, sv, pos2, n2)) == sign(x));
 #ifndef TEST_HAS_NO_EXCEPTIONS
-    else {
-        try {
+    else
+    {
+        try
+        {
             TEST_IGNORE_NODISCARD s.compare(pos1, n1, sv, pos2, n2);
             assert(false);
-        } catch (const std::out_of_range&) {
+        }
+        catch (const std::out_of_range&)
+        {
             assert(pos1 > s.size() || pos2 > sv.size());
         }
     }
@@ -47,17 +57,23 @@ void test(const S& s, typename S::size_type pos1, typename S::size_type n1,
 }
 
 template <class S, class SV>
-void test_npos(const S& s, typename S::size_type pos1, typename S::size_type n1,
-               SV sv, typename S::size_type pos2, int x) {
+void
+test_npos(const S& s, typename S::size_type pos1, typename S::size_type n1,
+          SV sv,      typename S::size_type pos2, int x)
+{
     static_assert((!std::is_same<S, SV>::value), "");
     if (pos1 <= s.size() && pos2 <= sv.size())
         assert(sign(s.compare(pos1, n1, sv, pos2)) == sign(x));
 #ifndef TEST_HAS_NO_EXCEPTIONS
-    else {
-        try {
+    else
+    {
+        try
+        {
             TEST_IGNORE_NODISCARD s.compare(pos1, n1, sv, pos2);
             assert(false);
-        } catch (const std::out_of_range&) {
+        }
+        catch (const std::out_of_range&)
+        {
             assert(pos1 > s.size() || pos2 > sv.size());
         }
     }
@@ -65,7 +81,8 @@ void test_npos(const S& s, typename S::size_type pos1, typename S::size_type n1,
 }
 
 template <class S, class SV>
-void test0() {
+void test0()
+{
     test(S(""), 0, 0, SV(""), 0, 0, 0);
     test(S(""), 0, 0, SV(""), 0, 1, 0);
     test(S(""), 0, 0, SV(""), 1, 0, 0);
@@ -169,7 +186,8 @@ void test0() {
 }
 
 template <class S, class SV>
-void test1() {
+void test1()
+{
     test(S(""), 0, 1, SV("abcdefghij"), 0, 0, 0);
     test(S(""), 0, 1, SV("abcdefghij"), 0, 1, -1);
     test(S(""), 0, 1, SV("abcdefghij"), 0, 5, -5);
@@ -273,7 +291,8 @@ void test1() {
 }
 
 template <class S, class SV>
-void test2() {
+void test2()
+{
     test(S(""), 1, 0, SV("abcdefghijklmnopqrst"), 0, 10, 0);
     test(S(""), 1, 0, SV("abcdefghijklmnopqrst"), 0, 19, 0);
     test(S(""), 1, 0, SV("abcdefghijklmnopqrst"), 0, 20, 0);
@@ -377,7 +396,8 @@ void test2() {
 }
 
 template <class S, class SV>
-void test3() {
+void test3()
+{
     test(S("abcde"), 0, 1, SV("abcde"), 0, 1, 0);
     test(S("abcde"), 0, 1, SV("abcde"), 0, 2, -1);
     test(S("abcde"), 0, 1, SV("abcde"), 0, 4, -3);
@@ -481,7 +501,8 @@ void test3() {
 }
 
 template <class S, class SV>
-void test4() {
+void test4()
+{
     test(S("abcde"), 0, 2, SV("abcdefghij"), 0, 10, -8);
     test(S("abcde"), 0, 2, SV("abcdefghij"), 0, 11, -8);
     test(S("abcde"), 0, 2, SV("abcdefghij"), 1, 0, 2);
@@ -585,7 +606,8 @@ void test4() {
 }
 
 template <class S, class SV>
-void test5() {
+void test5()
+{
     test(S("abcde"), 0, 4, SV("abcdefghijklmnopqrst"), 1, 0, 4);
     test(S("abcde"), 0, 4, SV("abcdefghijklmnopqrst"), 1, 1, -1);
     test(S("abcde"), 0, 4, SV("abcdefghijklmnopqrst"), 1, 9, -1);
@@ -689,7 +711,8 @@ void test5() {
 }
 
 template <class S, class SV>
-void test6() {
+void test6()
+{
     test(S("abcde"), 0, 6, SV("abcde"), 0, 6, 0);
     test(S("abcde"), 0, 6, SV("abcde"), 1, 0, 5);
     test(S("abcde"), 0, 6, SV("abcde"), 1, 1, -1);
@@ -793,7 +816,8 @@ void test6() {
 }
 
 template <class S, class SV>
-void test7() {
+void test7()
+{
     test(S("abcde"), 1, 0, SV("abcdefghij"), 1, 4, -4);
     test(S("abcde"), 1, 0, SV("abcdefghij"), 1, 8, -8);
     test(S("abcde"), 1, 0, SV("abcdefghij"), 1, 9, -9);
@@ -897,7 +921,8 @@ void test7() {
 }
 
 template <class S, class SV>
-void test8() {
+void test8()
+{
     test(S("abcde"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 19, -18);
     test(S("abcde"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 20, -18);
     test(S("abcde"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 0, 1);
@@ -1001,7 +1026,8 @@ void test8() {
 }
 
 template <class S, class SV>
-void test9() {
+void test9()
+{
     test(S("abcde"), 1, 3, SV("abcde"), 1, 3, 0);
     test(S("abcde"), 1, 3, SV("abcde"), 1, 4, -1);
     test(S("abcde"), 1, 3, SV("abcde"), 1, 5, -1);
@@ -1105,7 +1131,8 @@ void test9() {
 }
 
 template <class S, class SV>
-void test10() {
+void test10()
+{
     test(S("abcde"), 1, 4, SV("abcdefghij"), 5, 0, 4);
     test(S("abcde"), 1, 4, SV("abcdefghij"), 5, 1, -4);
     test(S("abcde"), 1, 4, SV("abcdefghij"), 5, 2, -4);
@@ -1209,7 +1236,8 @@ void test10() {
 }
 
 template <class S, class SV>
-void test11() {
+void test11()
+{
     test(S("abcde"), 1, 5, SV("abcdefghijklmnopqrst"), 10, 5, -9);
     test(S("abcde"), 1, 5, SV("abcdefghijklmnopqrst"), 10, 9, -9);
     test(S("abcde"), 1, 5, SV("abcdefghijklmnopqrst"), 10, 10, -9);
@@ -1313,7 +1341,8 @@ void test11() {
 }
 
 template <class S, class SV>
-void test12() {
+void test12()
+{
     test(S("abcde"), 2, 1, SV("abcde"), 2, 1, 0);
     test(S("abcde"), 2, 1, SV("abcde"), 2, 2, -1);
     test(S("abcde"), 2, 1, SV("abcde"), 2, 3, -2);
@@ -1417,7 +1446,8 @@ void test12() {
 }
 
 template <class S, class SV>
-void test13() {
+void test13()
+{
     test(S("abcde"), 2, 2, SV("abcdefghij"), 5, 5, -3);
     test(S("abcde"), 2, 2, SV("abcdefghij"), 5, 6, -3);
     test(S("abcde"), 2, 2, SV("abcdefghij"), 9, 0, 2);
@@ -1521,7 +1551,8 @@ void test13() {
 }
 
 template <class S, class SV>
-void test14() {
+void test14()
+{
     test(S("abcde"), 2, 3, SV("abcdefghijklmnopqrst"), 19, 0, 3);
     test(S("abcde"), 2, 3, SV("abcdefghijklmnopqrst"), 19, 1, -17);
     test(S("abcde"), 2, 3, SV("abcdefghijklmnopqrst"), 19, 2, -17);
@@ -1625,7 +1656,8 @@ void test14() {
 }
 
 template <class S, class SV>
-void test15() {
+void test15()
+{
     test(S("abcde"), 4, 0, SV("abcde"), 4, 0, 0);
     test(S("abcde"), 4, 0, SV("abcde"), 4, 1, -1);
     test(S("abcde"), 4, 0, SV("abcde"), 4, 2, -1);
@@ -1729,7 +1761,8 @@ void test15() {
 }
 
 template <class S, class SV>
-void test16() {
+void test16()
+{
     test(S("abcde"), 4, 1, SV("abcdefghij"), 9, 2, -5);
     test(S("abcde"), 4, 1, SV("abcdefghij"), 10, 0, 1);
     test(S("abcde"), 4, 1, SV("abcdefghij"), 10, 1, 1);
@@ -1833,7 +1866,8 @@ void test16() {
 }
 
 template <class S, class SV>
-void test17() {
+void test17()
+{
     test(S("abcde"), 4, 2, SV("abcdefghijklmnopqrst"), 20, 1, 1);
     test(S("abcde"), 4, 2, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcde"), 5, 0, SV(""), 0, 0, 0);
@@ -1937,7 +1971,8 @@ void test17() {
 }
 
 template <class S, class SV>
-void test18() {
+void test18()
+{
     test(S("abcde"), 5, 1, SV("abcde"), 5, 1, 0);
     test(S("abcde"), 5, 1, SV("abcde"), 6, 0, 0);
     test(S("abcde"), 5, 1, SV("abcdefghij"), 0, 0, 0);
@@ -2041,7 +2076,8 @@ void test18() {
 }
 
 template <class S, class SV>
-void test19() {
+void test19()
+{
     test(S("abcde"), 6, 0, SV("abcdefghijklmnopqrst"), 0, 0, 0);
     test(S("abcde"), 6, 0, SV("abcdefghijklmnopqrst"), 0, 1, 0);
     test(S("abcde"), 6, 0, SV("abcdefghijklmnopqrst"), 0, 10, 0);
@@ -2145,7 +2181,8 @@ void test19() {
 }
 
 template <class S, class SV>
-void test20() {
+void test20()
+{
     test(S("abcdefghij"), 0, 1, SV(""), 1, 0, 0);
     test(S("abcdefghij"), 0, 1, SV("abcde"), 0, 0, 1);
     test(S("abcdefghij"), 0, 1, SV("abcde"), 0, 1, 0);
@@ -2249,7 +2286,8 @@ void test20() {
 }
 
 template <class S, class SV>
-void test21() {
+void test21()
+{
     test(S("abcdefghij"), 0, 5, SV("abcdefghij"), 0, 5, 0);
     test(S("abcdefghij"), 0, 5, SV("abcdefghij"), 0, 9, -4);
     test(S("abcdefghij"), 0, 5, SV("abcdefghij"), 0, 10, -5);
@@ -2353,7 +2391,8 @@ void test21() {
 }
 
 template <class S, class SV>
-void test22() {
+void test22()
+{
     test(S("abcdefghij"), 0, 9, SV("abcdefghijklmnopqrst"), 0, 20, -11);
     test(S("abcdefghij"), 0, 9, SV("abcdefghijklmnopqrst"), 0, 21, -11);
     test(S("abcdefghij"), 0, 9, SV("abcdefghijklmnopqrst"), 1, 0, 9);
@@ -2457,7 +2496,8 @@ void test22() {
 }
 
 template <class S, class SV>
-void test23() {
+void test23()
+{
     test(S("abcdefghij"), 0, 11, SV("abcde"), 0, 4, 6);
     test(S("abcdefghij"), 0, 11, SV("abcde"), 0, 5, 5);
     test(S("abcdefghij"), 0, 11, SV("abcde"), 0, 6, 5);
@@ -2561,7 +2601,8 @@ void test23() {
 }
 
 template <class S, class SV>
-void test24() {
+void test24()
+{
     test(S("abcdefghij"), 1, 0, SV("abcdefghij"), 1, 0, 0);
     test(S("abcdefghij"), 1, 0, SV("abcdefghij"), 1, 1, -1);
     test(S("abcdefghij"), 1, 0, SV("abcdefghij"), 1, 4, -4);
@@ -2665,7 +2706,8 @@ void test24() {
 }
 
 template <class S, class SV>
-void test25() {
+void test25()
+{
     test(S("abcdefghij"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 9, -8);
     test(S("abcdefghij"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 18, -17);
     test(S("abcdefghij"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 19, -18);
@@ -2769,7 +2811,8 @@ void test25() {
 }
 
 template <class S, class SV>
-void test26() {
+void test26()
+{
     test(S("abcdefghij"), 1, 8, SV("abcde"), 1, 1, 7);
     test(S("abcdefghij"), 1, 8, SV("abcde"), 1, 2, 6);
     test(S("abcdefghij"), 1, 8, SV("abcde"), 1, 3, 5);
@@ -2873,7 +2916,8 @@ void test26() {
 }
 
 template <class S, class SV>
-void test27() {
+void test27()
+{
     test(S("abcdefghij"), 1, 9, SV("abcdefghij"), 1, 9, 0);
     test(S("abcdefghij"), 1, 9, SV("abcdefghij"), 1, 10, 0);
     test(S("abcdefghij"), 1, 9, SV("abcdefghij"), 5, 0, 9);
@@ -2977,7 +3021,8 @@ void test27() {
 }
 
 template <class S, class SV>
-void test28() {
+void test28()
+{
     test(S("abcdefghij"), 1, 10, SV("abcdefghijklmnopqrst"), 10, 0, 9);
     test(S("abcdefghij"), 1, 10, SV("abcdefghijklmnopqrst"), 10, 1, -9);
     test(S("abcdefghij"), 1, 10, SV("abcdefghijklmnopqrst"), 10, 5, -9);
@@ -3081,7 +3126,8 @@ void test28() {
 }
 
 template <class S, class SV>
-void test29() {
+void test29()
+{
     test(S("abcdefghij"), 5, 1, SV("abcde"), 1, 5, 4);
     test(S("abcdefghij"), 5, 1, SV("abcde"), 2, 0, 1);
     test(S("abcdefghij"), 5, 1, SV("abcde"), 2, 1, 3);
@@ -3185,7 +3231,8 @@ void test29() {
 }
 
 template <class S, class SV>
-void test30() {
+void test30()
+{
     test(S("abcdefghij"), 5, 2, SV("abcdefghij"), 5, 2, 0);
     test(S("abcdefghij"), 5, 2, SV("abcdefghij"), 5, 4, -2);
     test(S("abcdefghij"), 5, 2, SV("abcdefghij"), 5, 5, -3);
@@ -3289,7 +3336,8 @@ void test30() {
 }
 
 template <class S, class SV>
-void test31() {
+void test31()
+{
     test(S("abcdefghij"), 5, 4, SV("abcdefghijklmnopqrst"), 10, 10, -5);
     test(S("abcdefghij"), 5, 4, SV("abcdefghijklmnopqrst"), 10, 11, -5);
     test(S("abcdefghij"), 5, 4, SV("abcdefghijklmnopqrst"), 19, 0, 4);
@@ -3393,7 +3441,8 @@ void test31() {
 }
 
 template <class S, class SV>
-void test32() {
+void test32()
+{
     test(S("abcdefghij"), 5, 6, SV("abcde"), 2, 3, 3);
     test(S("abcdefghij"), 5, 6, SV("abcde"), 2, 4, 3);
     test(S("abcdefghij"), 5, 6, SV("abcde"), 4, 0, 5);
@@ -3497,7 +3546,8 @@ void test32() {
 }
 
 template <class S, class SV>
-void test33() {
+void test33()
+{
     test(S("abcdefghij"), 9, 0, SV("abcdefghij"), 9, 0, 0);
     test(S("abcdefghij"), 9, 0, SV("abcdefghij"), 9, 1, -1);
     test(S("abcdefghij"), 9, 0, SV("abcdefghij"), 9, 2, -1);
@@ -3601,7 +3651,8 @@ void test33() {
 }
 
 template <class S, class SV>
-void test34() {
+void test34()
+{
     test(S("abcdefghij"), 9, 1, SV("abcdefghijklmnopqrst"), 19, 2, -10);
     test(S("abcdefghij"), 9, 1, SV("abcdefghijklmnopqrst"), 20, 0, 1);
     test(S("abcdefghij"), 9, 1, SV("abcdefghijklmnopqrst"), 20, 1, 1);
@@ -3705,7 +3756,8 @@ void test34() {
 }
 
 template <class S, class SV>
-void test35() {
+void test35()
+{
     test(S("abcdefghij"), 10, 0, SV("abcde"), 4, 2, -1);
     test(S("abcdefghij"), 10, 0, SV("abcde"), 5, 0, 0);
     test(S("abcdefghij"), 10, 0, SV("abcde"), 5, 1, 0);
@@ -3809,7 +3861,8 @@ void test35() {
 }
 
 template <class S, class SV>
-void test36() {
+void test36()
+{
     test(S("abcdefghij"), 10, 1, SV("abcdefghij"), 10, 1, 0);
     test(S("abcdefghij"), 10, 1, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghij"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 0, 0);
@@ -3913,7 +3966,8 @@ void test36() {
 }
 
 template <class S, class SV>
-void test37() {
+void test37()
+{
     test(S("abcdefghijklmnopqrst"), 0, 0, SV(""), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV(""), 0, 1, 0);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV(""), 1, 0, 0);
@@ -3966,39 +4020,25 @@ void test37() {
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 1, -1);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 20,
-         -20);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 21,
-         -20);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 20, -20);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 0, 21, -20);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 1, 0, 0);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 1, 1, -1);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 1, 9, -9);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 1, 18,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 1, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 1, 20,
-         -19);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 1, 18, -18);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 1, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 1, 20, -19);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 5,
-         -5);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 5, -5);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 10, 11, -10);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 19, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 19, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 19, 2,
-         -1);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 19, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 19, 2, -1);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 20, 0, 0);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 20, 1, 0);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghijklmnopqrst"), 21, 0, 0);
@@ -4031,7 +4071,8 @@ void test37() {
 }
 
 template <class S, class SV>
-void test38() {
+void test38()
+{
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghij"), 0, 0, 1);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghij"), 0, 1, 0);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghij"), 0, 5, -4);
@@ -4058,39 +4099,25 @@ void test38() {
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 0, 1);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 1, 0);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 10,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 19,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 20,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 21,
-         -19);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 10, -9);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 19, -18);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 20, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 0, 21, -19);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 1, 0, 1);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 1, 1, -1);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 1, 9, -1);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 1, 18,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 1, 19,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 1, 20,
-         -1);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 1, 18, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 1, 19, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 1, 20, -1);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 0, 1);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 1,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 5,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 9,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 1, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 5, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 9, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 10, 11, -10);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 19, 0, 1);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 19, 1,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 19, 2,
-         -19);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 19, 1, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 19, 2, -19);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 20, 0, 1);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 20, 1, 1);
     test(S("abcdefghijklmnopqrst"), 0, 1, SV("abcdefghijklmnopqrst"), 21, 0, 0);
@@ -4144,57 +4171,35 @@ void test38() {
     test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghij"), 10, 0, 10);
     test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghij"), 10, 1, 10);
     test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghij"), 11, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 0,
-         10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 0, 10);
     test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 1, 9);
 }
 
 template <class S, class SV>
-void test39() {
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 10,
-         0);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 19,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 20,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 21,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 9,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 18,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 19,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 20,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 1,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 5,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 9,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 19, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 19, 1,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 19, 2,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 20, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 20, 1,
-         10);
-    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+void test39()
+{
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 10, 0);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 19, -9);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 20, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 0, 21, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 9, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 18, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 19, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 1, 20, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 1, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 5, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 9, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 10, 11, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 19, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 19, 1, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 19, 2, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 20, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 20, 1, 10);
+    test(S("abcdefghijklmnopqrst"), 0, 10, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 0, 19, SV(""), 0, 0, 19);
     test(S("abcdefghijklmnopqrst"), 0, 19, SV(""), 0, 1, 19);
     test(S("abcdefghijklmnopqrst"), 0, 19, SV(""), 1, 0, 0);
@@ -4245,54 +4250,30 @@ void test39() {
     test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghij"), 10, 0, 19);
     test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghij"), 10, 1, 19);
     test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghij"), 11, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 1,
-         18);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 10,
-         9);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 19,
-         0);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 20,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 21,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 9,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 18,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 19,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 20,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 1,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 5,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 9,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 19, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 19, 1,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 19, 2,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 20, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 20, 1,
-         19);
-    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 1, 18);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 10, 9);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 19, 0);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 20, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 0, 21, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 9, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 18, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 19, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 1, 20, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 1, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 5, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 9, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 10, 11, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 19, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 19, 1, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 19, 2, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 20, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 20, 1, 19);
+    test(S("abcdefghijklmnopqrst"), 0, 19, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 0, 20, SV(""), 0, 0, 20);
     test(S("abcdefghijklmnopqrst"), 0, 20, SV(""), 0, 1, 20);
     test(S("abcdefghijklmnopqrst"), 0, 20, SV(""), 1, 0, 0);
@@ -4300,7 +4281,8 @@ void test39() {
 }
 
 template <class S, class SV>
-void test40() {
+void test40()
+{
     test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcde"), 0, 1, 19);
     test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcde"), 0, 2, 18);
     test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcde"), 0, 4, 16);
@@ -4347,54 +4329,30 @@ void test40() {
     test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghij"), 10, 0, 20);
     test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghij"), 10, 1, 20);
     test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghij"), 11, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 1,
-         19);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 10,
-         10);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 19,
-         1);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 20,
-         0);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 21,
-         0);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 9,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 18,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 19,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 20,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 1,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 5,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 9,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 19, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 19, 1,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 19, 2,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 20, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 20, 1,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 1, 19);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 10, 10);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 19, 1);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 20, 0);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 0, 21, 0);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 9, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 18, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 19, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 1, 20, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 1, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 5, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 9, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 10, 11, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 19, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 19, 1, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 19, 2, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 20, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 20, 1, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 20, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 0, 21, SV(""), 0, 0, 20);
     test(S("abcdefghijklmnopqrst"), 0, 21, SV(""), 0, 1, 20);
     test(S("abcdefghijklmnopqrst"), 0, 21, SV(""), 1, 0, 0);
@@ -4428,7 +4386,8 @@ void test40() {
 }
 
 template <class S, class SV>
-void test41() {
+void test41()
+{
     test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghij"), 0, 10, 10);
     test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghij"), 0, 11, 10);
     test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghij"), 1, 0, 20);
@@ -4449,54 +4408,30 @@ void test41() {
     test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghij"), 10, 0, 20);
     test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghij"), 10, 1, 20);
     test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghij"), 11, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 1,
-         19);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 10,
-         10);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 19,
-         1);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 20,
-         0);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 21,
-         0);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 9,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 18,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 19,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 20,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 1,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 5,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 9,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 19, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 19, 1,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 19, 2,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 20, 0,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 20, 1,
-         20);
-    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 1, 19);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 10, 10);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 19, 1);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 20, 0);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 0, 21, 0);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 9, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 18, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 19, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 1, 20, -1);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 1, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 5, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 9, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 10, 11, -10);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 19, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 19, 1, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 19, 2, -19);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 20, 0, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 20, 1, 20);
+    test(S("abcdefghijklmnopqrst"), 0, 21, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV(""), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV(""), 0, 1, 0);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV(""), 1, 0, 0);
@@ -4549,43 +4484,30 @@ void test41() {
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 1, -1);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 20,
-         -20);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 21,
-         -20);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 20, -20);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 0, 21, -20);
 }
 
 template <class S, class SV>
-void test42() {
+void test42()
+{
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 1, 0, 0);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 1, 1, -1);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 1, 9, -9);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 1, 18,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 1, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 1, 20,
-         -19);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 1, 18, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 1, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 1, 20, -19);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 5,
-         -5);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 5, -5);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 10, 11, -10);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 19, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 19, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 19, 2,
-         -1);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 19, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 19, 2, -1);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 20, 0, 0);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 20, 1, 0);
     test(S("abcdefghijklmnopqrst"), 1, 0, SV("abcdefghijklmnopqrst"), 21, 0, 0);
@@ -4648,28 +4570,18 @@ void test42() {
     test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 0, 1);
     test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 1, 0);
     test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 9, -8);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 18,
-         -17);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 19,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 20,
-         -18);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 18, -17);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 19, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 1, 20, -18);
     test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 0, 1);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 5,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 10,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 11,
-         -9);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 5, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 10, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 10, 11, -9);
     test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 19, 0, 1);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 19, 1,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 19, 2,
-         -18);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 19, 1, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 19, 2, -18);
     test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 20, 0, 1);
     test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 20, 1, 1);
     test(S("abcdefghijklmnopqrst"), 1, 1, SV("abcdefghijklmnopqrst"), 21, 0, 0);
@@ -4684,7 +4596,8 @@ void test42() {
 }
 
 template <class S, class SV>
-void test43() {
+void test43()
+{
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcde"), 0, 6, 1);
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcde"), 1, 0, 9);
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcde"), 1, 1, 8);
@@ -4736,28 +4649,18 @@ void test43() {
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 1, 0, 9);
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 1, 1, 8);
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 1, 9, 0);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 1, 18,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 1, 19,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 1, 20,
-         -10);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 1, 18, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 1, 19, -10);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 1, 20, -10);
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 0, 9);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 5,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 10,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 11,
-         -9);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 5, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 10, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 10, 11, -9);
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 19, 0, 9);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 19, 1,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 19, 2,
-         -18);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 19, 1, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 19, 2, -18);
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 20, 0, 9);
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 20, 1, 9);
     test(S("abcdefghijklmnopqrst"), 1, 9, SV("abcdefghijklmnopqrst"), 21, 0, 0);
@@ -4798,7 +4701,8 @@ void test43() {
 }
 
 template <class S, class SV>
-void test44() {
+void test44()
+{
     test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghij"), 1, 4, 14);
     test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghij"), 1, 8, 10);
     test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghij"), 1, 9, 9);
@@ -4815,52 +4719,30 @@ void test44() {
     test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghij"), 10, 0, 18);
     test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghij"), 10, 1, 18);
     test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghij"), 11, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 0,
-         18);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 0, 18);
     test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 1, 1);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 10,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 19,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 20,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 21,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 0,
-         18);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 1,
-         17);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 10, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 19, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 20, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 0, 21, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 0, 18);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 1, 17);
     test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 9, 9);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 18,
-         0);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 19,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 20,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 0,
-         18);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 5,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 10,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 11,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 19, 0,
-         18);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 19, 1,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 19, 2,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 20, 0,
-         18);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 20, 1,
-         18);
-    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 18, 0);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 19, -1);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 1, 20, -1);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 0, 18);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 5, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 10, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 10, 11, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 19, 0, 18);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 19, 1, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 19, 2, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 20, 0, 18);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 20, 1, 18);
+    test(S("abcdefghijklmnopqrst"), 1, 18, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 1, 19, SV(""), 0, 0, 19);
     test(S("abcdefghijklmnopqrst"), 1, 19, SV(""), 0, 1, 19);
     test(S("abcdefghijklmnopqrst"), 1, 19, SV(""), 1, 0, 0);
@@ -4911,57 +4793,35 @@ void test44() {
     test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghij"), 10, 0, 19);
     test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghij"), 10, 1, 19);
     test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghij"), 11, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 0,
-         19);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 0, 19);
     test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 1, 1);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 10,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 19,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 20,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 21,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 1,
-         18);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 9,
-         10);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 18,
-         1);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 10, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 19, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 20, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 0, 21, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 1, 18);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 9, 10);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 18, 1);
 }
 
 template <class S, class SV>
-void test45() {
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 19,
-         0);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 20,
-         0);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 5,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 10,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 11,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 19, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 19, 1,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 19, 2,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 20, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 20, 1,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+void test45()
+{
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 19, 0);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 1, 20, 0);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 5, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 10, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 10, 11, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 19, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 19, 1, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 19, 2, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 20, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 20, 1, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 19, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 1, 20, SV(""), 0, 0, 19);
     test(S("abcdefghijklmnopqrst"), 1, 20, SV(""), 0, 1, 19);
     test(S("abcdefghijklmnopqrst"), 1, 20, SV(""), 1, 0, 0);
@@ -5012,53 +4872,30 @@ void test45() {
     test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghij"), 10, 0, 19);
     test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghij"), 10, 1, 19);
     test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghij"), 11, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 0,
-         19);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 0, 19);
     test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 1, 1);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 10,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 19,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 20,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 21,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 1,
-         18);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 9,
-         10);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 18,
-         1);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 19,
-         0);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 20,
-         0);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 5,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 10,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 11,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 19, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 19, 1,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 19, 2,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 20, 0,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 20, 1,
-         19);
-    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 10, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 19, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 20, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 0, 21, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 1, 18);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 9, 10);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 18, 1);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 19, 0);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 1, 20, 0);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 5, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 10, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 10, 11, -9);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 19, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 19, 1, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 19, 2, -18);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 20, 0, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 20, 1, 19);
+    test(S("abcdefghijklmnopqrst"), 1, 20, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 0, SV(""), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 0, SV(""), 0, 1, 0);
     test(S("abcdefghijklmnopqrst"), 10, 0, SV(""), 1, 0, 0);
@@ -5074,7 +4911,8 @@ void test45() {
 }
 
 template <class S, class SV>
-void test46() {
+void test46()
+{
     test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcde"), 1, 3, -3);
     test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcde"), 1, 4, -4);
     test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcde"), 1, 5, -4);
@@ -5114,51 +4952,29 @@ void test46() {
     test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghij"), 10, 1, 0);
     test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 20,
-         -20);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 21,
-         -20);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 20, -20);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 0, 21, -20);
     test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 18,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 20,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 5,
-         -5);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 19, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 19, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 19, 2,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 20, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 20, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 18, -18);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 1, 20, -19);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 5, -5);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 10, 11, -10);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 19, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 19, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 19, 2, -1);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 20, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 20, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 0, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV(""), 0, 0, 1);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV(""), 0, 1, 1);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV(""), 1, 0, 0);
@@ -5200,7 +5016,8 @@ void test46() {
 }
 
 template <class S, class SV>
-void test47() {
+void test47()
+{
     test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghij"), 5, 0, 1);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghij"), 5, 1, 5);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghij"), 5, 2, 5);
@@ -5214,49 +5031,29 @@ void test47() {
     test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghij"), 10, 1, 1);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 0, 1);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 1,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 10,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 19,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 20,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 21,
-         10);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 1, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 10, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 19, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 20, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 0, 21, 10);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 1, 0, 1);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 1, 1, 9);
     test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 1, 9, 9);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 1, 18,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 1, 19,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 1, 20,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 0,
-         1);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 5,
-         -4);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 9,
-         -8);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 10,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 11,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 19, 0,
-         1);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 19, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 19, 2,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 20, 0,
-         1);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 20, 1,
-         1);
-    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 1, 18, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 1, 19, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 1, 20, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 0, 1);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 5, -4);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 9, -8);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 10, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 10, 11, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 19, 0, 1);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 19, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 19, 2, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 20, 0, 1);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 20, 1, 1);
+    test(S("abcdefghijklmnopqrst"), 10, 1, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 5, SV(""), 0, 0, 5);
     test(S("abcdefghijklmnopqrst"), 10, 5, SV(""), 0, 1, 5);
     test(S("abcdefghijklmnopqrst"), 10, 5, SV(""), 1, 0, 0);
@@ -5308,53 +5105,34 @@ void test47() {
     test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghij"), 10, 1, 5);
     test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 0, 5);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 1,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 10,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 19,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 20,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 21,
-         10);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 1, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 10, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 19, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 20, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 0, 21, 10);
     test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 1, 0, 5);
     test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 1, 1, 9);
     test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 1, 9, 9);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 1, 18,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 1, 19,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 1, 20,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 0,
-         5);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 1,
-         4);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 1, 18, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 1, 19, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 1, 20, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 0, 5);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 1, 4);
 }
 
 template <class S, class SV>
-void test48() {
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 5,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 9,
-         -4);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 10,
-         -5);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 11,
-         -5);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 19, 0,
-         5);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 19, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 19, 2,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 20, 0,
-         5);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 20, 1,
-         5);
-    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+void test48()
+{
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 5, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 9, -4);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 10, -5);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 10, 11, -5);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 19, 0, 5);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 19, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 19, 2, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 20, 0, 5);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 20, 1, 5);
+    test(S("abcdefghijklmnopqrst"), 10, 5, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 9, SV(""), 0, 0, 9);
     test(S("abcdefghijklmnopqrst"), 10, 9, SV(""), 0, 1, 9);
     test(S("abcdefghijklmnopqrst"), 10, 9, SV(""), 1, 0, 0);
@@ -5406,49 +5184,29 @@ void test48() {
     test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghij"), 10, 1, 9);
     test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 0, 9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 1,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 10,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 19,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 20,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 21,
-         10);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 1, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 10, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 19, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 20, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 0, 21, 10);
     test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 1, 0, 9);
     test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 1, 1, 9);
     test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 1, 9, 9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 1, 18,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 1, 19,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 1, 20,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 0,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 1,
-         8);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 5,
-         4);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 9,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 10,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 11,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 19, 0,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 19, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 19, 2,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 20, 0,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 20, 1,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 1, 18, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 1, 19, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 1, 20, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 0, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 1, 8);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 5, 4);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 9, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 10, -1);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 10, 11, -1);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 19, 0, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 19, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 19, 2, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 20, 0, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 20, 1, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 9, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 10, SV(""), 0, 0, 10);
     test(S("abcdefghijklmnopqrst"), 10, 10, SV(""), 0, 1, 10);
     test(S("abcdefghijklmnopqrst"), 10, 10, SV(""), 1, 0, 0);
@@ -5468,7 +5226,8 @@ void test48() {
 }
 
 template <class S, class SV>
-void test49() {
+void test49()
+{
     test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcde"), 2, 1, 8);
     test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcde"), 2, 2, 8);
     test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcde"), 2, 3, 8);
@@ -5503,54 +5262,30 @@ void test49() {
     test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghij"), 10, 0, 10);
     test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghij"), 10, 1, 10);
     test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghij"), 11, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 1,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 10,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 19,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 20,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 21,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 1,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 9,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 18,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 19,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 20,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 1,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 5,
-         5);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 9,
-         1);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 10,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 11,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 19, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 19, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 19, 2,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 20, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 20, 1,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 1, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 10, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 19, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 20, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 0, 21, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 1, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 9, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 18, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 19, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 1, 20, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 1, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 5, 5);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 9, 1);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 10, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 10, 11, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 19, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 19, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 19, 2, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 20, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 20, 1, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 10, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 10, 11, SV(""), 0, 0, 10);
     test(S("abcdefghijklmnopqrst"), 10, 11, SV(""), 0, 1, 10);
     test(S("abcdefghijklmnopqrst"), 10, 11, SV(""), 1, 0, 0);
@@ -5596,7 +5331,8 @@ void test49() {
 }
 
 template <class S, class SV>
-void test50() {
+void test50()
+{
     test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghij"), 5, 5, 5);
     test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghij"), 5, 6, 5);
     test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghij"), 9, 0, 10);
@@ -5605,54 +5341,30 @@ void test50() {
     test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghij"), 10, 0, 10);
     test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghij"), 10, 1, 10);
     test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghij"), 11, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 1,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 10,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 19,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 20,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 21,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 1,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 9,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 18,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 19,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 20,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 1,
-         9);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 5,
-         5);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 9,
-         1);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 10,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 11,
-         0);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 19, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 19, 1,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 19, 2,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 20, 0,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 20, 1,
-         10);
-    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 1, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 10, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 19, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 20, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 0, 21, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 1, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 9, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 18, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 19, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 1, 20, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 1, 9);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 5, 5);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 9, 1);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 10, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 10, 11, 0);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 19, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 19, 1, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 19, 2, -9);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 20, 0, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 20, 1, 10);
+    test(S("abcdefghijklmnopqrst"), 10, 11, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 19, 0, SV(""), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 19, 0, SV(""), 0, 1, 0);
     test(S("abcdefghijklmnopqrst"), 19, 0, SV(""), 1, 0, 0);
@@ -5704,55 +5416,34 @@ void test50() {
     test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghij"), 10, 1, 0);
     test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 20,
-         -20);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 21,
-         -20);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 20, -20);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 0, 21, -20);
     test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 18,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 20,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 5,
-         -5);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 18, -18);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 1, 20, -19);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 5, -5);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 10, 11, -10);
 }
 
 template <class S, class SV>
-void test51() {
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 19, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 19, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 19, 2,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 20, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 20, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+void test51()
+{
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 19, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 19, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 19, 2, -1);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 20, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 20, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 19, 0, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 19, 1, SV(""), 0, 0, 1);
     test(S("abcdefghijklmnopqrst"), 19, 1, SV(""), 0, 1, 1);
     test(S("abcdefghijklmnopqrst"), 19, 1, SV(""), 1, 0, 0);
@@ -5804,51 +5495,29 @@ void test51() {
     test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghij"), 10, 1, 1);
     test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 0, 1);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 1,
-         19);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 10,
-         19);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 19,
-         19);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 20,
-         19);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 21,
-         19);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 1, 19);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 10, 19);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 19, 19);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 20, 19);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 0, 21, 19);
     test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 0, 1);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 1,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 9,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 18,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 19,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 20,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 0,
-         1);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 1,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 5,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 9,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 10,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 11,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 19, 0,
-         1);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 19, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 19, 2,
-         0);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 20, 0,
-         1);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 20, 1,
-         1);
-    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 1, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 9, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 18, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 19, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 1, 20, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 0, 1);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 1, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 5, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 9, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 10, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 10, 11, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 19, 0, 1);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 19, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 19, 2, 0);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 20, 0, 1);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 20, 1, 1);
+    test(S("abcdefghijklmnopqrst"), 19, 1, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 19, 2, SV(""), 0, 0, 1);
     test(S("abcdefghijklmnopqrst"), 19, 2, SV(""), 0, 1, 1);
     test(S("abcdefghijklmnopqrst"), 19, 2, SV(""), 1, 0, 0);
@@ -5872,7 +5541,8 @@ void test51() {
 }
 
 template <class S, class SV>
-void test52() {
+void test52()
+{
     test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcde"), 4, 0, 1);
     test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcde"), 4, 1, 15);
     test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcde"), 4, 2, 15);
@@ -5904,51 +5574,29 @@ void test52() {
     test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghij"), 10, 1, 1);
     test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 0, 1);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 1,
-         19);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 10,
-         19);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 19,
-         19);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 20,
-         19);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 21,
-         19);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 1, 19);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 10, 19);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 19, 19);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 20, 19);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 0, 21, 19);
     test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 0, 1);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 1,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 9,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 18,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 19,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 20,
-         18);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 0,
-         1);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 1,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 5,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 9,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 10,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 11,
-         9);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 19, 0,
-         1);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 19, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 19, 2,
-         0);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 20, 0,
-         1);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 20, 1,
-         1);
-    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 1, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 9, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 18, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 19, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 1, 20, 18);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 0, 1);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 1, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 5, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 9, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 10, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 10, 11, 9);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 19, 0, 1);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 19, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 19, 2, 0);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 20, 0, 1);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 20, 1, 1);
+    test(S("abcdefghijklmnopqrst"), 19, 2, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 20, 0, SV(""), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 20, 0, SV(""), 0, 1, 0);
     test(S("abcdefghijklmnopqrst"), 20, 0, SV(""), 1, 0, 0);
@@ -5998,57 +5646,36 @@ void test52() {
 }
 
 template <class S, class SV>
-void test53() {
+void test53()
+{
     test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghij"), 9, 2, -1);
     test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghij"), 10, 0, 0);
     test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghij"), 10, 1, 0);
     test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 20,
-         -20);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 21,
-         -20);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 20, -20);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 0, 21, -20);
     test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 18,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 20,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 5,
-         -5);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 19, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 19, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 19, 2,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 20, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 20, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 18, -18);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 1, 20, -19);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 5, -5);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 10, 11, -10);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 19, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 19, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 19, 2, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 20, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 20, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 20, 0, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 20, 1, SV(""), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 20, 1, SV(""), 0, 1, 0);
     test(S("abcdefghijklmnopqrst"), 20, 1, SV(""), 1, 0, 0);
@@ -6100,55 +5727,34 @@ void test53() {
     test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghij"), 10, 1, 0);
     test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 20,
-         -20);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 21,
-         -20);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 20, -20);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 0, 21, -20);
     test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 0, 0);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 18,
-         -18);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 19,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 20,
-         -19);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 5,
-         -5);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 9,
-         -9);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 10,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 11,
-         -10);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 19, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 19, 1,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 19, 2,
-         -1);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 20, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 18, -18);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 19, -19);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 1, 20, -19);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 5, -5);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 9, -9);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 10, -10);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 10, 11, -10);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 19, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 19, 1, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 19, 2, -1);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 20, 0, 0);
 }
 
 template <class S, class SV>
-void test54() {
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 20, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+void test54()
+{
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 20, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 20, 1, SV("abcdefghijklmnopqrst"), 21, 0, 0);
     test(S("abcdefghijklmnopqrst"), 21, 0, SV(""), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 21, 0, SV(""), 0, 1, 0);
     test(S("abcdefghijklmnopqrst"), 21, 0, SV(""), 1, 0, 0);
@@ -6201,51 +5807,33 @@ void test54() {
     test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghij"), 11, 0, 0);
     test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 0, 0);
     test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 1, 0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 10,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 19,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 20,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 21,
-         0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 10, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 19, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 20, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0, 21, 0);
     test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 1, 0, 0);
     test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 1, 1, 0);
     test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 1, 9, 0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 1, 18,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 1, 19,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 1, 20,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 5,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 9,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 10,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 11,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 19, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 19, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 19, 2,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 20, 0,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 20, 1,
-         0);
-    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 21, 0,
-         0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 1, 18, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 1, 19, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 1, 20, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 5, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 9, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 10, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 10, 11, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 19, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 19, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 19, 2, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 20, 0, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 20, 1, 0);
+    test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 21, 0, 0);
 }
 
 template <class S, class SV>
-void test55() {
+void test55()
+{
     test_npos(S(""), 0, 0, SV(""), 0, 0);
     test_npos(S(""), 0, 0, SV("abcde"), 0, -5);
     test_npos(S("abcde"), 0, 0, SV("abcdefghij"), 0, -10);
@@ -6253,154 +5841,153 @@ void test55() {
     test_npos(S("abcde"), 0, 0, SV("abcdefghij"), 5, -5);
 }
 
-int main() {
+int main()
+{
     {
-        typedef std::string S;
-        typedef std::string_view SV;
-        test0<S, SV>();
-        test1<S, SV>();
-        test2<S, SV>();
-        test3<S, SV>();
-        test4<S, SV>();
-        test5<S, SV>();
-        test6<S, SV>();
-        test7<S, SV>();
-        test8<S, SV>();
-        test9<S, SV>();
-        test10<S, SV>();
-        test11<S, SV>();
-        test12<S, SV>();
-        test13<S, SV>();
-        test14<S, SV>();
-        test15<S, SV>();
-        test16<S, SV>();
-        test17<S, SV>();
-        test18<S, SV>();
-        test19<S, SV>();
-        test20<S, SV>();
-        test21<S, SV>();
-        test22<S, SV>();
-        test23<S, SV>();
-        test24<S, SV>();
-        test25<S, SV>();
-        test26<S, SV>();
-        test27<S, SV>();
-        test28<S, SV>();
-        test29<S, SV>();
-        test30<S, SV>();
-        test31<S, SV>();
-        test32<S, SV>();
-        test33<S, SV>();
-        test34<S, SV>();
-        test35<S, SV>();
-        test36<S, SV>();
-        test37<S, SV>();
-        test38<S, SV>();
-        test39<S, SV>();
-        test40<S, SV>();
-        test41<S, SV>();
-        test42<S, SV>();
-        test43<S, SV>();
-        test44<S, SV>();
-        test45<S, SV>();
-        test46<S, SV>();
-        test47<S, SV>();
-        test48<S, SV>();
-        test49<S, SV>();
-        test50<S, SV>();
-        test51<S, SV>();
-        test52<S, SV>();
-        test53<S, SV>();
-        test54<S, SV>();
-        test55<S, SV>();
+    typedef std::string S;
+    typedef std::string_view SV;
+    test0<S, SV>();
+    test1<S, SV>();
+    test2<S, SV>();
+    test3<S, SV>();
+    test4<S, SV>();
+    test5<S, SV>();
+    test6<S, SV>();
+    test7<S, SV>();
+    test8<S, SV>();
+    test9<S, SV>();
+    test10<S, SV>();
+    test11<S, SV>();
+    test12<S, SV>();
+    test13<S, SV>();
+    test14<S, SV>();
+    test15<S, SV>();
+    test16<S, SV>();
+    test17<S, SV>();
+    test18<S, SV>();
+    test19<S, SV>();
+    test20<S, SV>();
+    test21<S, SV>();
+    test22<S, SV>();
+    test23<S, SV>();
+    test24<S, SV>();
+    test25<S, SV>();
+    test26<S, SV>();
+    test27<S, SV>();
+    test28<S, SV>();
+    test29<S, SV>();
+    test30<S, SV>();
+    test31<S, SV>();
+    test32<S, SV>();
+    test33<S, SV>();
+    test34<S, SV>();
+    test35<S, SV>();
+    test36<S, SV>();
+    test37<S, SV>();
+    test38<S, SV>();
+    test39<S, SV>();
+    test40<S, SV>();
+    test41<S, SV>();
+    test42<S, SV>();
+    test43<S, SV>();
+    test44<S, SV>();
+    test45<S, SV>();
+    test46<S, SV>();
+    test47<S, SV>();
+    test48<S, SV>();
+    test49<S, SV>();
+    test50<S, SV>();
+    test51<S, SV>();
+    test52<S, SV>();
+    test53<S, SV>();
+    test54<S, SV>();
+    test55<S, SV>();
     }
 #if TEST_STD_VER >= 11
     {
-        typedef std::basic_string<char, std::char_traits<char>,
-                                  min_allocator<char>>
-            S;
-        typedef std::basic_string_view<char, std::char_traits<char>> SV;
-        test0<S, SV>();
-        test1<S, SV>();
-        test2<S, SV>();
-        test3<S, SV>();
-        test4<S, SV>();
-        test5<S, SV>();
-        test6<S, SV>();
-        test7<S, SV>();
-        test8<S, SV>();
-        test9<S, SV>();
-        test10<S, SV>();
-        test11<S, SV>();
-        test12<S, SV>();
-        test13<S, SV>();
-        test14<S, SV>();
-        test15<S, SV>();
-        test16<S, SV>();
-        test17<S, SV>();
-        test18<S, SV>();
-        test19<S, SV>();
-        test20<S, SV>();
-        test21<S, SV>();
-        test22<S, SV>();
-        test23<S, SV>();
-        test24<S, SV>();
-        test25<S, SV>();
-        test26<S, SV>();
-        test27<S, SV>();
-        test28<S, SV>();
-        test29<S, SV>();
-        test30<S, SV>();
-        test31<S, SV>();
-        test32<S, SV>();
-        test33<S, SV>();
-        test34<S, SV>();
-        test35<S, SV>();
-        test36<S, SV>();
-        test37<S, SV>();
-        test38<S, SV>();
-        test39<S, SV>();
-        test40<S, SV>();
-        test41<S, SV>();
-        test42<S, SV>();
-        test43<S, SV>();
-        test44<S, SV>();
-        test45<S, SV>();
-        test46<S, SV>();
-        test47<S, SV>();
-        test48<S, SV>();
-        test49<S, SV>();
-        test50<S, SV>();
-        test51<S, SV>();
-        test52<S, SV>();
-        test53<S, SV>();
-        test54<S, SV>();
-        test55<S, SV>();
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    typedef std::basic_string_view<char, std::char_traits<char>> SV;
+    test0<S, SV>();
+    test1<S, SV>();
+    test2<S, SV>();
+    test3<S, SV>();
+    test4<S, SV>();
+    test5<S, SV>();
+    test6<S, SV>();
+    test7<S, SV>();
+    test8<S, SV>();
+    test9<S, SV>();
+    test10<S, SV>();
+    test11<S, SV>();
+    test12<S, SV>();
+    test13<S, SV>();
+    test14<S, SV>();
+    test15<S, SV>();
+    test16<S, SV>();
+    test17<S, SV>();
+    test18<S, SV>();
+    test19<S, SV>();
+    test20<S, SV>();
+    test21<S, SV>();
+    test22<S, SV>();
+    test23<S, SV>();
+    test24<S, SV>();
+    test25<S, SV>();
+    test26<S, SV>();
+    test27<S, SV>();
+    test28<S, SV>();
+    test29<S, SV>();
+    test30<S, SV>();
+    test31<S, SV>();
+    test32<S, SV>();
+    test33<S, SV>();
+    test34<S, SV>();
+    test35<S, SV>();
+    test36<S, SV>();
+    test37<S, SV>();
+    test38<S, SV>();
+    test39<S, SV>();
+    test40<S, SV>();
+    test41<S, SV>();
+    test42<S, SV>();
+    test43<S, SV>();
+    test44<S, SV>();
+    test45<S, SV>();
+    test46<S, SV>();
+    test47<S, SV>();
+    test48<S, SV>();
+    test49<S, SV>();
+    test50<S, SV>();
+    test51<S, SV>();
+    test52<S, SV>();
+    test53<S, SV>();
+    test54<S, SV>();
+    test55<S, SV>();
     }
 #endif
     {
-        typedef std::string S;
-        typedef std::string_view SV;
-        S s = "MNOP";
-        SV sv = "CDEF";
-        char arr[] = "MNOP";
+    typedef std::string S;
+    typedef std::string_view SV;
+    S s = "MNOP";
+    SV sv = "CDEF";
+    char arr[] = "MNOP";
 
-        //  calls compare(pos, n1, const char *, 0)
-        assert(s.compare(0, 4, "QRST", 0) > 0);
+//  calls compare(pos, n1, const char *, 0)
+    assert(s.compare(0, 4, "QRST", 0) > 0);
 
-        //  calls compare(pos, n1, string("QRST"), 0, npos)
-        assert(s.compare(0, 4, "QRST", 0, std::string::npos) < 0);
+//  calls compare(pos, n1, string("QRST"), 0, npos)
+    assert(s.compare(0, 4, "QRST", 0, std::string::npos) < 0);
 
-        //  calls compare(pos, n1, T, 0, npos)
-        assert(s.compare(0, 4, sv, 0) > 0);
+//  calls compare(pos, n1, T, 0, npos)
+    assert(s.compare(0, 4, sv, 0) > 0);
 
-        //  calls compare(pos, n1, T, 0, npos)
-        assert(s.compare(0, 4, sv, 0, std::string::npos) > 0);
+//  calls compare(pos, n1, T, 0, npos)
+    assert(s.compare(0, 4, sv, 0, std::string::npos) > 0);
 
-        // calls compare(pos, n1, const char *, 0)
-        assert(s.compare(0, 4, arr, 0) > 0);
+// calls compare(pos, n1, const char *, 0)
+    assert(s.compare(0, 4, arr, 0) > 0);
 
-        //  calls compare(size, size, string(arr), 0, npos)
-        assert(s.compare(0, 4, arr, 0, std::string::npos) == 0);
+//  calls compare(size, size, string(arr), 0, npos)
+    assert(s.compare(0, 4, arr, 0, std::string::npos) == 0);
     }
 }

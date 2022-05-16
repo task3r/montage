@@ -1,16 +1,15 @@
 #pragma once
-#include <pthread.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <uuid/uuid.h>
-
+#include <stdint.h>
+#include <string.h>
+#include <pthread.h>
+#include <stdlib.h>
 #include <list>
-#include <map>
 #include <string>
+#include <map>
 #include <type_traits>
 
-#define TOTAL_ALLOC_BUCKETS 14
+#define TOTAL_ALLOC_BUCKETS     14
 
 class FreeList;
 class GlobalAlloc;
@@ -25,21 +24,21 @@ typedef struct {
     // 64-byte aligned offset of previous chunk
     uint16_t prev_offset;
     uint16_t free_list_id;
-    unsigned int last : 1;  // last chunk in block
-    unsigned int used : 1;  // allocated?
+    unsigned int last:1; // last chunk in block
+    unsigned int used:1; // allocated?
     // future support for chunks larger than block
-    unsigned int jumbo : 1;
-    unsigned int size : 29;  // chunk size in bytes
+    unsigned int jumbo:1;
+    unsigned int size:29; // chunk size in bytes
 } chunk_header_t;
 
 typedef struct free_header_t {
     // <chunk_header_t>
     uint16_t prev_offset;
     uint16_t free_list_id;
-    unsigned int last : 1;
-    unsigned int used : 1;
-    unsigned int jumbo : 1;
-    unsigned int size : 29;
+    unsigned int last:1;
+    unsigned int used:1;
+    unsigned int jumbo:1;
+    unsigned int size:29;
     // </chunk_header_t>
     struct free_header_t *prev;
     struct free_header_t *next;
@@ -52,7 +51,7 @@ typedef struct free_header_t {
  * * Maintains the list of allocated pages for snapshots.
  */
 class GlobalAlloc {
-   public:
+public:
     GlobalAlloc(const char *snapshot = NULL, const char *bitmap = NULL);
     ~GlobalAlloc();
     static GlobalAlloc *getInstance() {
@@ -83,11 +82,11 @@ class GlobalAlloc {
     ObjectAlloc *findAllocator(uuid_t);
     void restoreAllocator(ObjectAlloc *);
 
-   protected:
+protected:
     bool newBlock(memory_region_t *, uintptr_t, size_t);
     void tryMergingRegions(free_header_t *);
 
-   private:
+private:
     static GlobalAlloc *instance;
 
     uint64_t *alloc_bitmap = NULL;
@@ -99,16 +98,16 @@ class GlobalAlloc {
     std::map<std::string, ObjectAlloc *> allocators;
     ObjectAlloc *allocatorsMemory = NULL;
 
-   public:
-    static const size_t MaxAllocatorMemorySize = (size_t)2 << 20;  // 2 MB
-    static const size_t MaxMemorySize = (size_t)1 << 40;           // 1 TB
-    static const size_t BitmapGranularity = (size_t)1 << 12;       // 4 KB
+public:
+    static const size_t MaxAllocatorMemorySize = (size_t)2 << 20; // 2 MB
+    static const size_t MaxMemorySize = (size_t)1 << 40; // 1 TB
+    static const size_t BitmapGranularity = (size_t)1 << 12; // 4 KB
     static const uintptr_t BaseAddress = 0x10000000000;
-    static const size_t MinPoolSize = (size_t)256 << 20;  // 256 MB
+    static const size_t MinPoolSize = (size_t)256 << 20; // 256 MB
     static_assert(((size_t)1 << 12) == BitmapGranularity,
-                  "Fix bitmap set and unset methods!");
+            "Fix bitmap set and unset methods!");
     static_assert(sizeof(long long) == sizeof(uint64_t),
-                  "Fix save and load bitmap methods!");
+            "Fix save and load bitmap methods!");
 };
 
 /*
@@ -123,7 +122,7 @@ class GlobalAlloc {
  * * We assume a single-socket processor (no NUMA and thus no affinity).
  */
 class ObjectAlloc {
-   public:
+public:
     ObjectAlloc(const uuid_t uuid, const char *snapshot = NULL);
     ~ObjectAlloc();
     void *alloc(const size_t size);
@@ -138,17 +137,17 @@ class ObjectAlloc {
 
     void releaseFreeBlocks();
 
-   private:
+private:
     uuid_t my_id;
     size_t total_cores;
     FreeList **free_lists = NULL;
 
     inline off_t getOffset(const pthread_t thread_id) const;
 
-   public:
-    static const size_t Alignment = 0x40;  // Cache-line width
+public:
+    static const size_t Alignment = 0x40; // Cache-line width
     static_assert(sizeof(uuid_t) == 2 * sizeof(uint64_t),
-                  "Fix Object Allocator snapshot methods!");
+            "Fix Object Allocator snapshot methods!");
     friend class GlobalAlloc;
 };
 
@@ -163,7 +162,7 @@ class ObjectAlloc {
  * * Changes to the bitmap are postponed till after snapshot completion.
  */
 class FreeList {
-   public:
+public:
     FreeList(uint16_t);
     ~FreeList();
 
@@ -185,11 +184,11 @@ class FreeList {
 
     void releaseFreeBlocks();
 
-   private:
-    uintptr_t buckets[TOTAL_ALLOC_BUCKETS];  // 64, 128, ...
-    uint64_t total_allocated;                // bytes
-    uint64_t global_allocs;  // number of requests for global alloc
-    uint64_t chain_lookups;  // number of free-list lookups
+private:
+    uintptr_t buckets[TOTAL_ALLOC_BUCKETS]; // 64, 128, ...
+    uint64_t total_allocated; // bytes
+    uint64_t global_allocs; // number of requests for global alloc
+    uint64_t chain_lookups; // number of free-list lookups
     uint64_t xlock;
     uint16_t my_id;
 #ifndef __OPTIMIZE__
@@ -213,11 +212,9 @@ class FreeList {
     static_assert(TOTAL_ALLOC_BUCKETS == 14, "Fix bucket caps!");
     static const uint64_t BucketCaps[14];
 
-   public:
-    static const size_t BlockSize = (size_t)1 << 21;  // 2 MB
+public:
+    static const size_t BlockSize = (size_t)1 << 21; // 2 MB
     static_assert(BlockSize - 1 == 0x1FFFFF, "Fix free-list block chain!");
-    static_assert(sizeof(long long) == sizeof(uintptr_t),
-                  "Fix save() and load()!");
-    static_assert(sizeof(long long) == sizeof(uintptr_t),
-                  "Fix save() and load()!");
+    static_assert(sizeof(long long) == sizeof(uintptr_t), "Fix save() and load()!");
+    static_assert(sizeof(long long) == sizeof(uintptr_t), "Fix save() and load()!");
 };

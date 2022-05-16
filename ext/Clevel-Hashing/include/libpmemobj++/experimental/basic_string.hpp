@@ -39,6 +39,9 @@
 #define LIBPMEMOBJ_CPP_BASIC_STRING_HPP
 
 #include <algorithm>
+#include <limits>
+#include <string>
+
 #include <libpmemobj++/detail/common.hpp>
 #include <libpmemobj++/detail/iterator_traits.hpp>
 #include <libpmemobj++/detail/life.hpp>
@@ -49,14 +52,15 @@
 #include <libpmemobj++/persistent_ptr.hpp>
 #include <libpmemobj++/pext.hpp>
 #include <libpmemobj++/transaction.hpp>
-#include <limits>
-#include <string>
 
-namespace pmem {
+namespace pmem
+{
 
-namespace obj {
+namespace obj
+{
 
-namespace experimental {
+namespace experimental
+{
 
 /**
  * pmem::obj::experimental::string - EXPERIMENTAL persistent container
@@ -66,238 +70,244 @@ namespace experimental {
  */
 template <typename CharT, typename Traits = std::char_traits<CharT>>
 class basic_string {
-   public:
-    /* Member types */
-    using traits_type = Traits;
-    using value_type = CharT;
-    using size_type = std::size_t;
-    using difference_type = std::ptrdiff_t;
-    using reference = value_type &;
-    using const_reference = const value_type &;
-    using pointer = value_type *;
-    using const_pointer = const value_type *;
-    using iterator = basic_contiguous_iterator<CharT>;
-    using const_iterator = const_pointer;
-    using reverse_iterator = std::reverse_iterator<iterator>;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+public:
+	/* Member types */
+	using traits_type = Traits;
+	using value_type = CharT;
+	using size_type = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using reference = value_type &;
+	using const_reference = const value_type &;
+	using pointer = value_type *;
+	using const_pointer = const value_type *;
+	using iterator = basic_contiguous_iterator<CharT>;
+	using const_iterator = const_pointer;
+	using reverse_iterator = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    /* Number of characters which can be stored using sso */
-    static constexpr size_type sso_capacity = (32 - 8) / sizeof(CharT) - 1;
+	/* Number of characters which can be stored using sso */
+	static constexpr size_type sso_capacity = (32 - 8) / sizeof(CharT) - 1;
 
-    /* Constructors */
-    basic_string();
-    basic_string(size_type count, CharT ch);
-    basic_string(const basic_string &other, size_type pos,
-                 size_type count = npos);
-    basic_string(const std::basic_string<CharT> &other, size_type pos,
-                 size_type count = npos);
-    basic_string(const CharT *s, size_type count);
-    basic_string(const CharT *s);
-    template <typename InputIt,
-              typename Enable = typename std::enable_if<
-                  pmem::detail::is_input_iterator<InputIt>::value>::type>
-    basic_string(InputIt first, InputIt last);
-    basic_string(const basic_string &other);
-    basic_string(const std::basic_string<CharT> &other);
-    basic_string(basic_string &&other);
-    basic_string(std::initializer_list<CharT> ilist);
+	/* Constructors */
+	basic_string();
+	basic_string(size_type count, CharT ch);
+	basic_string(const basic_string &other, size_type pos,
+		     size_type count = npos);
+	basic_string(const std::basic_string<CharT> &other, size_type pos,
+		     size_type count = npos);
+	basic_string(const CharT *s, size_type count);
+	basic_string(const CharT *s);
+	template <
+		typename InputIt,
+		typename Enable = typename std::enable_if<
+			pmem::detail::is_input_iterator<InputIt>::value>::type>
+	basic_string(InputIt first, InputIt last);
+	basic_string(const basic_string &other);
+	basic_string(const std::basic_string<CharT> &other);
+	basic_string(basic_string &&other);
+	basic_string(std::initializer_list<CharT> ilist);
 
-    /* Destructor */
-    ~basic_string();
+	/* Destructor */
+	~basic_string();
 
-    /* Assignment operators */
-    basic_string &operator=(const basic_string &other);
-    basic_string &operator=(const std::basic_string<CharT> &other);
-    basic_string &operator=(basic_string &&other);
-    basic_string &operator=(const CharT *s);
-    basic_string &operator=(CharT ch);
-    basic_string &operator=(std::initializer_list<CharT> ilist);
+	/* Assignment operators */
+	basic_string &operator=(const basic_string &other);
+	basic_string &operator=(const std::basic_string<CharT> &other);
+	basic_string &operator=(basic_string &&other);
+	basic_string &operator=(const CharT *s);
+	basic_string &operator=(CharT ch);
+	basic_string &operator=(std::initializer_list<CharT> ilist);
 
-    /* Assignment methods */
-    basic_string &assign(size_type count, CharT ch);
-    basic_string &assign(const basic_string &other);
-    basic_string &assign(const std::basic_string<CharT> &other);
-    basic_string &assign(const basic_string &other, size_type pos,
-                         size_type count = npos);
-    basic_string &assign(const std::basic_string<CharT> &other, size_type pos,
-                         size_type count = npos);
-    basic_string &assign(const CharT *s, size_type count);
-    basic_string &assign(const CharT *s);
-    template <typename InputIt,
-              typename Enable =
-                  typename pmem::detail::is_input_iterator<InputIt>::type>
-    basic_string &assign(InputIt first, InputIt last);
-    basic_string &assign(basic_string &&other);
-    basic_string &assign(std::initializer_list<CharT> ilist);
+	/* Assignment methods */
+	basic_string &assign(size_type count, CharT ch);
+	basic_string &assign(const basic_string &other);
+	basic_string &assign(const std::basic_string<CharT> &other);
+	basic_string &assign(const basic_string &other, size_type pos,
+			     size_type count = npos);
+	basic_string &assign(const std::basic_string<CharT> &other,
+			     size_type pos, size_type count = npos);
+	basic_string &assign(const CharT *s, size_type count);
+	basic_string &assign(const CharT *s);
+	template <typename InputIt,
+		  typename Enable = typename pmem::detail::is_input_iterator<
+			  InputIt>::type>
+	basic_string &assign(InputIt first, InputIt last);
+	basic_string &assign(basic_string &&other);
+	basic_string &assign(std::initializer_list<CharT> ilist);
 
-    /* Element access */
-    reference at(size_type n);
-    const_reference at(size_type n) const;
-    const_reference const_at(size_type n) const;
-    reference operator[](size_type n);
-    const_reference operator[](size_type n) const;
-    CharT &front();
-    const CharT &front() const;
-    const CharT &cfront() const;
-    CharT &back();
-    const CharT &back() const;
-    const CharT &cback() const;
-    CharT *data();
-    const CharT *data() const noexcept;
-    const CharT *cdata() const noexcept;
-    const CharT *c_str() const noexcept;
+	/* Element access */
+	reference at(size_type n);
+	const_reference at(size_type n) const;
+	const_reference const_at(size_type n) const;
+	reference operator[](size_type n);
+	const_reference operator[](size_type n) const;
+	CharT &front();
+	const CharT &front() const;
+	const CharT &cfront() const;
+	CharT &back();
+	const CharT &back() const;
+	const CharT &cback() const;
+	CharT *data();
+	const CharT *data() const noexcept;
+	const CharT *cdata() const noexcept;
+	const CharT *c_str() const noexcept;
 
-    /* Iterators */
-    iterator begin();
-    const_iterator begin() const noexcept;
-    const_iterator cbegin() const noexcept;
-    iterator end();
-    const_iterator end() const noexcept;
-    const_iterator cend() const noexcept;
-    reverse_iterator rbegin();
-    const_reverse_iterator rbegin() const noexcept;
-    const_reverse_iterator crbegin() const noexcept;
-    reverse_iterator rend();
-    const_reverse_iterator rend() const noexcept;
-    const_reverse_iterator crend() const noexcept;
+	/* Iterators */
+	iterator begin();
+	const_iterator begin() const noexcept;
+	const_iterator cbegin() const noexcept;
+	iterator end();
+	const_iterator end() const noexcept;
+	const_iterator cend() const noexcept;
+	reverse_iterator rbegin();
+	const_reverse_iterator rbegin() const noexcept;
+	const_reverse_iterator crbegin() const noexcept;
+	reverse_iterator rend();
+	const_reverse_iterator rend() const noexcept;
+	const_reverse_iterator crend() const noexcept;
 
-    /* Capacity */
-    bool empty() const noexcept;
-    size_type size() const noexcept;
-    size_type length() const noexcept;
-    size_type max_size() const noexcept;
-    size_type capacity() const noexcept;
-    void resize(size_type count, CharT ch);
-    void resize(size_type n);
-    void reserve(size_type new_cap = 0);
-    void shrink_to_fit();
-    void clear();
+	/* Capacity */
+	bool empty() const noexcept;
+	size_type size() const noexcept;
+	size_type length() const noexcept;
+	size_type max_size() const noexcept;
+	size_type capacity() const noexcept;
+	void resize(size_type count, CharT ch);
+	void resize(size_type n);
+	void reserve(size_type new_cap = 0);
+	void shrink_to_fit();
+	void clear();
 
-    /* Modifiers */
-    basic_string &erase(size_type index = 0, size_type count = npos);
-    iterator erase(const_iterator pos);
-    iterator erase(const_iterator first, const_iterator last);
-    /* We add following overloads to resolve erase(0) ambiguity */
-    template <typename T, typename Enable = typename std::enable_if<
-                              std::is_convertible<T, size_type>::value>::type>
-    basic_string &erase(T param);
-    template <typename T, typename Enable = typename std::enable_if<
-                              !std::is_convertible<T, size_type>::value>::type>
-    iterator erase(T param);
+	/* Modifiers */
+	basic_string &erase(size_type index = 0, size_type count = npos);
+	iterator erase(const_iterator pos);
+	iterator erase(const_iterator first, const_iterator last);
+	/* We add following overloads to resolve erase(0) ambiguity */
+	template <typename T,
+		  typename Enable = typename std::enable_if<
+			  std::is_convertible<T, size_type>::value>::type>
+	basic_string &erase(T param);
+	template <typename T,
+		  typename Enable = typename std::enable_if<
+			  !std::is_convertible<T, size_type>::value>::type>
+	iterator erase(T param);
 
-    basic_string &append(size_type count, CharT ch);
-    basic_string &append(const basic_string &str);
-    basic_string &append(const basic_string &str, size_type pos,
-                         size_type count = npos);
-    basic_string &append(const CharT *s, size_type count);
-    basic_string &append(const CharT *s);
-    template <typename InputIt,
-              typename Enable =
-                  typename pmem::detail::is_input_iterator<InputIt>::type>
-    basic_string &append(InputIt first, InputIt last);
-    basic_string &append(std::initializer_list<CharT> ilist);
+	basic_string &append(size_type count, CharT ch);
+	basic_string &append(const basic_string &str);
+	basic_string &append(const basic_string &str, size_type pos,
+			     size_type count = npos);
+	basic_string &append(const CharT *s, size_type count);
+	basic_string &append(const CharT *s);
+	template <typename InputIt,
+		  typename Enable = typename pmem::detail::is_input_iterator<
+			  InputIt>::type>
+	basic_string &append(InputIt first, InputIt last);
+	basic_string &append(std::initializer_list<CharT> ilist);
 
-    int compare(const basic_string &other) const;
-    int compare(const std::basic_string<CharT> &other) const;
-    int compare(size_type pos, size_type count,
-                const basic_string &other) const;
-    int compare(size_type pos, size_type count,
-                const std::basic_string<CharT> &other) const;
-    int compare(size_type pos1, size_type count1, const basic_string &other,
-                size_type pos2, size_type count2 = npos) const;
-    int compare(size_type pos1, size_type count1,
-                const std::basic_string<CharT> &other, size_type pos2,
-                size_type count2 = npos) const;
-    int compare(const CharT *s) const;
-    int compare(size_type pos, size_type count, const CharT *s) const;
-    int compare(size_type pos, size_type count1, const CharT *s,
-                size_type count2) const;
+	int compare(const basic_string &other) const;
+	int compare(const std::basic_string<CharT> &other) const;
+	int compare(size_type pos, size_type count,
+		    const basic_string &other) const;
+	int compare(size_type pos, size_type count,
+		    const std::basic_string<CharT> &other) const;
+	int compare(size_type pos1, size_type count1, const basic_string &other,
+		    size_type pos2, size_type count2 = npos) const;
+	int compare(size_type pos1, size_type count1,
+		    const std::basic_string<CharT> &other, size_type pos2,
+		    size_type count2 = npos) const;
+	int compare(const CharT *s) const;
+	int compare(size_type pos, size_type count, const CharT *s) const;
+	int compare(size_type pos, size_type count1, const CharT *s,
+		    size_type count2) const;
 
-    /* Special value. The exact meaning depends on the context. */
-    static const size_type npos = static_cast<size_type>(-1);
+	/* Special value. The exact meaning depends on the context. */
+	static const size_type npos = static_cast<size_type>(-1);
 
-   private:
-    using sso_type = array<value_type, sso_capacity + 1>;
-    using non_sso_type = vector<value_type>;
+private:
+	using sso_type = array<value_type, sso_capacity + 1>;
+	using non_sso_type = vector<value_type>;
 
-    /**
-     * This union holds sso data inside of an array and non sso data inside
-     * a vector. If vector is used, it must be manually created and
-     * destroyed.
-     *
-     * _size is used to store length in case when SSO is used. It is the
-     * same type as first member of data field. This means that it can be
-     * safely accessed through both sso (_size variable) and non_sso (as
-     * size in a vector) no matter which one is used.
-     *
-     * C++11 §9.2/18 says:
-     * If a standard-layout union contains two or more standard-layout
-     * structs that share a common initial sequence, and if the
-     * standard-layout union object currently contains one of these
-     * standard-layout structs, it is permitted to inspect the common
-     * initial part of any of them.
-     */
-    union {
-        struct {
-            /*
-             * EXACTLY the same type as first member in vector
-             * Holds size for sso string, bit specified by _sso_mask
-             * indicates if sso is used.
-             */
-            p<size_type> _size;
+	/**
+	 * This union holds sso data inside of an array and non sso data inside
+	 * a vector. If vector is used, it must be manually created and
+	 * destroyed.
+	 *
+	 * _size is used to store length in case when SSO is used. It is the
+	 * same type as first member of data field. This means that it can be
+	 * safely accessed through both sso (_size variable) and non_sso (as
+	 * size in a vector) no matter which one is used.
+	 *
+	 * C++11 §9.2/18 says:
+	 * If a standard-layout union contains two or more standard-layout
+	 * structs that share a common initial sequence, and if the
+	 * standard-layout union object currently contains one of these
+	 * standard-layout structs, it is permitted to inspect the common
+	 * initial part of any of them.
+	 */
+	union {
+		struct {
+			/*
+			 * EXACTLY the same type as first member in vector
+			 * Holds size for sso string, bit specified by _sso_mask
+			 * indicates if sso is used.
+			 */
+			p<size_type> _size;
 
-            sso_type data;
-        } sso;
+			sso_type data;
+		} sso;
 
-        struct {
-            non_sso_type data;
-        } non_sso;
-    };
+		struct {
+			non_sso_type data;
+		} non_sso;
+	};
 
-    /*
-     * MSB is used because vector is known not to use entire range of
-     * size_type.
-     */
-    static constexpr size_type _sso_mask =
-        1ULL << (std::numeric_limits<size_type>::digits - 1);
+	/*
+	 * MSB is used because vector is known not to use entire range of
+	 * size_type.
+	 */
+	static constexpr size_type _sso_mask = 1ULL
+		<< (std::numeric_limits<size_type>::digits - 1);
 
-    /* helper functions */
-    bool is_sso_used() const;
-    void destroy_data();
-    template <typename InputIt,
-              typename Enable = typename std::enable_if<
-                  pmem::detail::is_input_iterator<InputIt>::value>::type>
-    size_type get_size(InputIt first, InputIt last) const;
-    size_type get_size(size_type count, value_type ch) const;
-    size_type get_size(const basic_string &other) const;
-    template <typename... Args>
-    pointer replace(Args &&... args);
-    template <typename... Args>
-    pointer initialize(Args &&... args);
-    void allocate(size_type capacity);
-    template <typename InputIt,
-              typename Enable = typename std::enable_if<
-                  pmem::detail::is_input_iterator<InputIt>::value>::type>
-    pointer assign_sso_data(InputIt first, InputIt last);
-    pointer assign_sso_data(size_type count, value_type ch);
-    pointer assign_sso_data(basic_string &&other);
-    template <typename InputIt,
-              typename Enable = typename std::enable_if<
-                  pmem::detail::is_input_iterator<InputIt>::value>::type>
-    pointer assign_large_data(InputIt first, InputIt last);
-    pointer assign_large_data(size_type count, value_type ch);
-    pointer assign_large_data(basic_string &&other);
-    pool_base get_pool() const;
-    void check_pmem() const;
-    void check_tx_stage_work() const;
-    void check_pmem_tx() const;
-    void snapshot_sso() const;
-    size_type get_sso_size() const;
-    void enable_sso();
-    void disable_sso();
-    void set_sso_size(size_type new_size);
-    void sso_to_large(size_t new_capacity);
-    void large_to_sso();
+	/* helper functions */
+	bool is_sso_used() const;
+	void destroy_data();
+	template <
+		typename InputIt,
+		typename Enable = typename std::enable_if<
+			pmem::detail::is_input_iterator<InputIt>::value>::type>
+	size_type get_size(InputIt first, InputIt last) const;
+	size_type get_size(size_type count, value_type ch) const;
+	size_type get_size(const basic_string &other) const;
+	template <typename... Args>
+	pointer replace(Args &&... args);
+	template <typename... Args>
+	pointer initialize(Args &&... args);
+	void allocate(size_type capacity);
+	template <
+		typename InputIt,
+		typename Enable = typename std::enable_if<
+			pmem::detail::is_input_iterator<InputIt>::value>::type>
+	pointer assign_sso_data(InputIt first, InputIt last);
+	pointer assign_sso_data(size_type count, value_type ch);
+	pointer assign_sso_data(basic_string &&other);
+	template <
+		typename InputIt,
+		typename Enable = typename std::enable_if<
+			pmem::detail::is_input_iterator<InputIt>::value>::type>
+	pointer assign_large_data(InputIt first, InputIt last);
+	pointer assign_large_data(size_type count, value_type ch);
+	pointer assign_large_data(basic_string &&other);
+	pool_base get_pool() const;
+	void check_pmem() const;
+	void check_tx_stage_work() const;
+	void check_pmem_tx() const;
+	void snapshot_sso() const;
+	size_type get_sso_size() const;
+	void enable_sso();
+	void disable_sso();
+	void set_sso_size(size_type new_size);
+	void sso_to_large(size_t new_capacity);
+	void large_to_sso();
 };
 
 /**
@@ -310,12 +320,13 @@ class basic_string {
  * transaction.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits>::basic_string() {
-    check_pmem_tx();
-    sso._size = 0;
+basic_string<CharT, Traits>::basic_string()
+{
+	check_pmem_tx();
+	sso._size = 0;
 
-    allocate(0);
-    initialize(0U, value_type('\0'));
+	allocate(0);
+	initialize(0U, value_type('\0'));
 }
 
 /**
@@ -333,12 +344,13 @@ basic_string<CharT, Traits>::basic_string() {
  * transaction.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits>::basic_string(size_type count, CharT ch) {
-    check_pmem_tx();
-    sso._size = 0;
+basic_string<CharT, Traits>::basic_string(size_type count, CharT ch)
+{
+	check_pmem_tx();
+	sso._size = 0;
 
-    allocate(count);
-    initialize(count, ch);
+	allocate(count);
+	initialize(count, ch);
 }
 
 /**
@@ -360,19 +372,22 @@ basic_string<CharT, Traits>::basic_string(size_type count, CharT ch) {
  */
 template <typename CharT, typename Traits>
 basic_string<CharT, Traits>::basic_string(const basic_string &other,
-                                          size_type pos, size_type count) {
-    check_pmem_tx();
-    sso._size = 0;
+					  size_type pos, size_type count)
+{
+	check_pmem_tx();
+	sso._size = 0;
 
-    if (pos > other.size()) throw std::out_of_range("Index out of range.");
+	if (pos > other.size())
+		throw std::out_of_range("Index out of range.");
 
-    if (count == npos || pos + count > other.size()) count = other.size() - pos;
+	if (count == npos || pos + count > other.size())
+		count = other.size() - pos;
 
-    auto first = static_cast<difference_type>(pos);
-    auto last = first + static_cast<difference_type>(count);
+	auto first = static_cast<difference_type>(pos);
+	auto last = first + static_cast<difference_type>(count);
 
-    allocate(count);
-    initialize(other.cbegin() + first, other.cbegin() + last);
+	allocate(count);
+	initialize(other.cbegin() + first, other.cbegin() + last);
 }
 
 /**
@@ -395,19 +410,22 @@ basic_string<CharT, Traits>::basic_string(const basic_string &other,
  */
 template <typename CharT, typename Traits>
 basic_string<CharT, Traits>::basic_string(const std::basic_string<CharT> &other,
-                                          size_type pos, size_type count) {
-    check_pmem_tx();
-    sso._size = 0;
+					  size_type pos, size_type count)
+{
+	check_pmem_tx();
+	sso._size = 0;
 
-    if (pos > other.size()) throw std::out_of_range("Index out of range.");
+	if (pos > other.size())
+		throw std::out_of_range("Index out of range.");
 
-    if (count == npos || pos + count > other.size()) count = other.size() - pos;
+	if (count == npos || pos + count > other.size())
+		count = other.size() - pos;
 
-    auto first = static_cast<difference_type>(pos);
-    auto last = first + static_cast<difference_type>(count);
+	auto first = static_cast<difference_type>(pos);
+	auto last = first + static_cast<difference_type>(count);
 
-    allocate(count);
-    initialize(other.cbegin() + first, other.cbegin() + last);
+	allocate(count);
+	initialize(other.cbegin() + first, other.cbegin() + last);
 }
 
 /**
@@ -426,12 +444,13 @@ basic_string<CharT, Traits>::basic_string(const std::basic_string<CharT> &other,
  * transaction.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits>::basic_string(const CharT *s, size_type count) {
-    check_pmem_tx();
-    sso._size = 0;
+basic_string<CharT, Traits>::basic_string(const CharT *s, size_type count)
+{
+	check_pmem_tx();
+	sso._size = 0;
 
-    allocate(count);
-    initialize(s, s + count);
+	allocate(count);
+	initialize(s, s + count);
 }
 
 /**
@@ -448,14 +467,15 @@ basic_string<CharT, Traits>::basic_string(const CharT *s, size_type count) {
  * transaction.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits>::basic_string(const CharT *s) {
-    check_pmem_tx();
-    sso._size = 0;
+basic_string<CharT, Traits>::basic_string(const CharT *s)
+{
+	check_pmem_tx();
+	sso._size = 0;
 
-    auto length = traits_type::length(s);
+	auto length = traits_type::length(s);
 
-    allocate(length);
-    initialize(s, s + length);
+	allocate(length);
+	initialize(s, s + length);
 }
 
 /**
@@ -476,15 +496,16 @@ basic_string<CharT, Traits>::basic_string(const CharT *s) {
  */
 template <typename CharT, typename Traits>
 template <typename InputIt, typename Enable>
-basic_string<CharT, Traits>::basic_string(InputIt first, InputIt last) {
-    auto len = std::distance(first, last);
-    assert(len >= 0);
+basic_string<CharT, Traits>::basic_string(InputIt first, InputIt last)
+{
+	auto len = std::distance(first, last);
+	assert(len >= 0);
 
-    check_pmem_tx();
-    sso._size = 0;
+	check_pmem_tx();
+	sso._size = 0;
 
-    allocate(static_cast<size_type>(len));
-    initialize(first, last);
+	allocate(static_cast<size_type>(len));
+	initialize(first, last);
 }
 
 /**
@@ -502,12 +523,13 @@ basic_string<CharT, Traits>::basic_string(InputIt first, InputIt last) {
  * transaction.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits>::basic_string(const basic_string &other) {
-    check_pmem_tx();
-    sso._size = 0;
+basic_string<CharT, Traits>::basic_string(const basic_string &other)
+{
+	check_pmem_tx();
+	sso._size = 0;
 
-    allocate(other.size());
-    initialize(other.cbegin(), other.cend());
+	allocate(other.size());
+	initialize(other.cbegin(), other.cend());
 }
 
 /**
@@ -527,7 +549,9 @@ basic_string<CharT, Traits>::basic_string(const basic_string &other) {
  */
 template <typename CharT, typename Traits>
 basic_string<CharT, Traits>::basic_string(const std::basic_string<CharT> &other)
-    : basic_string(other.cbegin(), other.cend()) {}
+    : basic_string(other.cbegin(), other.cend())
+{
+}
 
 /**
  * Move constructor. Construct the string with the contents of other
@@ -544,14 +568,16 @@ basic_string<CharT, Traits>::basic_string(const std::basic_string<CharT> &other)
  * transaction.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits>::basic_string(basic_string &&other) {
-    check_pmem_tx();
-    sso._size = 0;
+basic_string<CharT, Traits>::basic_string(basic_string &&other)
+{
+	check_pmem_tx();
+	sso._size = 0;
 
-    allocate(other.size());
-    initialize(std::move(other));
+	allocate(other.size());
+	initialize(std::move(other));
 
-    if (other.is_sso_used()) other.initialize(0U, value_type('\0'));
+	if (other.is_sso_used())
+		other.initialize(0U, value_type('\0'));
 }
 
 /**
@@ -569,12 +595,13 @@ basic_string<CharT, Traits>::basic_string(basic_string &&other) {
  * transaction.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits>::basic_string(std::initializer_list<CharT> ilist) {
-    check_pmem_tx();
-    sso._size = 0;
+basic_string<CharT, Traits>::basic_string(std::initializer_list<CharT> ilist)
+{
+	check_pmem_tx();
+	sso._size = 0;
 
-    allocate(ilist.size());
-    initialize(ilist.begin(), ilist.end());
+	allocate(ilist.size());
+	initialize(ilist.begin(), ilist.end());
 }
 
 /**
@@ -583,8 +610,10 @@ basic_string<CharT, Traits>::basic_string(std::initializer_list<CharT> ilist) {
  * XXX: implement free_data()
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits>::~basic_string() {
-    if (!is_sso_used()) detail::destroy<non_sso_type>(non_sso.data);
+basic_string<CharT, Traits>::~basic_string()
+{
+	if (!is_sso_used())
+		detail::destroy<non_sso_type>(non_sso.data);
 }
 
 /**
@@ -597,9 +626,10 @@ basic_string<CharT, Traits>::~basic_string() {
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
-    const basic_string &other) {
-    return assign(other);
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::operator=(const basic_string &other)
+{
+	return assign(other);
 }
 
 /**
@@ -613,9 +643,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
-    const std::basic_string<CharT> &other) {
-    return assign(other);
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::operator=(const std::basic_string<CharT> &other)
+{
+	return assign(other);
 }
 
 /**
@@ -628,9 +659,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
-    basic_string &&other) {
-    return assign(std::move(other));
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::operator=(basic_string &&other)
+{
+	return assign(std::move(other));
 }
 
 /**
@@ -642,9 +674,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
-    const CharT *s) {
-    return assign(s);
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::operator=(const CharT *s)
+{
+	return assign(s);
 }
 
 /**
@@ -656,8 +689,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(CharT ch) {
-    return assign(1, ch);
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::operator=(CharT ch)
+{
+	return assign(1, ch);
 }
 
 /**
@@ -670,9 +705,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(CharT ch) {
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
-    std::initializer_list<CharT> ilist) {
-    return assign(ilist);
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::operator=(std::initializer_list<CharT> ilist)
+{
+	return assign(ilist);
 }
 
 /**
@@ -686,13 +722,14 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::operator=(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
-    size_type count, CharT ch) {
-    auto pop = get_pool();
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(size_type count, CharT ch)
+{
+	auto pop = get_pool();
 
-    transaction::run(pop, [&] { replace(count, ch); });
+	transaction::run(pop, [&] { replace(count, ch); });
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -705,15 +742,17 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
-    const basic_string &other) {
-    if (&other == this) return *this;
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(const basic_string &other)
+{
+	if (&other == this)
+		return *this;
 
-    auto pop = get_pool();
+	auto pop = get_pool();
 
-    transaction::run(pop, [&] { replace(other.cbegin(), other.cend()); });
+	transaction::run(pop, [&] { replace(other.cbegin(), other.cend()); });
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -727,9 +766,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
-    const std::basic_string<CharT> &other) {
-    return assign(other.cbegin(), other.cend());
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(const std::basic_string<CharT> &other)
+{
+	return assign(other.cbegin(), other.cend());
 }
 
 /**
@@ -745,20 +785,25 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
-    const basic_string &other, size_type pos, size_type count) {
-    if (pos > other.size()) throw std::out_of_range("Index out of range.");
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(const basic_string &other, size_type pos,
+				    size_type count)
+{
+	if (pos > other.size())
+		throw std::out_of_range("Index out of range.");
 
-    if (count == npos || pos + count > other.size()) count = other.size() - pos;
+	if (count == npos || pos + count > other.size())
+		count = other.size() - pos;
 
-    auto pop = get_pool();
-    auto first = static_cast<difference_type>(pos);
-    auto last = first + static_cast<difference_type>(count);
+	auto pop = get_pool();
+	auto first = static_cast<difference_type>(pos);
+	auto last = first + static_cast<difference_type>(count);
 
-    transaction::run(
-        pop, [&] { replace(other.cbegin() + first, other.cbegin() + last); });
+	transaction::run(pop, [&] {
+		replace(other.cbegin() + first, other.cbegin() + last);
+	});
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -776,13 +821,17 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
-    const std::basic_string<CharT> &other, size_type pos, size_type count) {
-    if (pos > other.size()) throw std::out_of_range("Index out of range.");
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(const std::basic_string<CharT> &other,
+				    size_type pos, size_type count)
+{
+	if (pos > other.size())
+		throw std::out_of_range("Index out of range.");
 
-    if (count == npos || pos + count > other.size()) count = other.size() - pos;
+	if (count == npos || pos + count > other.size())
+		count = other.size() - pos;
 
-    return assign(other.c_str() + pos, count);
+	return assign(other.c_str() + pos, count);
 }
 
 /**
@@ -796,13 +845,14 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
-    const CharT *s, size_type count) {
-    auto pop = get_pool();
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(const CharT *s, size_type count)
+{
+	auto pop = get_pool();
 
-    transaction::run(pop, [&] { replace(s, s + count); });
+	transaction::run(pop, [&] { replace(s, s + count); });
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -814,15 +864,16 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
-    const CharT *s) {
-    auto pop = get_pool();
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(const CharT *s)
+{
+	auto pop = get_pool();
 
-    auto length = traits_type::length(s);
+	auto length = traits_type::length(s);
 
-    transaction::run(pop, [&] { replace(s, s + length); });
+	transaction::run(pop, [&] { replace(s, s + length); });
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -838,13 +889,14 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
  */
 template <typename CharT, typename Traits>
 template <typename InputIt, typename Enable>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(InputIt first,
-                                                                 InputIt last) {
-    auto pop = get_pool();
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(InputIt first, InputIt last)
+{
+	auto pop = get_pool();
 
-    transaction::run(pop, [&] { replace(first, last); });
+	transaction::run(pop, [&] { replace(first, last); });
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -857,19 +909,22 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(InputIt first,
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
-    basic_string &&other) {
-    if (&other == this) return *this;
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(basic_string &&other)
+{
+	if (&other == this)
+		return *this;
 
-    auto pop = get_pool();
+	auto pop = get_pool();
 
-    transaction::run(pop, [&] {
-        replace(std::move(other));
+	transaction::run(pop, [&] {
+		replace(std::move(other));
 
-        if (other.is_sso_used()) other.initialize(0U, value_type('\0'));
-    });
+		if (other.is_sso_used())
+			other.initialize(0U, value_type('\0'));
+	});
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -882,9 +937,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
  * underlying storage in transaction failed.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
-    std::initializer_list<CharT> ilist) {
-    return assign(ilist.begin(), ilist.end());
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::assign(std::initializer_list<CharT> ilist)
+{
+	return assign(ilist.begin(), ilist.end());
 }
 
 /**
@@ -894,9 +950,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::assign(
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::iterator
-basic_string<CharT, Traits>::begin() {
-    return is_sso_used() ? iterator(&*sso.data.begin())
-                         : iterator(&*non_sso.data.begin());
+basic_string<CharT, Traits>::begin()
+{
+	return is_sso_used() ? iterator(&*sso.data.begin())
+			     : iterator(&*non_sso.data.begin());
 }
 
 /**
@@ -906,8 +963,9 @@ basic_string<CharT, Traits>::begin() {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_iterator
-basic_string<CharT, Traits>::begin() const noexcept {
-    return cbegin();
+basic_string<CharT, Traits>::begin() const noexcept
+{
+	return cbegin();
 }
 
 /**
@@ -917,9 +975,10 @@ basic_string<CharT, Traits>::begin() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_iterator
-basic_string<CharT, Traits>::cbegin() const noexcept {
-    return is_sso_used() ? const_iterator(&*sso.data.cbegin())
-                         : const_iterator(&*non_sso.data.cbegin());
+basic_string<CharT, Traits>::cbegin() const noexcept
+{
+	return is_sso_used() ? const_iterator(&*sso.data.cbegin())
+			     : const_iterator(&*non_sso.data.cbegin());
 }
 
 /**
@@ -929,8 +988,9 @@ basic_string<CharT, Traits>::cbegin() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::iterator
-basic_string<CharT, Traits>::end() {
-    return begin() + static_cast<difference_type>(size());
+basic_string<CharT, Traits>::end()
+{
+	return begin() + static_cast<difference_type>(size());
 }
 
 /**
@@ -941,8 +1001,9 @@ basic_string<CharT, Traits>::end() {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_iterator
-basic_string<CharT, Traits>::end() const noexcept {
-    return cbegin() + static_cast<difference_type>(size());
+basic_string<CharT, Traits>::end() const noexcept
+{
+	return cbegin() + static_cast<difference_type>(size());
 }
 
 /**
@@ -953,8 +1014,9 @@ basic_string<CharT, Traits>::end() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_iterator
-basic_string<CharT, Traits>::cend() const noexcept {
-    return cbegin() + static_cast<difference_type>(size());
+basic_string<CharT, Traits>::cend() const noexcept
+{
+	return cbegin() + static_cast<difference_type>(size());
 }
 
 /**
@@ -965,8 +1027,9 @@ basic_string<CharT, Traits>::cend() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::reverse_iterator
-basic_string<CharT, Traits>::rbegin() {
-    return reverse_iterator(end());
+basic_string<CharT, Traits>::rbegin()
+{
+	return reverse_iterator(end());
 }
 
 /**
@@ -977,8 +1040,9 @@ basic_string<CharT, Traits>::rbegin() {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_reverse_iterator
-basic_string<CharT, Traits>::rbegin() const noexcept {
-    return crbegin();
+basic_string<CharT, Traits>::rbegin() const noexcept
+{
+	return crbegin();
 }
 
 /**
@@ -989,8 +1053,9 @@ basic_string<CharT, Traits>::rbegin() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_reverse_iterator
-basic_string<CharT, Traits>::crbegin() const noexcept {
-    return const_reverse_iterator(cend());
+basic_string<CharT, Traits>::crbegin() const noexcept
+{
+	return const_reverse_iterator(cend());
 }
 
 /**
@@ -1001,8 +1066,9 @@ basic_string<CharT, Traits>::crbegin() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::reverse_iterator
-basic_string<CharT, Traits>::rend() {
-    return reverse_iterator(begin());
+basic_string<CharT, Traits>::rend()
+{
+	return reverse_iterator(begin());
 }
 
 /**
@@ -1013,8 +1079,9 @@ basic_string<CharT, Traits>::rend() {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_reverse_iterator
-basic_string<CharT, Traits>::rend() const noexcept {
-    return crend();
+basic_string<CharT, Traits>::rend() const noexcept
+{
+	return crend();
 }
 
 /**
@@ -1025,8 +1092,9 @@ basic_string<CharT, Traits>::rend() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_reverse_iterator
-basic_string<CharT, Traits>::crend() const noexcept {
-    return const_reverse_iterator(cbegin());
+basic_string<CharT, Traits>::crend() const noexcept
+{
+	return const_reverse_iterator(cbegin());
 }
 
 /**
@@ -1043,11 +1111,13 @@ basic_string<CharT, Traits>::crend() const noexcept {
  * transaction failed.
  */
 template <typename CharT, typename Traits>
-typename basic_string<CharT, Traits>::reference basic_string<CharT, Traits>::at(
-    size_type n) {
-    if (n >= size()) throw std::out_of_range("string::at");
+typename basic_string<CharT, Traits>::reference
+basic_string<CharT, Traits>::at(size_type n)
+{
+	if (n >= size())
+		throw std::out_of_range("string::at");
 
-    return is_sso_used() ? sso.data[n] : non_sso.data[n];
+	return is_sso_used() ? sso.data[n] : non_sso.data[n];
 }
 
 /**
@@ -1062,8 +1132,9 @@ typename basic_string<CharT, Traits>::reference basic_string<CharT, Traits>::at(
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_reference
-basic_string<CharT, Traits>::at(size_type n) const {
-    return const_at(n);
+basic_string<CharT, Traits>::at(size_type n) const
+{
+	return const_at(n);
 }
 
 /**
@@ -1081,11 +1152,14 @@ basic_string<CharT, Traits>::at(size_type n) const {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_reference
-basic_string<CharT, Traits>::const_at(size_type n) const {
-    if (n >= size()) throw std::out_of_range("string::const_at");
+basic_string<CharT, Traits>::const_at(size_type n) const
+{
+	if (n >= size())
+		throw std::out_of_range("string::const_at");
 
-    return is_sso_used() ? static_cast<const sso_type &>(sso.data)[n]
-                         : static_cast<const non_sso_type &>(non_sso.data)[n];
+	return is_sso_used()
+		? static_cast<const sso_type &>(sso.data)[n]
+		: static_cast<const non_sso_type &>(non_sso.data)[n];
 }
 
 /**
@@ -1100,9 +1174,10 @@ basic_string<CharT, Traits>::const_at(size_type n) const {
  * transaction failed.
  */
 template <typename CharT, typename Traits>
-typename basic_string<CharT, Traits>::reference
-basic_string<CharT, Traits>::operator[](size_type n) {
-    return is_sso_used() ? sso.data[n] : non_sso.data[n];
+typename basic_string<CharT, Traits>::reference basic_string<CharT, Traits>::
+operator[](size_type n)
+{
+	return is_sso_used() ? sso.data[n] : non_sso.data[n];
 }
 
 /**
@@ -1114,8 +1189,9 @@ basic_string<CharT, Traits>::operator[](size_type n) {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::const_reference
-basic_string<CharT, Traits>::operator[](size_type n) const {
-    return is_sso_used() ? sso.data[n] : non_sso.data[n];
+	basic_string<CharT, Traits>::operator[](size_type n) const
+{
+	return is_sso_used() ? sso.data[n] : non_sso.data[n];
 }
 
 /**
@@ -1128,8 +1204,10 @@ basic_string<CharT, Traits>::operator[](size_type n) const {
  * transaction failed.
  */
 template <typename CharT, typename Traits>
-CharT &basic_string<CharT, Traits>::front() {
-    return (*this)[0];
+CharT &
+basic_string<CharT, Traits>::front()
+{
+	return (*this)[0];
 }
 
 /**
@@ -1138,8 +1216,10 @@ CharT &basic_string<CharT, Traits>::front() {
  * @return const reference to first element in string.
  */
 template <typename CharT, typename Traits>
-const CharT &basic_string<CharT, Traits>::front() const {
-    return cfront();
+const CharT &
+basic_string<CharT, Traits>::front() const
+{
+	return cfront();
 }
 
 /**
@@ -1151,8 +1231,10 @@ const CharT &basic_string<CharT, Traits>::front() const {
  * @return const reference to first element in string.
  */
 template <typename CharT, typename Traits>
-const CharT &basic_string<CharT, Traits>::cfront() const {
-    return static_cast<const basic_string &>(*this)[0];
+const CharT &
+basic_string<CharT, Traits>::cfront() const
+{
+	return static_cast<const basic_string &>(*this)[0];
 }
 
 /**
@@ -1165,8 +1247,10 @@ const CharT &basic_string<CharT, Traits>::cfront() const {
  * transaction failed.
  */
 template <typename CharT, typename Traits>
-CharT &basic_string<CharT, Traits>::back() {
-    return (*this)[size() - 1];
+CharT &
+basic_string<CharT, Traits>::back()
+{
+	return (*this)[size() - 1];
 }
 
 /**
@@ -1175,8 +1259,10 @@ CharT &basic_string<CharT, Traits>::back() {
  * @return const reference to last element in string.
  */
 template <typename CharT, typename Traits>
-const CharT &basic_string<CharT, Traits>::back() const {
-    return cback();
+const CharT &
+basic_string<CharT, Traits>::back() const
+{
+	return cback();
 }
 
 /**
@@ -1188,8 +1274,10 @@ const CharT &basic_string<CharT, Traits>::back() const {
  * @return const reference to last element in string.
  */
 template <typename CharT, typename Traits>
-const CharT &basic_string<CharT, Traits>::cback() const {
-    return static_cast<const basic_string &>(*this)[size() - 1];
+const CharT &
+basic_string<CharT, Traits>::cback() const
+{
+	return static_cast<const basic_string &>(*this)[size() - 1];
 }
 
 /**
@@ -1197,13 +1285,14 @@ const CharT &basic_string<CharT, Traits>::cback() const {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::size_type
-basic_string<CharT, Traits>::size() const noexcept {
-    if (is_sso_used())
-        return get_sso_size();
-    else if (non_sso.data.size() == 0)
-        return 0;
-    else
-        return non_sso.data.size() - 1;
+basic_string<CharT, Traits>::size() const noexcept
+{
+	if (is_sso_used())
+		return get_sso_size();
+	else if (non_sso.data.size() == 0)
+		return 0;
+	else
+		return non_sso.data.size() - 1;
 }
 
 /**
@@ -1213,9 +1302,11 @@ basic_string<CharT, Traits>::size() const noexcept {
  * transaction failed.
  */
 template <typename CharT, typename Traits>
-CharT *basic_string<CharT, Traits>::data() {
-    return is_sso_used() ? sso.data.range(0, get_sso_size() + 1).begin()
-                         : non_sso.data.data();
+CharT *
+basic_string<CharT, Traits>::data()
+{
+	return is_sso_used() ? sso.data.range(0, get_sso_size() + 1).begin()
+			     : non_sso.data.data();
 }
 
 /**
@@ -1237,36 +1328,38 @@ CharT *basic_string<CharT, Traits>::data() {
  * @throw rethrows destructor exception.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::erase(
-    size_type index, size_type count) {
-    auto sz = size();
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::erase(size_type index, size_type count)
+{
+	auto sz = size();
 
-    if (index > sz) throw std::out_of_range("Index exceeds size.");
+	if (index > sz)
+		throw std::out_of_range("Index exceeds size.");
 
-    count = (std::min)(count, sz - index);
+	count = (std::min)(count, sz - index);
 
-    auto pop = get_pool();
+	auto pop = get_pool();
 
-    auto first = begin() + static_cast<difference_type>(index);
-    auto last = first + static_cast<difference_type>(count);
+	auto first = begin() + static_cast<difference_type>(index);
+	auto last = first + static_cast<difference_type>(count);
 
-    if (is_sso_used()) {
-        transaction::run(pop, [&] {
-            auto move_len = sz - index - count;
+	if (is_sso_used()) {
+		transaction::run(pop, [&] {
+			auto move_len = sz - index - count;
 
-            auto dest = sso.data.range(index, move_len + 1).begin();
+			auto dest = sso.data.range(index, move_len + 1).begin();
 
-            traits_type::move(dest, &*last, move_len);
+			traits_type::move(dest, &*last, move_len);
 
-            auto new_size = sz - count;
-            set_sso_size(new_size);
-            sso.data[new_size] = value_type('\0');
-        });
-    } else {
-        non_sso.data.erase(first, last);
-    }
+			auto new_size = sz - count;
+			set_sso_size(new_size);
+			sso.data[new_size] = value_type('\0');
+		});
+	} else {
+		non_sso.data.erase(first, last);
+	}
 
-    return *this;
+	return *this;
 };
 
 /**
@@ -1287,8 +1380,9 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::erase(
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::iterator
-basic_string<CharT, Traits>::erase(const_iterator pos) {
-    return erase(pos, pos + 1);
+basic_string<CharT, Traits>::erase(const_iterator pos)
+{
+	return erase(pos, pos + 1);
 };
 
 /**
@@ -1311,13 +1405,15 @@ basic_string<CharT, Traits>::erase(const_iterator pos) {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::iterator
-basic_string<CharT, Traits>::erase(const_iterator first, const_iterator last) {
-    size_type index = static_cast<size_type>(std::distance(cbegin(), first));
-    size_type len = static_cast<size_type>(std::distance(first, last));
+basic_string<CharT, Traits>::erase(const_iterator first, const_iterator last)
+{
+	size_type index =
+		static_cast<size_type>(std::distance(cbegin(), first));
+	size_type len = static_cast<size_type>(std::distance(first, last));
 
-    erase(index, len);
+	erase(index, len);
 
-    return begin() + static_cast<difference_type>(index);
+	return begin() + static_cast<difference_type>(index);
 };
 
 /**
@@ -1340,52 +1436,56 @@ basic_string<CharT, Traits>::erase(const_iterator first, const_iterator last) {
  * @throw rethrows constructor exception.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
-    size_type count, CharT ch) {
-    auto sz = size();
-    auto new_size = sz + count;
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::append(size_type count, CharT ch)
+{
+	auto sz = size();
+	auto new_size = sz + count;
 
-    if (new_size > max_size())
-        throw std::length_error("Size exceeds max size.");
+	if (new_size > max_size())
+		throw std::length_error("Size exceeds max size.");
 
-    if (is_sso_used()) {
-        auto pop = get_pool();
+	if (is_sso_used()) {
+		auto pop = get_pool();
 
-        transaction::run(pop, [&] {
-            if (new_size > sso_capacity) {
-                sso_to_large(new_size);
+		transaction::run(pop, [&] {
+			if (new_size > sso_capacity) {
+				sso_to_large(new_size);
 
-                non_sso.data.insert(
-                    non_sso.data.cbegin() + static_cast<difference_type>(sz),
-                    count, ch);
-            } else {
-                /*
-                 * XXX: There is no necessity to snapshot
-                 * uninitialized data. However, we need
-                 * libpmemobj support for that, because right
-                 * now pmemcheck will report an error
-                 * (uninitialized part of data not added to tx).
-                 *
-                 * XXX: future optimization: we don't have to
-                 * snapshot data which we will not overwrite. We
-                 * should snapshot terminating null character
-                 * only.
-                 */
-                snapshot_sso();
-                auto dest = sso.data.range(sz, count + 1).begin();
-                traits_type::assign(dest, count, ch);
+				non_sso.data.insert(
+					non_sso.data.cbegin() +
+						static_cast<difference_type>(
+							sz),
+					count, ch);
+			} else {
+				/*
+				 * XXX: There is no necessity to snapshot
+				 * uninitialized data. However, we need
+				 * libpmemobj support for that, because right
+				 * now pmemcheck will report an error
+				 * (uninitialized part of data not added to tx).
+				 *
+				 * XXX: future optimization: we don't have to
+				 * snapshot data which we will not overwrite. We
+				 * should snapshot terminating null character
+				 * only.
+				 */
+				snapshot_sso();
+				auto dest =
+					sso.data.range(sz, count + 1).begin();
+				traits_type::assign(dest, count, ch);
 
-                set_sso_size(new_size);
-                sso.data[new_size] = value_type('\0');
-            }
-        });
-    } else {
-        non_sso.data.insert(
-            non_sso.data.cbegin() + static_cast<difference_type>(sz), count,
-            ch);
-    }
+				set_sso_size(new_size);
+				sso.data[new_size] = value_type('\0');
+			}
+		});
+	} else {
+		non_sso.data.insert(non_sso.data.cbegin() +
+					    static_cast<difference_type>(sz),
+				    count, ch);
+	}
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -1407,9 +1507,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
  * @throw rethrows constructor exception.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
-    const basic_string &str) {
-    return append(str.data(), str.size());
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::append(const basic_string &str)
+{
+	return append(str.data(), str.size());
 }
 
 /**
@@ -1438,17 +1539,20 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
  * @throw rethrows constructor exception.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
-    const basic_string &str, size_type pos, size_type count) {
-    auto sz = str.size();
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::append(const basic_string &str, size_type pos,
+				    size_type count)
+{
+	auto sz = str.size();
 
-    if (pos > sz) throw std::out_of_range("Index out of range.");
+	if (pos > sz)
+		throw std::out_of_range("Index out of range.");
 
-    count = (std::min)(count, sz - pos);
+	count = (std::min)(count, sz - pos);
 
-    append(str.data() + pos, count);
+	append(str.data() + pos, count);
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -1471,9 +1575,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
  * @throw rethrows constructor exception.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
-    const CharT *s, size_type count) {
-    return append(s, s + count);
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::append(const CharT *s, size_type count)
+{
+	return append(s, s + count);
 }
 
 /**
@@ -1496,9 +1601,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
  * @throw rethrows constructor exception.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
-    const CharT *s) {
-    return append(s, traits_type::length(s));
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::append(const CharT *s)
+{
+	return append(s, traits_type::length(s));
 }
 
 /**
@@ -1524,56 +1630,60 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
  */
 template <typename CharT, typename Traits>
 template <typename InputIt, typename Enable>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(InputIt first,
-                                                                 InputIt last) {
-    auto sz = size();
-    auto count = static_cast<size_type>(std::distance(first, last));
-    auto new_size = sz + count;
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::append(InputIt first, InputIt last)
+{
+	auto sz = size();
+	auto count = static_cast<size_type>(std::distance(first, last));
+	auto new_size = sz + count;
 
-    if (new_size > max_size())
-        throw std::length_error("Size exceeds max size.");
+	if (new_size > max_size())
+		throw std::length_error("Size exceeds max size.");
 
-    if (is_sso_used()) {
-        auto pop = get_pool();
+	if (is_sso_used()) {
+		auto pop = get_pool();
 
-        transaction::run(pop, [&] {
-            if (new_size > sso_capacity) {
-                /* 1) Cache C-style string in case of
-                 * self-append, because it will be destroyed
-                 * when switching from sso to large string.
-                 *
-                 * 2) We cache in std::vector instead of
-                 * std::string because of overload deduction
-                 * ambiguity on Windows
-                 */
-                std::vector<value_type> str(first, last);
+		transaction::run(pop, [&] {
+			if (new_size > sso_capacity) {
+				/* 1) Cache C-style string in case of
+				 * self-append, because it will be destroyed
+				 * when switching from sso to large string.
+				 *
+				 * 2) We cache in std::vector instead of
+				 * std::string because of overload deduction
+				 * ambiguity on Windows
+				 */
+				std::vector<value_type> str(first, last);
 
-                sso_to_large(new_size);
-                non_sso.data.insert(
-                    non_sso.data.cbegin() + static_cast<difference_type>(sz),
-                    str.begin(), str.end());
-            } else {
-                /*
-                 * XXX: future optimization: we don't have to
-                 * snapshot data which we will not overwrite. We
-                 * should snapshot terminating null character
-                 * only.
-                 */
-                snapshot_sso();
-                auto dest = sso.data.range(sz, count + 1).begin();
-                std::copy(first, last, dest);
+				sso_to_large(new_size);
+				non_sso.data.insert(
+					non_sso.data.cbegin() +
+						static_cast<difference_type>(
+							sz),
+					str.begin(), str.end());
+			} else {
+				/*
+				 * XXX: future optimization: we don't have to
+				 * snapshot data which we will not overwrite. We
+				 * should snapshot terminating null character
+				 * only.
+				 */
+				snapshot_sso();
+				auto dest =
+					sso.data.range(sz, count + 1).begin();
+				std::copy(first, last, dest);
 
-                set_sso_size(new_size);
-                sso.data[new_size] = value_type('\0');
-            }
-        });
-    } else {
-        non_sso.data.insert(
-            non_sso.data.cbegin() + static_cast<difference_type>(sz), first,
-            last);
-    }
+				set_sso_size(new_size);
+				sso.data[new_size] = value_type('\0');
+			}
+		});
+	} else {
+		non_sso.data.insert(non_sso.data.cbegin() +
+					    static_cast<difference_type>(sz),
+				    first, last);
+	}
 
-    return *this;
+	return *this;
 }
 
 /**
@@ -1595,9 +1705,10 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(InputIt first,
  * @throw rethrows constructor exception.
  */
 template <typename CharT, typename Traits>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
-    std::initializer_list<CharT> ilist) {
-    return append(ilist.begin(), ilist.end());
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::append(std::initializer_list<CharT> ilist)
+{
+	return append(ilist.begin(), ilist.end());
 }
 
 /**
@@ -1618,24 +1729,28 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::append(
  * @throw std::out_of_range is pos > size()
  */
 template <typename CharT, typename Traits>
-int basic_string<CharT, Traits>::compare(size_type pos, size_type count1,
-                                         const CharT *s,
-                                         size_type count2) const {
-    if (pos > size()) throw std::out_of_range("Index out of range.");
+int
+basic_string<CharT, Traits>::compare(size_type pos, size_type count1,
+				     const CharT *s, size_type count2) const
+{
+	if (pos > size())
+		throw std::out_of_range("Index out of range.");
 
-    if (count1 > size() - pos) count1 = size() - pos;
+	if (count1 > size() - pos)
+		count1 = size() - pos;
 
-    auto ret = traits_type::compare(cdata() + pos, s,
-                                    std::min<size_type>(count1, count2));
+	auto ret = traits_type::compare(cdata() + pos, s,
+					std::min<size_type>(count1, count2));
 
-    if (ret != 0) return ret;
+	if (ret != 0)
+		return ret;
 
-    if (count1 < count2)
-        return -1;
-    else if (count1 == count2)
-        return 0;
-    else
-        return 1;
+	if (count1 < count2)
+		return -1;
+	else if (count1 == count2)
+		return 0;
+	else
+		return 1;
 }
 
 /**
@@ -1647,8 +1762,10 @@ int basic_string<CharT, Traits>::compare(size_type pos, size_type count1,
  * zero if *this == other and positive value if *this > other.
  */
 template <typename CharT, typename Traits>
-int basic_string<CharT, Traits>::compare(const basic_string &other) const {
-    return compare(0, size(), other.cdata(), other.size());
+int
+basic_string<CharT, Traits>::compare(const basic_string &other) const
+{
+	return compare(0, size(), other.cdata(), other.size());
 }
 
 /**
@@ -1660,9 +1777,11 @@ int basic_string<CharT, Traits>::compare(const basic_string &other) const {
  * zero if *this == other and positive value if *this > other.
  */
 template <typename CharT, typename Traits>
-int basic_string<CharT, Traits>::compare(
-    const std::basic_string<CharT> &other) const {
-    return compare(0, size(), other.data(), other.size());
+int
+basic_string<CharT, Traits>::compare(
+	const std::basic_string<CharT> &other) const
+{
+	return compare(0, size(), other.data(), other.size());
 }
 
 /**
@@ -1679,9 +1798,11 @@ int basic_string<CharT, Traits>::compare(
  * @throw std::out_of_range is pos > size()
  */
 template <typename CharT, typename Traits>
-int basic_string<CharT, Traits>::compare(size_type pos, size_type count,
-                                         const basic_string &other) const {
-    return compare(pos, count, other.cdata(), other.size());
+int
+basic_string<CharT, Traits>::compare(size_type pos, size_type count,
+				     const basic_string &other) const
+{
+	return compare(pos, count, other.cdata(), other.size());
 }
 
 /**
@@ -1699,10 +1820,12 @@ int basic_string<CharT, Traits>::compare(size_type pos, size_type count,
  * @throw std::out_of_range is pos > size()
  */
 template <typename CharT, typename Traits>
-int basic_string<CharT, Traits>::compare(
-    size_type pos, size_type count,
-    const std::basic_string<CharT> &other) const {
-    return compare(pos, count, other.data(), other.size());
+int
+basic_string<CharT, Traits>::compare(
+	size_type pos, size_type count,
+	const std::basic_string<CharT> &other) const
+{
+	return compare(pos, count, other.data(), other.size());
 }
 
 /**
@@ -1724,15 +1847,18 @@ int basic_string<CharT, Traits>::compare(
  * @throw std::out_of_range is pos1 > size() or pos2 > other.size()
  */
 template <typename CharT, typename Traits>
-int basic_string<CharT, Traits>::compare(size_type pos1, size_type count1,
-                                         const basic_string &other,
-                                         size_type pos2,
-                                         size_type count2) const {
-    if (pos2 > other.size()) throw std::out_of_range("Index out of range.");
+int
+basic_string<CharT, Traits>::compare(size_type pos1, size_type count1,
+				     const basic_string &other, size_type pos2,
+				     size_type count2) const
+{
+	if (pos2 > other.size())
+		throw std::out_of_range("Index out of range.");
 
-    if (count2 > other.size() - pos2) count2 = other.size() - pos2;
+	if (count2 > other.size() - pos2)
+		count2 = other.size() - pos2;
 
-    return compare(pos1, count1, other.cdata() + pos2, count2);
+	return compare(pos1, count1, other.cdata() + pos2, count2);
 }
 
 /**
@@ -1754,15 +1880,18 @@ int basic_string<CharT, Traits>::compare(size_type pos1, size_type count1,
  * @throw std::out_of_range is pos1 > size() or pos2 > other.size()
  */
 template <typename CharT, typename Traits>
-int basic_string<CharT, Traits>::compare(size_type pos1, size_type count1,
-                                         const std::basic_string<CharT> &other,
-                                         size_type pos2,
-                                         size_type count2) const {
-    if (pos2 > other.size()) throw std::out_of_range("Index out of range.");
+int
+basic_string<CharT, Traits>::compare(size_type pos1, size_type count1,
+				     const std::basic_string<CharT> &other,
+				     size_type pos2, size_type count2) const
+{
+	if (pos2 > other.size())
+		throw std::out_of_range("Index out of range.");
 
-    if (count2 > other.size() - pos2) count2 = other.size() - pos2;
+	if (count2 > other.size() - pos2)
+		count2 = other.size() - pos2;
 
-    return compare(pos1, count1, other.data() + pos2, count2);
+	return compare(pos1, count1, other.data() + pos2, count2);
 }
 
 /**
@@ -1774,8 +1903,10 @@ int basic_string<CharT, Traits>::compare(size_type pos1, size_type count1,
  * zero if *this == s and positive value if *this > s.
  */
 template <typename CharT, typename Traits>
-int basic_string<CharT, Traits>::compare(const CharT *s) const {
-    return compare(0, size(), s, traits_type::length(s));
+int
+basic_string<CharT, Traits>::compare(const CharT *s) const
+{
+	return compare(0, size(), s, traits_type::length(s));
 }
 
 /**
@@ -1792,33 +1923,41 @@ int basic_string<CharT, Traits>::compare(const CharT *s) const {
  * @throw std::out_of_range is pos > size()
  */
 template <typename CharT, typename Traits>
-int basic_string<CharT, Traits>::compare(size_type pos, size_type count,
-                                         const CharT *s) const {
-    return compare(pos, count, s, traits_type::length(s));
+int
+basic_string<CharT, Traits>::compare(size_type pos, size_type count,
+				     const CharT *s) const
+{
+	return compare(pos, count, s, traits_type::length(s));
 }
 
 /**
  * @return const pointer to underlying data.
  */
 template <typename CharT, typename Traits>
-const CharT *basic_string<CharT, Traits>::cdata() const noexcept {
-    return is_sso_used() ? sso.data.cdata() : non_sso.data.cdata();
+const CharT *
+basic_string<CharT, Traits>::cdata() const noexcept
+{
+	return is_sso_used() ? sso.data.cdata() : non_sso.data.cdata();
 }
 
 /**
  * @return pointer to underlying data.
  */
 template <typename CharT, typename Traits>
-const CharT *basic_string<CharT, Traits>::data() const noexcept {
-    return cdata();
+const CharT *
+basic_string<CharT, Traits>::data() const noexcept
+{
+	return cdata();
 }
 
 /**
  * @return pointer to underlying data.
  */
 template <typename CharT, typename Traits>
-const CharT *basic_string<CharT, Traits>::c_str() const noexcept {
-    return cdata();
+const CharT *
+basic_string<CharT, Traits>::c_str() const noexcept
+{
+	return cdata();
 }
 
 /**
@@ -1826,8 +1965,9 @@ const CharT *basic_string<CharT, Traits>::c_str() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::size_type
-basic_string<CharT, Traits>::length() const noexcept {
-    return size();
+basic_string<CharT, Traits>::length() const noexcept
+{
+	return size();
 }
 
 /**
@@ -1835,8 +1975,9 @@ basic_string<CharT, Traits>::length() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::size_type
-basic_string<CharT, Traits>::max_size() const noexcept {
-    return PMEMOBJ_MAX_ALLOC_SIZE / sizeof(CharT) - 1;
+basic_string<CharT, Traits>::max_size() const noexcept
+{
+	return PMEMOBJ_MAX_ALLOC_SIZE / sizeof(CharT) - 1;
 }
 
 /**
@@ -1845,8 +1986,9 @@ basic_string<CharT, Traits>::max_size() const noexcept {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::size_type
-basic_string<CharT, Traits>::capacity() const noexcept {
-    return is_sso_used() ? sso_capacity : non_sso.data.capacity() - 1;
+basic_string<CharT, Traits>::capacity() const noexcept
+{
+	return is_sso_used() ? sso_capacity : non_sso.data.capacity() - 1;
 }
 
 /**
@@ -1868,24 +2010,27 @@ basic_string<CharT, Traits>::capacity() const noexcept {
  * @throw pmem::transaction_free_error when freeing old underlying array failed.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::resize(size_type count, CharT ch) {
-    if (count > max_size()) throw std::length_error("Count exceeds max size.");
+void
+basic_string<CharT, Traits>::resize(size_type count, CharT ch)
+{
+	if (count > max_size())
+		throw std::length_error("Count exceeds max size.");
 
-    auto sz = size();
+	auto sz = size();
 
-    auto pop = get_pool();
+	auto pop = get_pool();
 
-    transaction::run(pop, [&] {
-        if (count > sz) {
-            append(count - sz, ch);
-        } else if (is_sso_used()) {
-            set_sso_size(count);
-            sso.data[count] = value_type('\0');
-        } else {
-            non_sso.data.resize(count + 1, ch);
-            non_sso.data.back() = value_type('\0');
-        }
-    });
+	transaction::run(pop, [&] {
+		if (count > sz) {
+			append(count - sz, ch);
+		} else if (is_sso_used()) {
+			set_sso_size(count);
+			sso.data[count] = value_type('\0');
+		} else {
+			non_sso.data.resize(count + 1, ch);
+			non_sso.data.back() = value_type('\0');
+		}
+	});
 }
 
 /**
@@ -1906,8 +2051,10 @@ void basic_string<CharT, Traits>::resize(size_type count, CharT ch) {
  * @throw pmem::transaction_free_error when freeing old underlying array failed.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::resize(size_type count) {
-    resize(count, CharT());
+void
+basic_string<CharT, Traits>::resize(size_type count)
+{
+	resize(count, CharT());
 }
 
 /**
@@ -1929,19 +2076,22 @@ void basic_string<CharT, Traits>::resize(size_type count) {
  * @throw pmem::transaction_free_error when freeing old underlying array failed.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::reserve(size_type new_cap) {
-    if (new_cap > max_size())
-        throw std::length_error("New capacity exceeds max size.");
+void
+basic_string<CharT, Traits>::reserve(size_type new_cap)
+{
+	if (new_cap > max_size())
+		throw std::length_error("New capacity exceeds max size.");
 
-    if (new_cap < capacity() || new_cap <= sso_capacity) return;
+	if (new_cap < capacity() || new_cap <= sso_capacity)
+		return;
 
-    if (is_sso_used()) {
-        auto pop = get_pool();
+	if (is_sso_used()) {
+		auto pop = get_pool();
 
-        transaction::run(pop, [&] { sso_to_large(new_cap); });
-    } else {
-        non_sso.data.reserve(new_cap + 1);
-    }
+		transaction::run(pop, [&] { sso_to_large(new_cap); });
+	} else {
+		non_sso.data.reserve(new_cap + 1);
+	}
 }
 
 /**
@@ -1957,16 +2107,19 @@ void basic_string<CharT, Traits>::reserve(size_type new_cap) {
  * @throw rethrows destructor exception.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::shrink_to_fit() {
-    if (is_sso_used()) return;
+void
+basic_string<CharT, Traits>::shrink_to_fit()
+{
+	if (is_sso_used())
+		return;
 
-    if (size() <= sso_capacity) {
-        auto pop = get_pool();
+	if (size() <= sso_capacity) {
+		auto pop = get_pool();
 
-        transaction::run(pop, [&] { large_to_sso(); });
-    } else {
-        non_sso.data.shrink_to_fit();
-    }
+		transaction::run(pop, [&] { large_to_sso(); });
+	} else {
+		non_sso.data.shrink_to_fit();
+	}
 }
 
 /**
@@ -1979,34 +2132,42 @@ void basic_string<CharT, Traits>::shrink_to_fit() {
  * @throw rethrows destructor exception.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::clear() {
-    erase(begin(), end());
+void
+basic_string<CharT, Traits>::clear()
+{
+	erase(begin(), end());
 }
 
 /**
  * @return true if string is empty, false otherwise.
  */
 template <typename CharT, typename Traits>
-bool basic_string<CharT, Traits>::empty() const noexcept {
-    return size() == 0;
+bool
+basic_string<CharT, Traits>::empty() const noexcept
+{
+	return size() == 0;
 }
 
 template <typename CharT, typename Traits>
-bool basic_string<CharT, Traits>::is_sso_used() const {
-    return sso._size & _sso_mask;
+bool
+basic_string<CharT, Traits>::is_sso_used() const
+{
+	return sso._size & _sso_mask;
 }
 
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::destroy_data() {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+void
+basic_string<CharT, Traits>::destroy_data()
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
 
-    if (is_sso_used()) {
-        snapshot_sso();
-        /* sso.data destructor does not have to be called */
-    } else {
-        non_sso.data.free_data();
-        detail::destroy<decltype(non_sso.data)>(non_sso.data);
-    }
+	if (is_sso_used()) {
+		snapshot_sso();
+		/* sso.data destructor does not have to be called */
+	} else {
+		non_sso.data.free_data();
+		detail::destroy<decltype(non_sso.data)>(non_sso.data);
+	}
 }
 
 /**
@@ -2018,8 +2179,9 @@ void basic_string<CharT, Traits>::destroy_data() {
 template <typename CharT, typename Traits>
 template <typename InputIt, typename Enable>
 typename basic_string<CharT, Traits>::size_type
-basic_string<CharT, Traits>::get_size(InputIt first, InputIt last) const {
-    return static_cast<size_type>(std::distance(first, last));
+basic_string<CharT, Traits>::get_size(InputIt first, InputIt last) const
+{
+	return static_cast<size_type>(std::distance(first, last));
 }
 
 /**
@@ -2030,8 +2192,9 @@ basic_string<CharT, Traits>::get_size(InputIt first, InputIt last) const {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::size_type
-basic_string<CharT, Traits>::get_size(size_type count, value_type ch) const {
-    return count;
+basic_string<CharT, Traits>::get_size(size_type count, value_type ch) const
+{
+	return count;
 }
 
 /**
@@ -2042,8 +2205,9 @@ basic_string<CharT, Traits>::get_size(size_type count, value_type ch) const {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::size_type
-basic_string<CharT, Traits>::get_size(const basic_string &other) const {
-    return other.size();
+basic_string<CharT, Traits>::get_size(const basic_string &other) const
+{
+	return other.size();
 }
 
 /**
@@ -2056,19 +2220,20 @@ basic_string<CharT, Traits>::get_size(const basic_string &other) const {
 template <typename CharT, typename Traits>
 template <typename... Args>
 typename basic_string<CharT, Traits>::pointer
-basic_string<CharT, Traits>::replace(Args &&... args) {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+basic_string<CharT, Traits>::replace(Args &&... args)
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
 
-    auto new_size = get_size(std::forward<Args>(args)...);
+	auto new_size = get_size(std::forward<Args>(args)...);
 
-    /* If non_sso.data is used and there is enough capacity */
-    if (!is_sso_used() && new_size <= capacity())
-        return assign_large_data(std::forward<Args>(args)...);
+	/* If non_sso.data is used and there is enough capacity */
+	if (!is_sso_used() && new_size <= capacity())
+		return assign_large_data(std::forward<Args>(args)...);
 
-    destroy_data();
+	destroy_data();
 
-    allocate(new_size);
-    return initialize(std::forward<Args>(args)...);
+	allocate(new_size);
+	return initialize(std::forward<Args>(args)...);
 }
 
 /**
@@ -2085,17 +2250,18 @@ basic_string<CharT, Traits>::replace(Args &&... args) {
 template <typename CharT, typename Traits>
 template <typename... Args>
 typename basic_string<CharT, Traits>::pointer
-basic_string<CharT, Traits>::initialize(Args &&... args) {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+basic_string<CharT, Traits>::initialize(Args &&... args)
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
 
-    auto size = get_size(std::forward<Args>(args)...);
+	auto size = get_size(std::forward<Args>(args)...);
 
-    if (is_sso_used()) {
-        set_sso_size(size);
-        return assign_sso_data(std::forward<Args>(args)...);
-    } else {
-        return assign_large_data(std::forward<Args>(args)...);
-    }
+	if (is_sso_used()) {
+		set_sso_size(size);
+		return assign_sso_data(std::forward<Args>(args)...);
+	} else {
+		return assign_large_data(std::forward<Args>(args)...);
+	}
 }
 
 /**
@@ -2108,24 +2274,26 @@ basic_string<CharT, Traits>::initialize(Args &&... args) {
  * @param[in] capacity bytes to allocate.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::allocate(size_type capacity) {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+void
+basic_string<CharT, Traits>::allocate(size_type capacity)
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
 
-    if (capacity <= sso_capacity) {
-        enable_sso();
-    } else {
-        disable_sso();
-    }
+	if (capacity <= sso_capacity) {
+		enable_sso();
+	} else {
+		disable_sso();
+	}
 
-    /*
-     * array is aggregate type so it's not required to call
-     * a constructor.
-     */
-    if (!is_sso_used()) {
-        detail::conditional_add_to_tx(&non_sso.data);
-        detail::create<decltype(non_sso.data)>(&non_sso.data);
-        non_sso.data.reserve(capacity + sizeof('\0'));
-    }
+	/*
+	 * array is aggregate type so it's not required to call
+	 * a constructor.
+	 */
+	if (!is_sso_used()) {
+		detail::conditional_add_to_tx(&non_sso.data);
+		detail::create<decltype(non_sso.data)>(&non_sso.data);
+		non_sso.data.reserve(capacity + sizeof('\0'));
+	}
 }
 
 /**
@@ -2134,18 +2302,19 @@ void basic_string<CharT, Traits>::allocate(size_type capacity) {
 template <typename CharT, typename Traits>
 template <typename InputIt, typename Enable>
 typename basic_string<CharT, Traits>::pointer
-basic_string<CharT, Traits>::assign_sso_data(InputIt first, InputIt last) {
-    auto size = static_cast<size_type>(std::distance(first, last));
+basic_string<CharT, Traits>::assign_sso_data(InputIt first, InputIt last)
+{
+	auto size = static_cast<size_type>(std::distance(first, last));
 
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
-    assert(size <= sso_capacity);
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+	assert(size <= sso_capacity);
 
-    auto dest = sso.data.range(0, size + 1).begin();
-    std::copy(first, last, dest);
+	auto dest = sso.data.range(0, size + 1).begin();
+	std::copy(first, last, dest);
 
-    dest[size] = value_type('\0');
+	dest[size] = value_type('\0');
 
-    return dest;
+	return dest;
 }
 
 /**
@@ -2153,16 +2322,17 @@ basic_string<CharT, Traits>::assign_sso_data(InputIt first, InputIt last) {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::pointer
-basic_string<CharT, Traits>::assign_sso_data(size_type count, value_type ch) {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
-    assert(count <= sso_capacity);
+basic_string<CharT, Traits>::assign_sso_data(size_type count, value_type ch)
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+	assert(count <= sso_capacity);
 
-    auto dest = sso.data.range(0, count + 1).begin();
-    traits_type::assign(dest, count, ch);
+	auto dest = sso.data.range(0, count + 1).begin();
+	traits_type::assign(dest, count, ch);
 
-    dest[count] = value_type('\0');
+	dest[count] = value_type('\0');
 
-    return dest;
+	return dest;
 }
 
 /**
@@ -2170,10 +2340,11 @@ basic_string<CharT, Traits>::assign_sso_data(size_type count, value_type ch) {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::pointer
-basic_string<CharT, Traits>::assign_sso_data(basic_string &&other) {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+basic_string<CharT, Traits>::assign_sso_data(basic_string &&other)
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
 
-    return assign_sso_data(other.cbegin(), other.cend());
+	return assign_sso_data(other.cbegin(), other.cend());
 }
 
 /**
@@ -2183,16 +2354,17 @@ basic_string<CharT, Traits>::assign_sso_data(basic_string &&other) {
 template <typename CharT, typename Traits>
 template <typename InputIt, typename Enable>
 typename basic_string<CharT, Traits>::pointer
-basic_string<CharT, Traits>::assign_large_data(InputIt first, InputIt last) {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+basic_string<CharT, Traits>::assign_large_data(InputIt first, InputIt last)
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
 
-    auto size = static_cast<size_type>(std::distance(first, last));
+	auto size = static_cast<size_type>(std::distance(first, last));
 
-    non_sso.data.reserve(size + 1);
-    non_sso.data.assign(first, last);
-    non_sso.data.push_back(value_type('\0'));
+	non_sso.data.reserve(size + 1);
+	non_sso.data.assign(first, last);
+	non_sso.data.push_back(value_type('\0'));
 
-    return non_sso.data.data();
+	return non_sso.data.data();
 }
 
 /**
@@ -2201,14 +2373,15 @@ basic_string<CharT, Traits>::assign_large_data(InputIt first, InputIt last) {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::pointer
-basic_string<CharT, Traits>::assign_large_data(size_type count, value_type ch) {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+basic_string<CharT, Traits>::assign_large_data(size_type count, value_type ch)
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
 
-    non_sso.data.reserve(count + 1);
-    non_sso.data.assign(count, ch);
-    non_sso.data.push_back(value_type('\0'));
+	non_sso.data.reserve(count + 1);
+	non_sso.data.assign(count, ch);
+	non_sso.data.push_back(value_type('\0'));
 
-    return non_sso.data.data();
+	return non_sso.data.data();
 }
 
 /**
@@ -2217,45 +2390,52 @@ basic_string<CharT, Traits>::assign_large_data(size_type count, value_type ch) {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::pointer
-basic_string<CharT, Traits>::assign_large_data(basic_string &&other) {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+basic_string<CharT, Traits>::assign_large_data(basic_string &&other)
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
 
-    if (other.is_sso_used())
-        return assign_large_data(other.cbegin(), other.cend());
+	if (other.is_sso_used())
+		return assign_large_data(other.cbegin(), other.cend());
 
-    non_sso.data = std::move(other.non_sso.data);
+	non_sso.data = std::move(other.non_sso.data);
 
-    return non_sso.data.data();
+	return non_sso.data.data();
 }
 
 /**
  * Return pool_base instance and assert that object is on pmem.
  */
 template <typename CharT, typename Traits>
-pool_base basic_string<CharT, Traits>::get_pool() const {
-    auto pop = pmemobj_pool_by_ptr(this);
-    assert(pop != nullptr);
+pool_base
+basic_string<CharT, Traits>::get_pool() const
+{
+	auto pop = pmemobj_pool_by_ptr(this);
+	assert(pop != nullptr);
 
-    return pool_base(pop);
+	return pool_base(pop);
 }
 
 /**
  * @throw pmem::pool_error if an object is not in persistent memory.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::check_pmem() const {
-    if (pmemobj_pool_by_ptr(this) == nullptr)
-        throw pmem::pool_error("Object is not on pmem.");
+void
+basic_string<CharT, Traits>::check_pmem() const
+{
+	if (pmemobj_pool_by_ptr(this) == nullptr)
+		throw pmem::pool_error("Object is not on pmem.");
 }
 
 /**
  * @throw pmem::transaction_scope_error if called outside of a transaction.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::check_tx_stage_work() const {
-    if (pmemobj_tx_stage() != TX_STAGE_WORK)
-        throw pmem::transaction_scope_error(
-            "Call made out of transaction scope.");
+void
+basic_string<CharT, Traits>::check_tx_stage_work() const
+{
+	if (pmemobj_tx_stage() != TX_STAGE_WORK)
+		throw pmem::transaction_scope_error(
+			"Call made out of transaction scope.");
 }
 
 /**
@@ -2263,23 +2443,27 @@ void basic_string<CharT, Traits>::check_tx_stage_work() const {
  * @throw pmem::transaction_scope_error if called outside of a transaction.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::check_pmem_tx() const {
-    check_pmem();
-    check_tx_stage_work();
+void
+basic_string<CharT, Traits>::check_pmem_tx() const
+{
+	check_pmem();
+	check_tx_stage_work();
 }
 
 /**
  * Snapshot sso data.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::snapshot_sso() const {
+void
+basic_string<CharT, Traits>::snapshot_sso() const
+{
 /*
  * XXX: this can be optimized - only snapshot length() elements.
  */
 #if LIBPMEMOBJ_CPP_VG_MEMCHECK_ENABLED
-    VALGRIND_MAKE_MEM_DEFINED(&sso.data, sizeof(sso.data));
+	VALGRIND_MAKE_MEM_DEFINED(&sso.data, sizeof(sso.data));
 #endif
-    sso.data.data();
+	sso.data.data();
 };
 
 /**
@@ -2287,34 +2471,41 @@ void basic_string<CharT, Traits>::snapshot_sso() const {
  */
 template <typename CharT, typename Traits>
 typename basic_string<CharT, Traits>::size_type
-basic_string<CharT, Traits>::get_sso_size() const {
-    return sso._size & ~_sso_mask;
+basic_string<CharT, Traits>::get_sso_size() const
+{
+	return sso._size & ~_sso_mask;
 }
 
 /**
  * Enable sso string.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::enable_sso() {
-    /* temporary size_type must be created to avoid undefined reference
-     * linker error */
-    sso._size |= (size_type)(_sso_mask);
+void
+basic_string<CharT, Traits>::enable_sso()
+{
+	/* temporary size_type must be created to avoid undefined reference
+	 * linker error */
+	sso._size |= (size_type)(_sso_mask);
 }
 
 /**
  * Disable sso string.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::disable_sso() {
-    sso._size &= ~_sso_mask;
+void
+basic_string<CharT, Traits>::disable_sso()
+{
+	sso._size &= ~_sso_mask;
 }
 
 /**
  * Set size for sso.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::set_sso_size(size_type new_size) {
-    sso._size = new_size | _sso_mask;
+void
+basic_string<CharT, Traits>::set_sso_size(size_type new_size)
+{
+	sso._size = new_size | _sso_mask;
 }
 
 /**
@@ -2329,25 +2520,27 @@ void basic_string<CharT, Traits>::set_sso_size(size_type new_size) {
  * @param[in] new_capacity capacity of constructed large string.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::sso_to_large(size_t new_capacity) {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
-    assert(new_capacity > sso_capacity);
+void
+basic_string<CharT, Traits>::sso_to_large(size_t new_capacity)
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+	assert(new_capacity > sso_capacity);
 
-    auto sz = size();
+	auto sz = size();
 
-    sso_type tmp;
-    std::copy(cbegin(), cend(), tmp.data());
-    tmp[sz] = value_type('\0');
+	sso_type tmp;
+	std::copy(cbegin(), cend(), tmp.data());
+	tmp[sz] = value_type('\0');
 
-    destroy_data();
-    allocate(new_capacity);
+	destroy_data();
+	allocate(new_capacity);
 
-    auto begin = tmp.cbegin();
-    auto end = begin + sz;
+	auto begin = tmp.cbegin();
+	auto end = begin + sz;
 
-    initialize(begin, end);
+	initialize(begin, end);
 
-    assert(!is_sso_used());
+	assert(!is_sso_used());
 };
 
 /**
@@ -2360,26 +2553,28 @@ void basic_string<CharT, Traits>::sso_to_large(size_t new_capacity) {
  * @post sso is used.
  */
 template <typename CharT, typename Traits>
-void basic_string<CharT, Traits>::large_to_sso() {
-    assert(pmemobj_tx_stage() == TX_STAGE_WORK);
+void
+basic_string<CharT, Traits>::large_to_sso()
+{
+	assert(pmemobj_tx_stage() == TX_STAGE_WORK);
 
-    auto sz = size();
+	auto sz = size();
 
-    assert(sz <= sso_capacity);
+	assert(sz <= sso_capacity);
 
-    sso_type tmp;
-    std::copy(cbegin(), cbegin() + sz, tmp.data());
-    tmp[sz] = value_type('\0');
+	sso_type tmp;
+	std::copy(cbegin(), cbegin() + sz, tmp.data());
+	tmp[sz] = value_type('\0');
 
-    destroy_data();
-    allocate(sz);
+	destroy_data();
+	allocate(sz);
 
-    auto begin = tmp.cbegin();
-    auto end = begin + sz;
+	auto begin = tmp.cbegin();
+	auto end = begin + sz;
 
-    initialize(begin, end);
+	initialize(begin, end);
 
-    assert(is_sso_used());
+	assert(is_sso_used());
 };
 
 /**
@@ -2388,8 +2583,10 @@ void basic_string<CharT, Traits>::large_to_sso() {
  */
 template <typename CharT, typename Traits>
 template <typename T, typename Enable>
-basic_string<CharT, Traits> &basic_string<CharT, Traits>::erase(T param) {
-    return erase(static_cast<size_type>(param));
+basic_string<CharT, Traits> &
+basic_string<CharT, Traits>::erase(T param)
+{
+	return erase(static_cast<size_type>(param));
 }
 
 /**
@@ -2399,266 +2596,327 @@ basic_string<CharT, Traits> &basic_string<CharT, Traits>::erase(T param) {
 template <typename CharT, typename Traits>
 template <typename T, typename Enable>
 typename basic_string<CharT, Traits>::iterator
-basic_string<CharT, Traits>::erase(T param) {
-    return erase(static_cast<const_iterator>(param));
+basic_string<CharT, Traits>::erase(T param)
+{
+	return erase(static_cast<const_iterator>(param));
 }
 
 /**
  * Non-member equal operator.
  */
 template <class CharT, class Traits>
-bool operator==(const basic_string<CharT, Traits> &lhs,
-                const basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) == 0;
+bool
+operator==(const basic_string<CharT, Traits> &lhs,
+	   const basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) == 0;
 }
 
 /**
  * Non-member not equal operator.
  */
 template <class CharT, class Traits>
-bool operator!=(const basic_string<CharT, Traits> &lhs,
-                const basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) != 0;
+bool
+operator!=(const basic_string<CharT, Traits> &lhs,
+	   const basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) != 0;
 }
 
 /**
  * Non-member less than operator.
  */
 template <class CharT, class Traits>
-bool operator<(const basic_string<CharT, Traits> &lhs,
-               const basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) < 0;
+bool
+operator<(const basic_string<CharT, Traits> &lhs,
+	  const basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) < 0;
 }
 
 /**
  * Non-member less or equal operator.
  */
 template <class CharT, class Traits>
-bool operator<=(const basic_string<CharT, Traits> &lhs,
-                const basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) <= 0;
+bool
+operator<=(const basic_string<CharT, Traits> &lhs,
+	   const basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) <= 0;
 }
 
 /**
  * Non-member greater than operator.
  */
 template <class CharT, class Traits>
-bool operator>(const basic_string<CharT, Traits> &lhs,
-               const basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) > 0;
+bool
+operator>(const basic_string<CharT, Traits> &lhs,
+	  const basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) > 0;
 }
 
 /**
  * Non-member greater or equal operator.
  */
 template <class CharT, class Traits>
-bool operator>=(const basic_string<CharT, Traits> &lhs,
-                const basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) >= 0;
+bool
+operator>=(const basic_string<CharT, Traits> &lhs,
+	   const basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) >= 0;
 }
 
 /**
  * Non-member equal operator.
  */
 template <class CharT, class Traits>
-bool operator==(const CharT *lhs, const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) == 0;
+bool
+operator==(const CharT *lhs, const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) == 0;
 }
 
 /**
  * Non-member not equal operator.
  */
 template <class CharT, class Traits>
-bool operator!=(const CharT *lhs, const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) != 0;
+bool
+operator!=(const CharT *lhs, const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) != 0;
 }
 
 /**
  * Non-member less than operator.
  */
 template <class CharT, class Traits>
-bool operator<(const CharT *lhs, const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) > 0;
+bool
+operator<(const CharT *lhs, const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) > 0;
 }
 
 /**
  * Non-member less or equal operator.
  */
 template <class CharT, class Traits>
-bool operator<=(const CharT *lhs, const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) >= 0;
+bool
+operator<=(const CharT *lhs, const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) >= 0;
 }
 
 /**
  * Non-member greater than operator.
  */
 template <class CharT, class Traits>
-bool operator>(const CharT *lhs, const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) < 0;
+bool
+operator>(const CharT *lhs, const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) < 0;
 }
 
 /**
  * Non-member greater or equal operator.
  */
 template <class CharT, class Traits>
-bool operator>=(const CharT *lhs, const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) <= 0;
+bool
+operator>=(const CharT *lhs, const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) <= 0;
 }
 
 /**
  * Non-member equal operator.
  */
 template <class CharT, class Traits>
-bool operator==(const basic_string<CharT, Traits> &lhs, const CharT *rhs) {
-    return lhs.compare(rhs) == 0;
+bool
+operator==(const basic_string<CharT, Traits> &lhs, const CharT *rhs)
+{
+	return lhs.compare(rhs) == 0;
 }
 
 /**
  * Non-member not equal operator.
  */
 template <class CharT, class Traits>
-bool operator!=(const basic_string<CharT, Traits> &lhs, const CharT *rhs) {
-    return lhs.compare(rhs) != 0;
+bool
+operator!=(const basic_string<CharT, Traits> &lhs, const CharT *rhs)
+{
+	return lhs.compare(rhs) != 0;
 }
 
 /**
  * Non-member less than operator.
  */
 template <class CharT, class Traits>
-bool operator<(const basic_string<CharT, Traits> &lhs, const CharT *rhs) {
-    return lhs.compare(rhs) < 0;
+bool
+operator<(const basic_string<CharT, Traits> &lhs, const CharT *rhs)
+{
+	return lhs.compare(rhs) < 0;
 }
 
 /**
  * Non-member less or equal operator.
  */
 template <class CharT, class Traits>
-bool operator<=(const basic_string<CharT, Traits> &lhs, const CharT *rhs) {
-    return lhs.compare(rhs) <= 0;
+bool
+operator<=(const basic_string<CharT, Traits> &lhs, const CharT *rhs)
+{
+	return lhs.compare(rhs) <= 0;
 }
 
 /**
  * Non-member greater than operator.
  */
 template <class CharT, class Traits>
-bool operator>(const basic_string<CharT, Traits> &lhs, const CharT *rhs) {
-    return lhs.compare(rhs) > 0;
+bool
+operator>(const basic_string<CharT, Traits> &lhs, const CharT *rhs)
+{
+	return lhs.compare(rhs) > 0;
 }
 
 /**
  * Non-member greater or equal operator.
  */
 template <class CharT, class Traits>
-bool operator>=(const basic_string<CharT, Traits> &lhs, const CharT *rhs) {
-    return lhs.compare(rhs) >= 0;
+bool
+operator>=(const basic_string<CharT, Traits> &lhs, const CharT *rhs)
+{
+	return lhs.compare(rhs) >= 0;
 }
 
 /**
  * Non-member equal operator.
  */
 template <class CharT, class Traits>
-bool operator==(const std::basic_string<CharT, Traits> &lhs,
-                const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) == 0;
+bool
+operator==(const std::basic_string<CharT, Traits> &lhs,
+	   const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) == 0;
 }
 
 /**
  * Non-member not equal operator.
  */
 template <class CharT, class Traits>
-bool operator!=(const std::basic_string<CharT, Traits> &lhs,
-                const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) != 0;
+bool
+operator!=(const std::basic_string<CharT, Traits> &lhs,
+	   const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) != 0;
 }
 
 /**
  * Non-member less than operator.
  */
 template <class CharT, class Traits>
-bool operator<(const std::basic_string<CharT, Traits> &lhs,
-               const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) > 0;
+bool
+operator<(const std::basic_string<CharT, Traits> &lhs,
+	  const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) > 0;
 }
 
 /**
  * Non-member less or equal operator.
  */
 template <class CharT, class Traits>
-bool operator<=(const std::basic_string<CharT, Traits> &lhs,
-                const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) >= 0;
+bool
+operator<=(const std::basic_string<CharT, Traits> &lhs,
+	   const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) >= 0;
 }
 
 /**
  * Non-member greater than operator.
  */
 template <class CharT, class Traits>
-bool operator>(const std::basic_string<CharT, Traits> &lhs,
-               const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) < 0;
+bool
+operator>(const std::basic_string<CharT, Traits> &lhs,
+	  const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) < 0;
 }
 
 /**
  * Non-member greater or equal operator.
  */
 template <class CharT, class Traits>
-bool operator>=(const std::basic_string<CharT, Traits> &lhs,
-                const basic_string<CharT, Traits> &rhs) {
-    return rhs.compare(lhs) <= 0;
+bool
+operator>=(const std::basic_string<CharT, Traits> &lhs,
+	   const basic_string<CharT, Traits> &rhs)
+{
+	return rhs.compare(lhs) <= 0;
 }
 
 /**
  * Non-member equal operator.
  */
 template <class CharT, class Traits>
-bool operator==(const basic_string<CharT, Traits> &lhs,
-                const std::basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) == 0;
+bool
+operator==(const basic_string<CharT, Traits> &lhs,
+	   const std::basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) == 0;
 }
 
 /**
  * Non-member not equal operator.
  */
 template <class CharT, class Traits>
-bool operator!=(const basic_string<CharT, Traits> &lhs,
-                const std::basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) != 0;
+bool
+operator!=(const basic_string<CharT, Traits> &lhs,
+	   const std::basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) != 0;
 }
 
 /**
  * Non-member less than operator.
  */
 template <class CharT, class Traits>
-bool operator<(const basic_string<CharT, Traits> &lhs,
-               const std::basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) < 0;
+bool
+operator<(const basic_string<CharT, Traits> &lhs,
+	  const std::basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) < 0;
 }
 
 /**
  * Non-member less or equal operator.
  */
 template <class CharT, class Traits>
-bool operator<=(const basic_string<CharT, Traits> &lhs,
-                const std::basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) <= 0;
+bool
+operator<=(const basic_string<CharT, Traits> &lhs,
+	   const std::basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) <= 0;
 }
 
 /**
  * Non-member greater than operator.
  */
 template <class CharT, class Traits>
-bool operator>(const basic_string<CharT, Traits> &lhs,
-               const std::basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) > 0;
+bool
+operator>(const basic_string<CharT, Traits> &lhs,
+	  const std::basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) > 0;
 }
 
 /**
  * Non-member greater or equal operator.
  */
 template <class CharT, class Traits>
-bool operator>=(const basic_string<CharT, Traits> &lhs,
-                const std::basic_string<CharT, Traits> &rhs) {
-    return lhs.compare(rhs) >= 0;
+bool
+operator>=(const basic_string<CharT, Traits> &lhs,
+	   const std::basic_string<CharT, Traits> &rhs)
+{
+	return lhs.compare(rhs) >= 0;
 }
 
 } /* namespace experimental */

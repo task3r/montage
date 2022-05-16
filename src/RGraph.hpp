@@ -3,13 +3,12 @@
 
 // Louis Jenkins & Benjamin Valpey
 
-#include <functional>
 #include <string>
-
+#include <functional>
 #include "Rideable.hpp"
 
-class RGraph : public Rideable {
-   public:
+class RGraph : public Rideable{
+public:
     /**
      * Adds an edge to the graph, given two node IDs
      * @param src A pointer to the source node
@@ -29,30 +28,27 @@ class RGraph : public Rideable {
      * @return True if the edge exists
      */
     virtual bool remove_edge(int src, int dest) = 0;
-
+    
     /**
-     * @brief Removes vertex from graph, along with the incoming and outgoing
-     * edges.
-     *
-     * Removes vertex from graph, along with the incoming and outgoing edges.
-     * The vertex will be deleted, and so any subsequent calls to remove this
-     * vertex will return false, and any calls to add an edge will create this
-     * vertex anew.
-     *
+     * @brief Removes vertex from graph, along with the incoming and outgoing edges.
+     * 
+     * Removes vertex from graph, along with the incoming and outgoing edges. The vertex
+     * will be deleted, and so any subsequent calls to remove this vertex will return false,
+     * and any calls to add an edge will create this vertex anew.
+     * 
      * @param vid Identifier of the vertex to be removed.
      * @return true Vertex was removed.
      * @return false Vertex was already removed from the map.
      */
     virtual bool remove_vertex(int vid) = 0;
-
+ 
     /**
-     * @brief Obtains statistics including (|V|, |E|, average degree, vertex
-     * degrees, vertex degrees length)
-     *
-     * @return std::tuple<int, int, double, int *> Tuple of |V|, |E|, average
-     * degree, and histogram
+     * @brief Obtains statistics including (|V|, |E|, average degree, vertex degrees, vertex degrees length)
+     * 
+     * @return std::tuple<int, int, double, int *> Tuple of |V|, |E|, average degree, and histogram
      */
-    virtual std::tuple<int, int, double, int *, int> grab_stats() = 0;
+    virtual std::tuple<int, int, double, int *, int> grab_stats() = 0; 
 };
+
 
 #endif

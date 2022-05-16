@@ -40,16 +40,18 @@
 
 #include <cstddef>
 
-namespace pmem {
+namespace pmem
+{
 
-namespace detail {
+namespace detail
+{
 
 /*
  * Returns the number of array elements.
  */
 template <typename T>
 struct pp_array_elems {
-    enum { elems = 1 };
+	enum { elems = 1 };
 };
 
 /*
@@ -57,7 +59,7 @@ struct pp_array_elems {
  */
 template <typename T, size_t N>
 struct pp_array_elems<T[N]> {
-    enum { elems = N };
+	enum { elems = N };
 };
 
 /*
@@ -71,7 +73,7 @@ struct pp_array_type;
  */
 template <typename T>
 struct pp_array_type<T[]> {
-    typedef T type;
+	typedef T type;
 };
 
 /*
@@ -79,7 +81,7 @@ struct pp_array_type<T[]> {
  */
 template <typename T, size_t N>
 struct pp_array_type<T[N]> {
-    typedef T type;
+	typedef T type;
 };
 
 } /* namespace detail */

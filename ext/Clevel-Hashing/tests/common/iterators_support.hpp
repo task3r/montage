@@ -39,7 +39,8 @@
 
 #include <iterator>
 
-namespace test_support {
+namespace test_support
+{
 
 /**
  * Canonical implementation of OutputIterator. Satisfy requirements:
@@ -51,34 +52,46 @@ namespace test_support {
  */
 template <typename It>
 class output_it {
-   public:
-    using iterator_category = std::output_iterator_tag;
-    using value_type = typename std::iterator_traits<It>::value_type;
-    using difference_type = typename std::iterator_traits<It>::difference_type;
-    using pointer = typename std::iterator_traits<It>::pointer;
-    using reference = typename std::iterator_traits<It>::reference;
+public:
+	using iterator_category = std::output_iterator_tag;
+	using value_type = typename std::iterator_traits<It>::value_type;
+	using difference_type =
+		typename std::iterator_traits<It>::difference_type;
+	using pointer = typename std::iterator_traits<It>::pointer;
+	using reference = typename std::iterator_traits<It>::reference;
 
-    output_it() = delete;
+	output_it() = delete;
 
-    explicit output_it(It it) : _it(it) {}
+	explicit output_it(It it) : _it(it)
+	{
+	}
 
-    output_it(const output_it &t) : _it(t._it) {}
+	output_it(const output_it &t) : _it(t._it)
+	{
+	}
 
-    reference operator*() const { return *_it; }
+	reference operator*() const
+	{
+		return *_it;
+	}
 
-    output_it &operator++() {
-        ++_it;
-        return *this;
-    }
+	output_it &
+	operator++()
+	{
+		++_it;
+		return *this;
+	}
 
-    output_it operator++(int) {
-        output_it tmp(*this);
-        ++(*this);
-        return tmp;
-    }
+	output_it
+	operator++(int)
+	{
+		output_it tmp(*this);
+		++(*this);
+		return tmp;
+	}
 
-   private:
-    It _it;
+private:
+	It _it;
 };
 
 /**
@@ -92,44 +105,63 @@ class output_it {
  */
 template <typename It>
 class input_it {
-   public:
-    using iterator_category = std::input_iterator_tag;
-    using value_type = typename std::iterator_traits<It>::value_type;
-    using difference_type = typename std::iterator_traits<It>::difference_type;
-    using pointer = typename std::iterator_traits<It>::pointer;
-    using reference = typename std::iterator_traits<It>::reference;
+public:
+	using iterator_category = std::input_iterator_tag;
+	using value_type = typename std::iterator_traits<It>::value_type;
+	using difference_type =
+		typename std::iterator_traits<It>::difference_type;
+	using pointer = typename std::iterator_traits<It>::pointer;
+	using reference = typename std::iterator_traits<It>::reference;
 
-    input_it() = delete;
+	input_it() = delete;
 
-    explicit input_it(It it) : _it(it) {}
+	explicit input_it(It it) : _it(it)
+	{
+	}
 
-    input_it(const input_it &t) : _it(t._it) {}
+	input_it(const input_it &t) : _it(t._it)
+	{
+	}
 
-    reference operator*() const { return *_it; }
+	reference operator*() const
+	{
+		return *_it;
+	}
 
-    const pointer operator->() const { return _it; }
+	const pointer operator->() const
+	{
+		return _it;
+	}
 
-    input_it &operator++() {
-        ++_it;
-        return *this;
-    }
+	input_it &
+	operator++()
+	{
+		++_it;
+		return *this;
+	}
 
-    input_it operator++(int) {
-        input_it tmp(*this);
-        ++(*this);
-        return tmp;
-    }
+	input_it
+	operator++(int)
+	{
+		input_it tmp(*this);
+		++(*this);
+		return tmp;
+	}
 
-    friend bool operator==(const input_it &x, const input_it &y) {
-        return x._it == y._it;
-    }
+	friend bool
+	operator==(const input_it &x, const input_it &y)
+	{
+		return x._it == y._it;
+	}
 
-    friend bool operator!=(const input_it &x, const input_it &y) {
-        return !(x == y);
-    }
+	friend bool
+	operator!=(const input_it &x, const input_it &y)
+	{
+		return !(x == y);
+	}
 
-   private:
-    It _it;
+private:
+	It _it;
 };
 
 /**
@@ -147,44 +179,65 @@ class input_it {
  */
 template <typename It>
 class forward_it {
-   public:
-    using iterator_category = std::forward_iterator_tag;
-    using value_type = typename std::iterator_traits<It>::value_type;
-    using difference_type = typename std::iterator_traits<It>::difference_type;
-    using pointer = typename std::iterator_traits<It>::pointer;
-    using reference = typename std::iterator_traits<It>::reference;
+public:
+	using iterator_category = std::forward_iterator_tag;
+	using value_type = typename std::iterator_traits<It>::value_type;
+	using difference_type =
+		typename std::iterator_traits<It>::difference_type;
+	using pointer = typename std::iterator_traits<It>::pointer;
+	using reference = typename std::iterator_traits<It>::reference;
 
-    forward_it() : _it() {}
+	forward_it() : _it()
+	{
+	}
 
-    explicit forward_it(It it) : _it(it) {}
+	explicit forward_it(It it) : _it(it)
+	{
+	}
 
-    forward_it(const forward_it &t) : _it(t._it) {}
+	forward_it(const forward_it &t) : _it(t._it)
+	{
+	}
 
-    reference operator*() const { return *_it; }
+	reference operator*() const
+	{
+		return *_it;
+	}
 
-    pointer operator->() const { return _it; }
+	pointer operator->() const
+	{
+		return _it;
+	}
 
-    forward_it &operator++() {
-        ++_it;
-        return *this;
-    }
+	forward_it &
+	operator++()
+	{
+		++_it;
+		return *this;
+	}
 
-    forward_it operator++(int) {
-        forward_it tmp(*this);
-        ++(*this);
-        return tmp;
-    }
+	forward_it
+	operator++(int)
+	{
+		forward_it tmp(*this);
+		++(*this);
+		return tmp;
+	}
 
-    friend bool operator==(const forward_it &x, const forward_it &y) {
-        return x._it == y._it;
-    }
+	friend bool
+	operator==(const forward_it &x, const forward_it &y)
+	{
+		return x._it == y._it;
+	}
 
-    friend bool operator!=(const forward_it &x, const forward_it &y) {
-        return !(x == y);
-    }
+	friend bool
+	operator!=(const forward_it &x, const forward_it &y)
+	{
+		return !(x == y);
+	}
 
-   private:
-    It _it;
+private:
+	It _it;
 };
 
 /**
@@ -203,57 +256,80 @@ class forward_it {
  */
 template <typename It>
 class bidirectional_it {
-   public:
-    using iterator_category = std::bidirectional_iterator_tag;
-    using value_type = typename std::iterator_traits<It>::value_type;
-    using difference_type = typename std::iterator_traits<It>::difference_type;
-    using pointer = typename std::iterator_traits<It>::pointer;
-    using reference = typename std::iterator_traits<It>::reference;
+public:
+	using iterator_category = std::bidirectional_iterator_tag;
+	using value_type = typename std::iterator_traits<It>::value_type;
+	using difference_type =
+		typename std::iterator_traits<It>::difference_type;
+	using pointer = typename std::iterator_traits<It>::pointer;
+	using reference = typename std::iterator_traits<It>::reference;
 
-    bidirectional_it() : _it() {}
+	bidirectional_it() : _it()
+	{
+	}
 
-    explicit bidirectional_it(It it) : _it(it) {}
+	explicit bidirectional_it(It it) : _it(it)
+	{
+	}
 
-    bidirectional_it(const bidirectional_it &t) : _it(t._it) {}
+	bidirectional_it(const bidirectional_it &t) : _it(t._it)
+	{
+	}
 
-    reference operator*() const { return *_it; }
+	reference operator*() const
+	{
+		return *_it;
+	}
 
-    pointer operator->() const { return _it; }
+	pointer operator->() const
+	{
+		return _it;
+	}
 
-    bidirectional_it &operator++() {
-        ++_it;
-        return *this;
-    }
+	bidirectional_it &
+	operator++()
+	{
+		++_it;
+		return *this;
+	}
 
-    bidirectional_it operator++(int) {
-        bidirectional_it tmp(*this);
-        ++(*this);
-        return tmp;
-    }
+	bidirectional_it
+	operator++(int)
+	{
+		bidirectional_it tmp(*this);
+		++(*this);
+		return tmp;
+	}
 
-    bidirectional_it &operator--() {
-        --_it;
-        return *this;
-    }
+	bidirectional_it &
+	operator--()
+	{
+		--_it;
+		return *this;
+	}
 
-    bidirectional_it operator--(int) {
-        bidirectional_it tmp(*this);
-        --(*this);
-        return tmp;
-    }
+	bidirectional_it
+	operator--(int)
+	{
+		bidirectional_it tmp(*this);
+		--(*this);
+		return tmp;
+	}
 
-    friend bool operator==(const bidirectional_it &x,
-                           const bidirectional_it &y) {
-        return x._it == y._it;
-    }
+	friend bool
+	operator==(const bidirectional_it &x, const bidirectional_it &y)
+	{
+		return x._it == y._it;
+	}
 
-    friend bool operator!=(const bidirectional_it &x,
-                           const bidirectional_it &y) {
-        return !(x == y);
-    }
+	friend bool
+	operator!=(const bidirectional_it &x, const bidirectional_it &y)
+	{
+		return !(x == y);
+	}
 
-   private:
-    It _it;
+private:
+	It _it;
 };
 
 /**
@@ -277,110 +353,154 @@ class bidirectional_it {
  */
 template <typename It>
 class random_access_it {
-   public:
-    using iterator_category = std::random_access_iterator_tag;
-    using value_type = typename std::iterator_traits<It>::value_type;
-    using difference_type = typename std::iterator_traits<It>::difference_type;
-    using pointer = typename std::iterator_traits<It>::pointer;
-    using reference = typename std::iterator_traits<It>::reference;
+public:
+	using iterator_category = std::random_access_iterator_tag;
+	using value_type = typename std::iterator_traits<It>::value_type;
+	using difference_type =
+		typename std::iterator_traits<It>::difference_type;
+	using pointer = typename std::iterator_traits<It>::pointer;
+	using reference = typename std::iterator_traits<It>::reference;
 
-    random_access_it() : _it() {}
+	random_access_it() : _it()
+	{
+	}
 
-    explicit random_access_it(It it) : _it(it) {}
+	explicit random_access_it(It it) : _it(it)
+	{
+	}
 
-    random_access_it(const random_access_it &t) : _it(t._it) {}
+	random_access_it(const random_access_it &t) : _it(t._it)
+	{
+	}
 
-    reference operator*() const { return *_it; }
+	reference operator*() const
+	{
+		return *_it;
+	}
 
-    pointer operator->() const { return _it; }
+	pointer operator->() const
+	{
+		return _it;
+	}
 
-    random_access_it &operator++() {
-        ++_it;
-        return *this;
-    }
+	random_access_it &
+	operator++()
+	{
+		++_it;
+		return *this;
+	}
 
-    random_access_it operator++(int) {
-        random_access_it tmp(*this);
-        ++(*this);
-        return tmp;
-    }
+	random_access_it
+	operator++(int)
+	{
+		random_access_it tmp(*this);
+		++(*this);
+		return tmp;
+	}
 
-    random_access_it &operator--() {
-        --_it;
-        return *this;
-    }
+	random_access_it &
+	operator--()
+	{
+		--_it;
+		return *this;
+	}
 
-    random_access_it operator--(int) {
-        random_access_it tmp(*this);
-        --(*this);
-        return tmp;
-    }
+	random_access_it
+	operator--(int)
+	{
+		random_access_it tmp(*this);
+		--(*this);
+		return tmp;
+	}
 
-    random_access_it &operator+=(difference_type n) {
-        _it += n;
-        return *this;
-    }
+	random_access_it &
+	operator+=(difference_type n)
+	{
+		_it += n;
+		return *this;
+	}
 
-    random_access_it operator+(difference_type n) const {
-        random_access_it tmp(*this);
-        tmp += n;
-        return tmp;
-    }
+	random_access_it
+	operator+(difference_type n) const
+	{
+		random_access_it tmp(*this);
+		tmp += n;
+		return tmp;
+	}
 
-    friend random_access_it operator+(difference_type n, random_access_it x) {
-        x += n;
-        return x;
-    }
+	friend random_access_it
+	operator+(difference_type n, random_access_it x)
+	{
+		x += n;
+		return x;
+	}
 
-    random_access_it &operator-=(difference_type n) { return *this += -n; }
+	random_access_it &
+	operator-=(difference_type n)
+	{
+		return *this += -n;
+	}
 
-    random_access_it operator-(difference_type n) const {
-        random_access_it tmp(*this);
-        tmp -= n;
-        return tmp;
-    }
+	random_access_it
+	operator-(difference_type n) const
+	{
+		random_access_it tmp(*this);
+		tmp -= n;
+		return tmp;
+	}
 
-    difference_type operator-(random_access_it x) const {
-        difference_type n = this->_it - x._it;
-        return n;
-    }
+	difference_type
+	operator-(random_access_it x) const
+	{
+		difference_type n = this->_it - x._it;
+		return n;
+	}
 
-    reference operator[](difference_type n) const { return _it[n]; }
+	reference operator[](difference_type n) const
+	{
+		return _it[n];
+	}
 
-    friend bool operator==(const random_access_it &x,
-                           const random_access_it &y) {
-        return x._it == y._it;
-    }
+	friend bool
+	operator==(const random_access_it &x, const random_access_it &y)
+	{
+		return x._it == y._it;
+	}
 
-    friend bool operator!=(const random_access_it &x,
-                           const random_access_it &y) {
-        return !(x == y);
-    }
+	friend bool
+	operator!=(const random_access_it &x, const random_access_it &y)
+	{
+		return !(x == y);
+	}
 
-    friend bool operator<(const random_access_it &x,
-                          const random_access_it &y) {
-        return x._it() < y._it();
-    }
+	friend bool
+	operator<(const random_access_it &x, const random_access_it &y)
+	{
+		return x._it() < y._it();
+	}
 
-    friend bool operator<=(const random_access_it &x,
-                           const random_access_it &y) {
-        return !(y < x);
-    }
+	friend bool
+	operator<=(const random_access_it &x, const random_access_it &y)
+	{
+		return !(y < x);
+	}
 
-    friend bool operator>(const random_access_it &x,
-                          const random_access_it &y) {
-        return y < x;
-    }
+	friend bool
+	operator>(const random_access_it &x, const random_access_it &y)
+	{
+		return y < x;
+	}
 
-    friend bool operator>=(const random_access_it &x,
-                           const random_access_it &y) {
-        return !(x < y);
-    }
+	friend bool
+	operator>=(const random_access_it &x, const random_access_it &y)
+	{
+		return !(x < y);
+	}
 
-   private:
-    It _it;
+private:
+	It _it;
 };
 
-}  // namespace test_support
+} /* namespace test_common */
 
 #endif /* ITERATORS_COMMON_HPP */

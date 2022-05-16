@@ -9,24 +9,26 @@
 
 // <string>
 
-// size_type find_first_not_of(const charT* s, size_type pos, size_type n)
-// const;
+// size_type find_first_not_of(const charT* s, size_type pos, size_type n) const;
 
-#include <cassert>
 #include <string>
+#include <cassert>
 
 #include "min_allocator.h"
 
 template <class S>
-void test(const S& s, const typename S::value_type* str,
-          typename S::size_type pos, typename S::size_type n,
-          typename S::size_type x) {
+void
+test(const S& s, const typename S::value_type* str, typename S::size_type pos,
+     typename S::size_type n, typename S::size_type x)
+{
     assert(s.find_first_not_of(str, pos, n) == x);
-    if (x != S::npos) assert(pos <= x && x < s.size());
+    if (x != S::npos)
+        assert(pos <= x && x < s.size());
 }
 
 template <class S>
-void test0() {
+void test0()
+{
     test(S(""), "", 0, 0, S::npos);
     test(S(""), "irkhs", 0, 0, S::npos);
     test(S(""), "kante", 0, 1, S::npos);
@@ -130,7 +132,8 @@ void test0() {
 }
 
 template <class S>
-void test1() {
+void test1()
+{
     test(S("gbhqo"), "skqne", 5, 4, S::npos);
     test(S("ktdor"), "kipnf", 5, 5, S::npos);
     test(S("ldprn"), "hmrnqdgifl", 5, 0, S::npos);
@@ -234,7 +237,8 @@ void test1() {
 }
 
 template <class S>
-void test2() {
+void test2()
+{
     test(S("sdpcilonqj"), "dnjfsagktr", 10, 5, S::npos);
     test(S("gtfbdkqeml"), "nejaktmiqg", 10, 9, S::npos);
     test(S("bmeqgcdorj"), "pjqonlebsf", 10, 10, S::npos);
@@ -338,7 +342,8 @@ void test2() {
 }
 
 template <class S>
-void test3() {
+void test3()
+{
     test(S("pboqganrhedjmltsicfk"), "gbkhdnpoietfcmrslajq", 20, 1, S::npos);
     test(S("klchabsimetjnqgorfpd"), "rtfnmbsglkjaichoqedp", 20, 10, S::npos);
     test(S("sirfgmjqhctndbklaepo"), "ohkmdpfqbsacrtjnlgei", 20, 19, S::npos);
@@ -361,23 +366,22 @@ void test3() {
     test(S("hnbrcplsjfgiktoedmaq"), "qprlsfojamgndekthibc", 21, 20, S::npos);
 }
 
-int main() {
+int main()
+{
     {
-        typedef std::string S;
-        test0<S>();
-        test1<S>();
-        test2<S>();
-        test3<S>();
+    typedef std::string S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    test3<S>();
     }
 #if TEST_STD_VER >= 11
     {
-        typedef std::basic_string<char, std::char_traits<char>,
-                                  min_allocator<char>>
-            S;
-        test0<S>();
-        test1<S>();
-        test2<S>();
-        test3<S>();
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    test3<S>();
     }
 #endif
 }

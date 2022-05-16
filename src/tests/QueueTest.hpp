@@ -5,40 +5,38 @@
  * This is a test with fixed number of operations for queues.
  */
 
-#include <random>
-
 #include "AllocatorMacro.hpp"
 #include "Persistent.hpp"
-#include "RQueue.hpp"
 #include "TestConfig.hpp"
+#include "RQueue.hpp"
+#include <random>
 #ifdef PRONTO
-#include <execinfo.h>
 #include <signal.h>
-
-#include "nvm_manager.hpp"
 #include "savitar.hpp"
-#include "snapshot.hpp"
 #include "thread.hpp"
+#include "nvm_manager.hpp"
+#include "snapshot.hpp"
+#include <execinfo.h>
 #endif
-class QueueTest : public Test {
+class QueueTest : public Test{
 #ifdef PRONTO
     // some necessary var and func for running pronto
     static pthread_t snapshot_thread;
     static pthread_mutex_t snapshot_lock;
 
-    static void* snapshot_worker(void* arg) {
-        Snapshot* snap = (Snapshot*)arg;
+    static void *snapshot_worker(void *arg) {
+        Snapshot *snap = (Snapshot *)arg;
         snap->create();
         delete snap;
         return NULL;
     }
 
-    static void signal_handler(int sig, siginfo_t* si, void* unused) {
+    static void signal_handler(int sig, siginfo_t *si, void *unused) {
         assert(sig == SIGSEGV || sig == SIGUSR1);
         if (sig == SIGSEGV) {
-            void* addr = si->si_addr;
+            void *addr = si->si_addr;
             if (!Snapshot::anyActiveSnapshot()) {
-                void* array[10];
+                void *array[10];
                 size_t size;
 
                 size = backtrace(array, 10);
@@ -47,17 +45,18 @@ class QueueTest : public Test {
                 exit(1);
             }
             Snapshot::getInstance()->pageFaultHandler(addr);
-        } else {  // SIGUSR1
+        }
+        else { // SIGUSR1
             pthread_mutex_lock(&snapshot_lock);
             if (!Snapshot::anyActiveSnapshot()) {
-                Snapshot* snap = new Snapshot(PMEM_PATH);
+                Snapshot *snap = new Snapshot(PMEM_PATH);
                 pthread_create(&snapshot_thread, NULL, snapshot_worker, snap);
             }
             pthread_mutex_unlock(&snapshot_lock);
         }
     }
 #endif
-   public:
+public:
     // const std::string YCSB_PREFIX = "/localdisk2/ycsb_traces/ycsb/";
     RQueue<std::string>* q;
     // vector<std::string>** traces;
@@ -69,8 +68,8 @@ class QueueTest : public Test {
     uint64_t* thd_ops;
     unsigned int enq;
     std::string value_buffer;
-    QueueTest(uint64_t o, unsigned int e = 50) {
-        // wl is a or b
+    QueueTest(uint64_t o, unsigned int e = 50){
+        //wl is a or b
         // trace_prefix = YCSB_PREFIX + wl + "-";
         // q = nullptr;
         total_ops = o;
@@ -82,18 +81,19 @@ class QueueTest : public Test {
     //         delete q;
     // }
 
-    void parInit(GlobalTestConfig* gtc, LocalTestConfig* ltc) {
+    void parInit(GlobalTestConfig* gtc, LocalTestConfig* ltc){
         q->init_thread(gtc, ltc);
 #ifdef PRONTO
-        if (ltc->tid == 0) doPrefill(gtc, 0);
+        if(ltc->tid==0)
+            doPrefill(gtc,0);
 #endif
     }
 
-    void init(GlobalTestConfig* gtc) {
+    void init(GlobalTestConfig* gtc){
 #ifdef PRONTO
         // init pronto things
         Savitar_core_init();
-        NVManager::getInstance();  // recover persistent objects (blocking)
+        NVManager::getInstance(); // recover persistent objects (blocking)
 
         // Register signal handler for snapshots
         pthread_mutex_init(&snapshot_lock, NULL);
@@ -106,11 +106,9 @@ class QueueTest : public Test {
         assert(sigaction(SIGUSR1, &sa, NULL) == 0);
 #endif
 
-        if (gtc->checkEnv("ValueSize")) {
+        if(gtc->checkEnv("ValueSize")){
             val_size = atoi((gtc->getEnv("ValueSize")).c_str());
-            assert(val_size <= TESTS_VAL_SIZE &&
-                   "ValueSize dynamically passed in is greater than macro "
-                   "TESTS_VAL_SIZE!");
+            assert(val_size<=TESTS_VAL_SIZE&&"ValueSize dynamically passed in is greater than macro TESTS_VAL_SIZE!");
         }
         value_buffer.reserve(val_size);
         value_buffer.clear();
@@ -120,23 +118,23 @@ class QueueTest : public Test {
         }
         value_buffer += '\0';
         getRideable(gtc);
-
+        
         thd_num = to_string(gtc->task_num);
-        if (gtc->checkEnv("prefill")) {
+        if(gtc->checkEnv("prefill")){
             prefill = atoi((gtc->getEnv("prefill")).c_str());
         }
 #ifndef PRONTO /* if pronto, we do prefill in parInit */
-        doPrefill(gtc, 0);
+        doPrefill(gtc,0);
 #endif
         thd_ops = new uint64_t[gtc->task_num];
-        uint64_t new_ops = total_ops / gtc->task_num;
-        for (int i = 0; i < gtc->task_num; i++) {
+        uint64_t new_ops = total_ops/gtc->task_num;
+        for(int i=0;i<gtc->task_num;i++){
             thd_ops[i] = new_ops;
         }
-        if (new_ops * gtc->task_num != total_ops) {
-            thd_ops[0] += (total_ops - new_ops * gtc->task_num);
+        if(new_ops*gtc->task_num != total_ops) {
+            thd_ops[0] += (total_ops - new_ops*gtc->task_num);
         }
-
+        
         // /* get workload */
         // trace_prefix = trace_prefix + "load-" + thd_num + ".";
         // if(gtc->verbose){
@@ -156,21 +154,22 @@ class QueueTest : public Test {
         gtc->interval = numeric_limits<double>::max();
     }
 
-    int execute(GlobalTestConfig* gtc, LocalTestConfig* ltc) {
+    int execute(GlobalTestConfig* gtc, LocalTestConfig* ltc){
         int tid = ltc->tid;
         std::mt19937_64 gen_p(ltc->seed);
         for (size_t i = 0; i < thd_ops[ltc->tid]; i++) {
-            unsigned p = gen_p() % 100;
-            if (p < enq) {
+            unsigned p = gen_p()%100;
+            if (p<enq) {
                 q->enqueue(value_buffer, ltc->tid);
-            } else {
+            }
+            else {
                 q->dequeue(tid);
             }
         }
         return thd_ops[ltc->tid];
     }
     // void operation(unsigned p, string& value_buffer, int tid){
-
+        
     //     if (p<enq) {
     //         q->enqueue(value_buffer, tid);
     //     }
@@ -179,7 +178,7 @@ class QueueTest : public Test {
     //     }
     // }
 
-    void cleanup(GlobalTestConfig* gtc) {
+    void cleanup(GlobalTestConfig* gtc){
 #ifdef PRONTO
         // Wait for active snapshots to complete
         pthread_mutex_lock(&snapshot_lock);
@@ -195,20 +194,20 @@ class QueueTest : public Test {
         delete q;
 #endif
     }
-    void getRideable(GlobalTestConfig* gtc) {
+    void getRideable(GlobalTestConfig* gtc){
         Rideable* ptr = gtc->allocRideable();
         q = dynamic_cast<RQueue<std::string>*>(ptr);
-        if (!q) {
+        if(!q){
             errexit("QueueTest must be run on RQueue<string> type object.");
-        }
+        } 
     }
-    void doPrefill(GlobalTestConfig* gtc, int tid) {
-        if (this->prefill > 0) {
+    void doPrefill(GlobalTestConfig* gtc, int tid){
+        if(this->prefill > 0){
             int i = 0;
-            for (i = 0; i < this->prefill; i++) {
+            for(i = 0; i < this->prefill; i++){
                 q->enqueue(value_buffer, 0);
             }
-            if (gtc->verbose) {
+            if(gtc->verbose){
                 printf("Prefilled %d\n", i);
             }
         }

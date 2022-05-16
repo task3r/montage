@@ -41,9 +41,11 @@
 #include <chrono>
 #include <ctime>
 
-namespace pmem {
+namespace pmem
+{
 
-namespace detail {
+namespace detail
+{
 
 /**
  * Convert std::chrono::time_point to posix timespec.
@@ -53,19 +55,21 @@ namespace detail {
  * @return converted timespec structure.
  */
 template <typename Clock, typename Duration = typename Clock::duration>
-timespec timepoint_to_timespec(
-    const std::chrono::time_point<Clock, Duration> &timepoint) {
-    timespec ts;
-    auto rel_duration = timepoint.time_since_epoch();
-    const auto sec =
-        std::chrono::duration_cast<std::chrono::seconds>(rel_duration);
+timespec
+timepoint_to_timespec(const std::chrono::time_point<Clock, Duration> &timepoint)
+{
+	timespec ts;
+	auto rel_duration = timepoint.time_since_epoch();
+	const auto sec =
+		std::chrono::duration_cast<std::chrono::seconds>(rel_duration);
 
-    ts.tv_sec = sec.count();
-    ts.tv_nsec = static_cast<long>(
-        std::chrono::duration_cast<std::chrono::nanoseconds>(rel_duration - sec)
-            .count());
+	ts.tv_sec = sec.count();
+	ts.tv_nsec = static_cast<long>(
+		std::chrono::duration_cast<std::chrono::nanoseconds>(
+			rel_duration - sec)
+			.count());
 
-    return ts;
+	return ts;
 }
 
 } /* namespace detail */

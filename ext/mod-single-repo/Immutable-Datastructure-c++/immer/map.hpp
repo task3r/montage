@@ -8,11 +8,11 @@
 
 #pragma once
 
-#include <cstring>
+#include <immer/memory_policy.hpp>
 #include <immer/detail/hamts/champ.hpp>
 #include <immer/detail/hamts/champ_iterator.hpp>
-#include <immer/memory_policy.hpp>
 #include <immer/nvm_utils.hpp>
+#include <cstring>
 #if IMMER_USE_NVM
 #include <iostream>
 #include <string>
@@ -21,8 +21,12 @@
 
 namespace immer {
 
-template <typename K, typename T, typename Hash, typename Equal,
-          typename MemoryPolicy, detail::hamts::bits_t B>
+template <typename K,
+          typename T,
+          typename Hash,
+          typename Equal,
+          typename MemoryPolicy,
+          detail::hamts::bits_t B>
 class map_transient;
 
 /*!
@@ -59,79 +63,98 @@ class map_transient;
 
 #define ToCharStar(buffer) std::string(buffer.begin(), buffer.end()).c_str()
 
-template <typename K, typename T, typename Hash = std::hash<K>,
-          typename Equal = std::equal_to<K>,
-          typename MemoryPolicy = default_memory_policy,
+template <typename K,
+          typename T,
+          typename Hash          = std::hash<K>,
+          typename Equal         = std::equal_to<K>,
+          typename MemoryPolicy  = default_memory_policy,
           detail::hamts::bits_t B = default_bits>
-class map {
+class map
+{
     using value_t = std::pair<K, T>;
 
-    struct project_value {
-        const T& operator()(const value_t& v) const noexcept {
+    struct project_value
+    {
+        const T& operator() (const value_t& v) const noexcept
+        {
             return v.second;
         }
     };
 
-    struct project_value_ptr {
-        const T* operator()(const value_t& v) const noexcept {
+    struct project_value_ptr
+    {
+        const T* operator() (const value_t& v) const noexcept
+        {
             return &v.second;
         }
     };
 
-    struct combine_value {
+    struct combine_value
+    {
         template <typename Kf, typename Tf>
-        value_t operator()(Kf&& k, Tf&& v) const {
-            return {std::forward<Kf>(k), std::forward<Tf>(v)};
+        value_t operator() (Kf&& k, Tf&& v) const
+        {
+            return { std::forward<Kf>(k), std::forward<Tf>(v) };
         }
     };
 
-    struct default_value {
-        const T& operator()() const {
+    struct default_value
+    {
+        const T& operator() () const
+        {
             static T v{};
             return v;
         }
     };
 
-    struct error_value {
-        const T& operator()() const {
+    struct error_value
+    {
+        const T& operator() () const
+        {
             throw std::out_of_range{"key not found"};
         }
     };
 
-    struct hash_key {
-        auto operator()(const value_t& v) { return Hash{}(v.first); }
+    struct hash_key
+    {
+        auto operator() (const value_t& v)
+        { return Hash{}(v.first); }
 
-        auto operator()(const K& v) { return Hash{}(v); }
+        auto operator() (const K& v)
+        { return Hash{}(v); }
     };
 
-    struct equal_key {
-        auto operator()(const value_t& a, const value_t& b) {
-            return Equal{}(a.first, b.first);
-        }
+    struct equal_key
+    {
+        auto operator() (const value_t& a, const value_t& b)
+        { return Equal{}(a.first, b.first); }
 
-        auto operator()(const value_t& a, const K& b) {
-            return Equal{}(a.first, b);
-        }
+        auto operator() (const value_t& a, const K& b)
+        { return Equal{}(a.first, b); }
     };
 
-    struct equal_value {
-        auto operator()(const value_t& a, const value_t& b) {
-            return Equal{}(a.first, b.first) && a.second == b.second;
-        }
+    struct equal_value
+    {
+        auto operator() (const value_t& a, const value_t& b)
+        { return Equal{}(a.first, b.first) && a.second == b.second; }
     };
 
-    using impl_t =
-        detail::hamts::champ<value_t, hash_key, equal_key, MemoryPolicy, B>;
+    using impl_t = detail::hamts::champ<
+        value_t, hash_key, equal_key, MemoryPolicy, B>;
 
-    using memory = MemoryPolicy;
+    using memory      = MemoryPolicy;
     using heap_policy = typename memory::heap;
-    using heap = typename heap_policy::template optimized<sizeof(impl_t)>::type;
+    using heap = typename heap_policy::template
+        optimized<sizeof(impl_t)>::type;
 
-   public:
-    void* operator new(size_t size) { return heap::allocate(size); }
+public:
+
+    void* operator new(size_t size) {
+        return heap::allocate(size);
+    }
 
     void operator delete(void* data) {
-        heap::deallocate(sizeof(map<K, T>), data);
+        heap::deallocate(sizeof(map<K,T>), data);
     }
 
     void operator delete(void* data, size_t size) {
@@ -148,17 +171,17 @@ class map {
     using reference = const value_type&;
     using const_reference = const value_type&;
 
-    using iterator = detail::hamts::champ_iterator<value_t, hash_key, equal_key,
-                                                   MemoryPolicy, B>;
-    using const_iterator = iterator;
+    using iterator         = detail::hamts::champ_iterator<
+        value_t, hash_key, equal_key, MemoryPolicy, B>;
+    using const_iterator   = iterator;
 
-    using transient_type = map_transient<K, T, Hash, Equal, MemoryPolicy, B>;
+    using transient_type   = map_transient<K, T, Hash, Equal, MemoryPolicy, B>;
 
     /*!
      * Default constructor.  It creates a set of `size() == 0`.  It
      * does not allocate memory and its complexity is @f$ O(1) @f$.
      */
-    map() = default;
+    map() = default; 
 
     /*!
      * Returns an iterator pointing at the first element of the
@@ -184,10 +207,9 @@ class map {
      * otherwise. It won't allocate memory and its complexity is
      * *effectively* @f$ O(1) @f$.
      */
-    size_type count(const K& k) const {
-        return impl_.template get<detail::constantly<size_type, 1>,
-                                  detail::constantly<size_type, 0>>(k);
-    }
+    size_type count(const K& k) const
+    { return impl_.template get<detail::constantly<size_type, 1>,
+                                detail::constantly<size_type, 0>>(k); }
 
     /*!
      * Returns a `const` reference to the values associated to the key
@@ -195,9 +217,8 @@ class map {
      * default constructed value.  It does not allocate memory and its
      * complexity is *effectively* @f$ O(1) @f$.
      */
-    const T& operator[](const K& k) const {
-        return impl_.template get<project_value, default_value>(k);
-    }
+    const T& operator[] (const K& k) const
+    { return impl_.template get<project_value, default_value>(k); }
 
     /*!
      * Returns a `const` reference to the values associated to the key
@@ -205,9 +226,9 @@ class map {
      * `std::out_of_range` error.  It does not allocate memory and its
      * complexity is *effectively* @f$ O(1) @f$.
      */
-    const T& at(const K& k) const {
-        return impl_.template get<project_value, error_value>(k);
-    }
+    const T& at(const K& k) const
+    { return impl_.template get<project_value, error_value>(k); }
+
 
     /*!
      * Returns a pointer to the value associated with the key `k`.  If
@@ -238,18 +259,17 @@ class map {
      *
      * @endrst
      */
-    const T* find(const K& k) const {
-        return impl_.template get<project_value_ptr,
-                                  detail::constantly<const T*, nullptr>>(k);
-    }
+    const T* find(const K& k) const
+    { return impl_.template get<project_value_ptr,
+                                detail::constantly<const T*, nullptr>>(k); }
 
     /*!
      * Returns whether the sets are equal.
      */
-    bool operator==(const map& other) const {
-        return impl_.template equals<equal_value>(other.impl_);
-    }
-    bool operator!=(const map& other) const { return !(*this == other); }
+    bool operator==(const map& other) const
+    { return impl_.template equals<equal_value>(other.impl_); }
+    bool operator!=(const map& other) const
+    { return !(*this == other); }
 
     /*!
      * Returns a map containing the association `value`.  If the key is
@@ -257,7 +277,8 @@ class map {
      * It may allocate memory and its complexity is *effectively* @f$
      * O(1) @f$.
      */
-    map insert(value_type value) const { return impl_.add(std::move(value)); }
+    map insert(value_type value) const
+    { return impl_.add(std::move(value)); }
 
     /*!
      * Returns a map containing the association `(k, v)`.  If the key
@@ -265,9 +286,11 @@ class map {
      * It may allocate memory and its complexity is *effectively* @f$
      * O(1) @f$.
      */
-    map set(key_type k, mapped_type v) const {
+    map set(key_type k, mapped_type v) const
+    {
 #if IMMER_USE_NVM
-        map* new_map = new map(impl_.add({std::move(k), std::move(v)}));
+        map *new_map = 
+            new map(impl_.add({std::move(k), std::move(v)}));
         NVM_PERSIST_NOW(new_map, sizeof(map));
         NVM_FINALIZE();
         return std::move(*new_map);
@@ -276,8 +299,10 @@ class map {
 #endif
     }
 
-    map* set_ptr(key_type k, mapped_type v) const {
-        map* new_map = new map(impl_.add({std::move(k), std::move(v)}));
+    map *set_ptr(key_type k, mapped_type v) const
+    { 
+        map *new_map = new map(impl_.add(
+                    {std::move(k), std::move(v)}));
         NOTE("new_map:%p\n", new_map);
 #if IMMER_USE_NVM
         NVM_PERSIST_NOW(new_map, sizeof(map));
@@ -294,7 +319,8 @@ class map {
      * and its complexity is *effectively* @f$ O(1) @f$.
      */
     template <typename Fn>
-    map update(key_type k, Fn&& fn) const {
+    map update(key_type k, Fn&& fn) const
+    {
         return impl_
             .template update<project_value, default_value, combine_value>(
                 std::move(k), std::forward<Fn>(fn));
@@ -305,10 +331,13 @@ class map {
      * associated in the map it returns the same map.  It may allocate
      * memory and its complexity is *effectively* @f$ O(1) @f$.
      */
-    map erase(const K& k) const { return impl_.sub(k); }
+    map erase(const K& k) const
+    { return impl_.sub(k); }
 
-    map* erase_ptr(const K& k) const {
-        map* new_map = new map(impl_.sub(k));
+
+    map *erase_ptr(const K& k) const
+    {
+        map *new_map = new map(impl_.sub(k)); 
 #if IMMER_USE_NVM
         NVM_PERSIST_NOW(new_map, sizeof(map));
         NVM_FINALIZE();
@@ -320,10 +349,13 @@ class map {
      * Returns an @a transient form of this container, a
      * `immer::map_transient`.
      */
-    transient_type transient() const& { return transient_type{impl_}; }
-    transient_type transient() && { return transient_type{std::move(impl_)}; }
+    transient_type transient() const&
+    { return transient_type{ impl_ }; }
+    transient_type transient() &&
+    { return transient_type{ std::move(impl_) }; }
 
-    transient_type* transient_ptr() {
+    transient_type* transient_ptr()
+    { 
         auto* transient_map = new transient_type(impl_);
         NVM_PERSIST_NOW(transient_map, sizeof(impl_t));
         NVM_FINALIZE();
@@ -333,12 +365,14 @@ class map {
     // Semi-private
     const impl_t& impl() const { return impl_; }
 
-   private:
+private:
     friend transient_type;
 
-    map(impl_t impl) : impl_(std::move(impl)) {}
+    map(impl_t impl)
+        : impl_(std::move(impl))
+    {}
 
     impl_t impl_ = impl_t::empty();
 };
 
-}  // namespace immer
+} // namespace immer

@@ -33,26 +33,24 @@
 #ifndef LIBPMEMOBJ_CPP_UNITTEST_HPP
 #define LIBPMEMOBJ_CPP_UNITTEST_HPP
 
-#include <sys/stat.h>
-#include <sys/types.h>
-
+#include "../test_backtrace.h"
+#include "../valgrind_internal.hpp"
+#include "iterators_support.hpp"
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <type_traits>
 
-#include "../test_backtrace.h"
-#include "../valgrind_internal.hpp"
-#include "iterators_support.hpp"
-
-#define START()                      \
-    do {                             \
-        test_register_sighandlers(); \
-        set_valgrind_internals();    \
-    } while (0)
+#define START()                                                                \
+	do {                                                                   \
+		test_register_sighandlers();                                   \
+		set_valgrind_internals();                                      \
+	} while (0)
 
 #ifndef _WIN32
 #define os_stat_t struct stat
@@ -62,28 +60,34 @@
 #define os_stat _stat64
 #endif
 
-static inline void UT_OUT(const char *format, ...) {
-    va_list args_list;
-    va_start(args_list, format);
-    std::vfprintf(stdout, format, args_list);
-    va_end(args_list);
+static inline void
+UT_OUT(const char *format, ...)
+{
+	va_list args_list;
+	va_start(args_list, format);
+	std::vfprintf(stdout, format, args_list);
+	va_end(args_list);
 
-    fprintf(stdout, "\n");
+	fprintf(stdout, "\n");
 }
 
-static inline void UT_EXCEPTION(std::exception &e) {
-    std::cerr << e.what() << std::endl;
+static inline void
+UT_EXCEPTION(std::exception &e)
+{
+	std::cerr << e.what() << std::endl;
 }
 
-static inline void UT_FATAL(const char *format, ...) {
-    va_list args_list;
-    va_start(args_list, format);
-    std::vfprintf(stderr, format, args_list);
-    va_end(args_list);
+static inline void
+UT_FATAL(const char *format, ...)
+{
+	va_list args_list;
+	va_start(args_list, format);
+	std::vfprintf(stderr, format, args_list);
+	va_end(args_list);
 
-    fprintf(stderr, "\n");
+	fprintf(stderr, "\n");
 
-    abort();
+	abort();
 }
 
 #ifdef _WIN32
@@ -93,62 +97,67 @@ static inline void UT_FATAL(const char *format, ...) {
 /*
  * ut_stat -- stat that never returns -1
  */
-int ut_stat(const char *file, int line, const char *func, const char *path,
-            os_stat_t *st) {
-    int ret = os_stat(path, st);
+int
+ut_stat(const char *file, int line, const char *func, const char *path,
+	os_stat_t *st)
+{
+	int ret = os_stat(path, st);
 
-    if (ret < 0) UT_FATAL("%s:%d %s - !stat: %s", file, line, func, path);
+	if (ret < 0)
+		UT_FATAL("%s:%d %s - !stat: %s", file, line, func, path);
 
 #ifdef _WIN32
-    /* clear unused bits to avoid confusion */
-    st->st_mode &= 0600;
+	/* clear unused bits to avoid confusion */
+	st->st_mode &= 0600;
 #endif
 
-    return ret;
+	return ret;
 }
 
 #define STAT(path, st) ut_stat(__FILE__, __LINE__, __func__, path, st)
 
 /* assert a condition is true at runtime */
-#define UT_ASSERT(cnd)                                                       \
-    ((void)((cnd) || (UT_FATAL("%s:%d %s - assertion failure: %s", __FILE__, \
-                               __LINE__, __func__, #cnd),                    \
-                      0)))
+#define UT_ASSERT(cnd)                                                         \
+	((void)((cnd) ||                                                       \
+		(UT_FATAL("%s:%d %s - assertion failure: %s", __FILE__,        \
+			  __LINE__, __func__, #cnd),                           \
+		 0)))
 
 /* assertion with exception related string printed */
 #define UT_FATALexc(exception)                                                 \
-    ((void)(UT_EXCEPTION(exception), (UT_FATAL("%s:%d %s - assertion failure", \
-                                               __FILE__, __LINE__, __func__),  \
-                                      0)))
+	((void)(UT_EXCEPTION(exception),                                       \
+		(UT_FATAL("%s:%d %s - assertion failure", __FILE__, __LINE__,  \
+			  __func__),                                           \
+		 0)))
 
 /* assertion with extra info printed if assertion fails at runtime */
-#define UT_ASSERTinfo(cnd, info)                                              \
-    ((void)((cnd) ||                                                          \
-            (UT_FATAL("%s:%d %s - assertion failure: %s (%s = %s)", __FILE__, \
-                      __LINE__, __func__, #cnd, #info, info),                 \
-             0)))
+#define UT_ASSERTinfo(cnd, info)                                               \
+	((void)((cnd) ||                                                       \
+		(UT_FATAL("%s:%d %s - assertion failure: %s (%s = %s)",        \
+			  __FILE__, __LINE__, __func__, #cnd, #info, info),    \
+		 0)))
 
 /* assert two integer values are equal at runtime */
-#define UT_ASSERTeq(lhs, rhs)                                            \
-    ((void)(((lhs) == (rhs)) ||                                          \
-            (UT_FATAL("%s:%d %s - assertion failure: %s (0x%llx) == %s " \
-                      "(0x%llx)",                                        \
-                      __FILE__, __LINE__, __func__, #lhs,                \
-                      (unsigned long long)(lhs), #rhs,                   \
-                      (unsigned long long)(rhs)),                        \
-             0)))
+#define UT_ASSERTeq(lhs, rhs)                                                  \
+	((void)(((lhs) == (rhs)) ||                                            \
+		(UT_FATAL("%s:%d %s - assertion failure: %s (0x%llx) == %s "   \
+			  "(0x%llx)",                                          \
+			  __FILE__, __LINE__, __func__, #lhs,                  \
+			  (unsigned long long)(lhs), #rhs,                     \
+			  (unsigned long long)(rhs)),                          \
+		 0)))
 
 /* assert two integer values are not equal at runtime */
-#define UT_ASSERTne(lhs, rhs)                                            \
-    ((void)(((lhs) != (rhs)) ||                                          \
-            (UT_FATAL("%s:%d %s - assertion failure: %s (0x%llx) != %s " \
-                      "(0x%llx)",                                        \
-                      __FILE__, __LINE__, __func__, #lhs,                \
-                      (unsigned long long)(lhs), #rhs,                   \
-                      (unsigned long long)(rhs)),                        \
-             0)))
+#define UT_ASSERTne(lhs, rhs)                                                  \
+	((void)(((lhs) != (rhs)) ||                                            \
+		(UT_FATAL("%s:%d %s - assertion failure: %s (0x%llx) != %s "   \
+			  "(0x%llx)",                                          \
+			  __FILE__, __LINE__, __func__, #lhs,                  \
+			  (unsigned long long)(lhs), #rhs,                     \
+			  (unsigned long long)(rhs)),                          \
+		 0)))
 
-#define UT_ASSERT_NOEXCEPT(...) \
-    static_assert(noexcept(__VA_ARGS__), "Operation must be noexcept")
+#define UT_ASSERT_NOEXCEPT(...)                                                \
+	static_assert(noexcept(__VA_ARGS__), "Operation must be noexcept")
 
 #endif /* LIBPMEMOBJ_CPP_UNITTEST_HPP */

@@ -7,11 +7,11 @@ struct node_t {
     void *next;
     void *prev;
     void *data;
-    char __padding[40];  // so the whole struct is 64 byte for fairness
+    char __padding[40]; // so the whole struct is 64 byte for fairness
 };
 
 void perform_allocations(const std::string root_id) {
-    node_t *root = (node_t *)nvb::reserve_id(root_id, sizeof(node_t));
+    node_t *root = (node_t*) nvb::reserve_id(root_id, sizeof(node_t));
     root->next = nullptr;
     root->prev = nullptr;
     root->data = nullptr;
@@ -20,9 +20,9 @@ void perform_allocations(const std::string root_id) {
 
     node_t *last_element = root;
 
-    for (int i = 0; i < 1000; ++i) {
+    for (int i=0; i<1000; ++i) {
         // allocate new node
-        node_t *new_node = (node_t *)nvb::reserve(sizeof(node_t));
+        node_t *new_node = (node_t*) nvb::reserve(sizeof(node_t));
         new_node->next = nullptr;
         new_node->prev = nvb::rel(last_element);
         new_node->data = nullptr;
@@ -31,7 +31,7 @@ void perform_allocations(const std::string root_id) {
 
         // allocate payload
         void *payload = nvb::reserve(256);
-        *(int *)payload = i;
+        *(int*)payload = i;
         nvb::persist(payload, 256);
         nvb::activate(payload, &new_node->data, payload);
 
@@ -48,38 +48,30 @@ void perform_allocations(const std::string root_id) {
     while (true) {
         elem = (node_t*) nvb::abs(elem->next);
         if (*(int*)nvb::abs(elem->data) != count) {
-            std::cout << "node " << count << " has incorrect payload!" <<
-std::endl;
+            std::cout << "node " << count << " has incorrect payload!" << std::endl;
         }
         ++count;
         if (elem->next == 0)
             break;
     }
-    std::cout << "verified recovery of " << count << " items for root '" <<
-root_id << "'" << std::endl;
+    std::cout << "verified recovery of " << count << " items for root '" << root_id << "'" << std::endl;
 }*/
 
 int main(int argc, char **argv) {
     if (argc < 3 || argc > 4) {
-        std::cout << "usage: " << argv[0]
-                  << " <num_iterations> <payload_size_min> [payload_size_max]"
-                  << std::endl;
+        std::cout << "usage: " << argv[0] << " <num_iterations> <payload_size_min> [payload_size_max]" << std::endl;
         return -1;
     }
     uint64_t n_iterations = atoi(argv[1]);
     payload_size_min = atoi(argv[2]);
     if (payload_size_min < 64) {
-        std::cout << "WARNING: specified min payload size was less than "
-                     "minimum, using 64 bytes instead"
-                  << std::endl;
+        std::cout << "WARNING: specified min payload size was less than minimum, using 64 bytes instead" << std::endl;
         payload_size_min = 64;
     }
     if (argc == 4) {
         payload_size_max = atoi(argv[3]);
         if (payload_size_max < payload_size_min) {
-            std::cout << "WARNING: max payload size was less than min, using "
-                         "min instead"
-                      << std::endl;
+            std::cout << "WARNING: max payload size was less than min, using min instead" << std::endl;
             payload_size_max = payload_size_min;
         }
     } else {
@@ -93,7 +85,7 @@ int main(int argc, char **argv) {
     nvb::initialize("/mnt/pmfs/nvb", 0);
 
     // perform allocations and teardown
-    for (uint64_t i = 0; i < n_iterations; ++i) {
+    for (uint64_t i=0; i<n_iterations; ++i) {
         rootId = "mylist" + std::to_string(i);
         perform_allocations(rootId);
     }

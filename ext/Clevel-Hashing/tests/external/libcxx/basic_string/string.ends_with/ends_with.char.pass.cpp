@@ -12,22 +12,23 @@
 
 //   bool ends_with(charT x) const noexcept;
 
-#include <cassert>
 #include <string>
+#include <cassert>
 
 #include "test_macros.h"
 
-int main() {
+int main()
+{
     {
-        typedef std::string S;
-        S s1{};
-        S s2{"abcde", 5};
+    typedef std::string S;
+    S  s1 {};
+    S  s2 { "abcde", 5 };
 
-        ASSERT_NOEXCEPT(s1.ends_with('e'));
+    ASSERT_NOEXCEPT(s1.ends_with('e'));
 
-        assert(!s1.ends_with('e'));
-        assert(!s1.ends_with('x'));
-        assert(s2.ends_with('e'));
-        assert(!s2.ends_with('x'));
+    assert (!s1.ends_with('e'));
+    assert (!s1.ends_with('x'));
+    assert ( s2.ends_with('e'));
+    assert (!s2.ends_with('x'));
     }
 }

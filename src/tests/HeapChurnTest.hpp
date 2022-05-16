@@ -1,13 +1,13 @@
 // This test is obsolete
-#if 0
+#if 0 
 
 #ifndef HEAPCHURNTEST_HPP
 #define HEAPCHURNTEST_HPP
 
 #include "AllocatorMacro.hpp"
-#include "HeapQueue.hpp"
 #include "Persistent.hpp"
 #include "TestConfig.hpp"
+#include "HeapQueue.hpp"
 
 template <class V>
 class HeapChurnTest : public Test{
@@ -134,4 +134,4 @@ inline std::string HeapChurnTest<std::string>::fromInt(uint64_t v){
 
 #endif
 
-#endif  // 0
+#endif // 0

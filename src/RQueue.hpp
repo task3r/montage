@@ -12,24 +12,25 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License.
+limitations under the License. 
 
 */
+
 
 #ifndef RQUEUE_HPP
 #define RQUEUE_HPP
 
 #include <string>
-
 #include "Rideable.hpp"
+
 #include "optional.hpp"
 
-template <class V>
-class RQueue : public virtual Rideable {
-   public:
-    virtual optional<V> dequeue(int tid) = 0;
+template <class V> class RQueue : public virtual Rideable{
+public:
 
-    virtual void enqueue(V val, int tid) = 0;
+    virtual optional<V> dequeue(int tid)=0;
+
+    virtual void enqueue(V val, int tid)=0;
 };
 
-#endif
+#endif   

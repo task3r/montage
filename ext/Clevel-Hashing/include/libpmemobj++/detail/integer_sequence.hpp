@@ -40,15 +40,18 @@
 
 #include <cstddef>
 
-namespace pmem {
+namespace pmem
+{
 
-namespace detail {
+namespace detail
+{
 
 /*
  * Base index type template.
  */
 template <typename T, T...>
-struct integer_sequence {};
+struct integer_sequence {
+};
 
 /*
  * Size_t specialization of the integer sequence.
@@ -69,7 +72,7 @@ struct make_integer_seq_impl;
  */
 template <typename T, T I, T... Indices>
 struct make_integer_seq_impl<T, I, integer_sequence<T, Indices...>> {
-    typedef integer_sequence<T, Indices...> type;
+	typedef integer_sequence<T, Indices...> type;
 };
 
 /*
@@ -77,9 +80,10 @@ struct make_integer_seq_impl<T, I, integer_sequence<T, Indices...>> {
  */
 template <typename N, N I, N... Indices, typename T, typename... Types>
 struct make_integer_seq_impl<N, I, integer_sequence<N, Indices...>, T,
-                             Types...> {
-    typedef typename make_integer_seq_impl<
-        N, I + 1, integer_sequence<N, Indices..., I>, Types...>::type type;
+			     Types...> {
+	typedef typename make_integer_seq_impl<
+		N, I + 1, integer_sequence<N, Indices..., I>, Types...>::type
+		type;
 };
 
 /*
@@ -87,7 +91,7 @@ struct make_integer_seq_impl<N, I, integer_sequence<N, Indices...>, T,
  */
 template <typename... Types>
 using make_index_sequence =
-    make_integer_seq_impl<size_t, 0, integer_sequence<size_t>, Types...>;
+	make_integer_seq_impl<size_t, 0, integer_sequence<size_t>, Types...>;
 
 } /* namespace detail */
 

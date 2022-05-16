@@ -12,24 +12,25 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License.
+limitations under the License. 
 
 */
+
+
 
 #ifndef CONCURRENT_PRIMITIVES_HPP
 #define CONCURRENT_PRIMITIVES_HPP
 
 #include <assert.h>
 #include <stddef.h>
-
-#include <atomic>
 #include <iostream>
-#include <mutex>
+#include <atomic>
 #include <string>
+#include <mutex>
 
 #ifndef LEVEL1_DCACHE_LINESIZE
 #define LEVEL1_DCACHE_LINESIZE 64
-#define LEVEL1_DCACHE_LINEMASK (LEVEL1_DCACHE_LINESIZE - 1)
+#define LEVEL1_DCACHE_LINEMASK (LEVEL1_DCACHE_LINESIZE-1)
 #endif
 
 const auto CACHE_LINE_SIZE = LEVEL1_DCACHE_LINESIZE;
@@ -39,80 +40,72 @@ const auto CACHE_LINE_SIZE = LEVEL1_DCACHE_LINESIZE;
 
 // Pads data to cacheline size to eliminate false sharing
 
-template <typename T>
+
+
+template<typename T>
 class padded {
-   public:
-    //[[ align(CACHE_LINE_SIZE) ]] T ui;
-    T ui;
+public:
+   //[[ align(CACHE_LINE_SIZE) ]] T ui;	
+	T ui;
+private:
+   /*uint8_t pad[ CACHE_LINE_SIZE > sizeof(T)
+        ? CACHE_LINE_SIZE - sizeof(T)
+        : 1 ];*/
+	uint8_t pad[ 0 != sizeof(T)%CACHE_LINE_SIZE
+        ?  CACHE_LINE_SIZE - (sizeof(T)%CACHE_LINE_SIZE)
+        : CACHE_LINE_SIZE ];
+public:
+  padded<T> ():ui() {};
+  // conversion from T (constructor):
+  padded<T> (const T& val):ui(val) {};
+  // conversion from A (assignment):
+  padded<T>& operator= (const T& val) {ui = val; return *this;}
+  // conversion to A (type-cast operator)
+  operator T() {return T(ui);}
+};//__attribute__(( aligned(CACHE_LINE_SIZE) )); // alignment confuses valgrind by shifting bits
 
-   private:
-    /*uint8_t pad[ CACHE_LINE_SIZE > sizeof(T)
-         ? CACHE_LINE_SIZE - sizeof(T)
-         : 1 ];*/
-    uint8_t pad[0 != sizeof(T) % CACHE_LINE_SIZE
-                    ? CACHE_LINE_SIZE - (sizeof(T) % CACHE_LINE_SIZE)
-                    : CACHE_LINE_SIZE];
 
-   public:
-    padded<T>() : ui(){};
-    // conversion from T (constructor):
-    padded<T>(const T& val) : ui(val){};
-    // conversion from A (assignment):
-    padded<T>& operator=(const T& val) {
-        ui = val;
-        return *this;
-    }
-    // conversion to A (type-cast operator)
-    operator T() { return T(ui); }
-};  //__attribute__(( aligned(CACHE_LINE_SIZE) )); // alignment confuses
-    //valgrind by shifting bits
-
-template <typename T>
+template<typename T>
 class paddedAtomic {
-   public:
-    //[[ align(CACHE_LINE_SIZE) ]] T ui;
-    std::atomic<T> ui;
+public:
+   //[[ align(CACHE_LINE_SIZE) ]] T ui;	
+	std::atomic<T> ui;
+private:
+	uint8_t pad[ 0 != sizeof(T)%CACHE_LINE_SIZE
+        ?  CACHE_LINE_SIZE - (sizeof(T)%CACHE_LINE_SIZE)
+        : CACHE_LINE_SIZE ];
+public:
+  paddedAtomic<T> ():ui() {}
+  // conversion from T (constructor):
+  paddedAtomic<T> (const T& val):ui(val) {}
+  // conversion from A (assignment):
+  paddedAtomic<T>& operator= (const T& val) {ui.store(val); return *this;}
+  // conversion to A (type-cast operator)
+  operator T() {return T(ui.load());}
+};//__attribute__(( aligned(CACHE_LINE_SIZE) )); // alignment confuses valgrind by shifting bits
 
-   private:
-    uint8_t pad[0 != sizeof(T) % CACHE_LINE_SIZE
-                    ? CACHE_LINE_SIZE - (sizeof(T) % CACHE_LINE_SIZE)
-                    : CACHE_LINE_SIZE];
 
-   public:
-    paddedAtomic<T>() : ui() {}
-    // conversion from T (constructor):
-    paddedAtomic<T>(const T& val) : ui(val) {}
-    // conversion from A (assignment):
-    paddedAtomic<T>& operator=(const T& val) {
-        ui.store(val);
-        return *this;
-    }
-    // conversion to A (type-cast operator)
-    operator T() { return T(ui.load()); }
-};  //__attribute__(( aligned(CACHE_LINE_SIZE) )); // alignment confuses
-    //valgrind by shifting bits
 
-template <typename T>
+template<typename T>
 class volatile_padded {
-   public:
-    //[[ align(CACHE_LINE_SIZE) ]] volatile T ui;
-    volatile T ui;
+public:
+   //[[ align(CACHE_LINE_SIZE) ]] volatile T ui;	
+	volatile T ui;
+private:
+   uint8_t pad[ CACHE_LINE_SIZE > sizeof(T)
+        ? CACHE_LINE_SIZE - sizeof(T)
+        : 1 ];
+public:
+  volatile_padded<T> ():ui() {}
+  // conversion from T (constructor):
+  volatile_padded<T> (const T& val):ui(val) {}
+  // conversion from T (assignment):
+  volatile_padded<T>& operator= (const T& val) {ui = val; return *this;}
+  // conversion to T (type-cast operator)
+  operator T() {return T(ui);}
+}__attribute__(( aligned(CACHE_LINE_SIZE) ));
 
-   private:
-    uint8_t pad[CACHE_LINE_SIZE > sizeof(T) ? CACHE_LINE_SIZE - sizeof(T) : 1];
 
-   public:
-    volatile_padded<T>() : ui() {}
-    // conversion from T (constructor):
-    volatile_padded<T>(const T& val) : ui(val) {}
-    // conversion from T (assignment):
-    volatile_padded<T>& operator=(const T& val) {
-        ui = val;
-        return *this;
-    }
-    // conversion to T (type-cast operator)
-    operator T() { return T(ui); }
-} __attribute__((aligned(CACHE_LINE_SIZE)));
 
 // Counted pointer, used to eliminate ABA problem
 template <class T>
@@ -121,209 +114,235 @@ class cptr;
 // Counted pointer, local copy.  Non atomic, for use
 // to create values for counted pointers.
 template <class T>
-class cptr_local {
-    uint64_t ui __attribute__((aligned(8))) = 0;
+class cptr_local{
 
-   public:
-    void init(const T* ptr, const uint32_t sn) {
-        uint64_t a;
-        a = 0;
-        a = (uint32_t)ptr;
-        a = a << 32;
-        a += sn;
-        ui = a;
-    }
-    void init(const uint64_t initer) { ui = initer; }
-    void init(const cptr<T> ptr) { ui = ptr.all(); }
-    void init(const cptr_local<T> ptr) { ui = ptr.all(); }
-    uint64_t all() const { return ui; }
+	uint64_t ui
+		__attribute__(( aligned(8) )) =0;
 
-    T operator*() { return *this->ptr(); }
-    T* operator->() { return this->ptr(); }
+public:
+	void init(const T* ptr, const uint32_t sn){
+		uint64_t a;
+		a = 0;
+		a = (uint32_t)ptr;
+		a = a<<32;
+		a += sn;
+		ui=a;
+	}
+	void init(const uint64_t initer){
+		ui=initer;
+	}
+	void init(const cptr<T> ptr){
+		ui=ptr.all();
+	}
+	void init(const cptr_local<T> ptr){
+		ui=ptr.all();
+	}
+	uint64_t all() const{
+		return ui;
+	}
 
-    // conversion from T (constructor):
-    cptr_local<T>(const T*& val) { init(val, 0); }
-    // conversion to T (type-cast operator)
-    operator T*() { return this->ptr(); }
+	T operator *(){return *this->ptr();}
+	T* operator ->(){return this->ptr();}
 
-    void storeNull() { ui = 0; }
+	// conversion from T (constructor):
+	cptr_local<T> (const T*& val) {init(val,0);}
+	// conversion to T (type-cast operator)
+	operator T*() {return this->ptr();}
 
-    T* ptr() { return (T*)((ui & 0xffffffff00000000) >> 32); }
-    uint32_t sn() { return (ui & 0x00000000ffffffff); }
+	void storeNull(){
+		ui=0;
+	}
 
-    cptr_local<T>() { init(NULL, 0); }
-    cptr_local<T>(const uint64_t initer) { init(initer); }
-    cptr_local<T>(const T* ptr, const uint32_t sn) { init(ptr, sn); }
-    cptr_local<T>(const cptr_local<T>& cp) { init(cp.all()); }
 
-    cptr_local<T>(const cptr<T>& cp) { init(cp.all()); }
-    // conversion from A (assignment):
-    cptr_local<T>& operator=(const cptr<T>& cp) {
-        init(cp.all());
-        return *this;
-    }
+	T* ptr(){return (T*)((ui&0xffffffff00000000) >>32);}
+	uint32_t sn(){return (ui&0x00000000ffffffff);}
+
+	cptr_local<T>(){
+		init(NULL,0);
+	}
+	cptr_local<T>(const uint64_t initer){
+		init(initer);
+	}
+	cptr_local<T>(const T* ptr, const uint32_t sn){
+		init(ptr,sn);
+	}
+	cptr_local<T>(const cptr_local<T> &cp){
+		init(cp.all());
+	}
+
+	cptr_local<T> (const cptr<T>& cp) {init(cp.all());}
+	// conversion from A (assignment):
+	cptr_local<T>& operator= (const cptr<T>& cp) {init(cp.all()); return *this;}
 };
 
 // Counted pointer
 template <class T>
-class cptr {
-    std::atomic<uint64_t> ui __attribute__((aligned(8)));
+class cptr{
 
-   public:
-    void init(const T* ptr, const uint32_t sn) {
-        uint64_t a;
-        a = 0;
-        a = (uint32_t)ptr;
-        a = a << 32;
-        a += sn;
-        ui.store(a, std::memory_order_release);
-    }
-    void init(const uint64_t initer) { ui.store(initer); }
-    T operator*() { return *this->ptr(); }
-    T* operator->() { return this->ptr(); }
+	std::atomic<uint64_t> ui
+		__attribute__(( aligned(8) ));
 
-    // conversion from T (constructor):
-    cptr<T>(const T*& val) { init(val, 0); }
-    // conversion to T (type-cast operator)
-    operator T*() { return this->ptr(); }
+public:
+	void init(const T* ptr, const uint32_t sn){
+		uint64_t a;
+		a = 0;
+		a = (uint32_t)ptr;
+		a = a<<32;
+		a += sn;
+		ui.store(a,std::memory_order_release);
+	}
+	void init(const uint64_t initer){
+		ui.store(initer);
+	}
+	T operator *(){return *this->ptr();}
+	T* operator ->(){return this->ptr();}
 
-    T* ptr() {
-        return (
-            T*)(((ui.load(std::memory_order_consume)) & 0xffffffff00000000) >>
-                32);
-    }
-    uint32_t sn() {
-        return ((ui.load(std::memory_order_consume)) & 0x00000000ffffffff);
-    }
+  // conversion from T (constructor):
+  cptr<T> (const T*& val) {init(val,0);}
+  // conversion to T (type-cast operator)
+  operator T*() {return this->ptr();}
 
-    uint64_t all() const { return ui; }
+	T* ptr(){return (T*)(((ui.load(std::memory_order_consume))&0xffffffff00000000) >>32);}
+	uint32_t sn(){return ((ui.load(std::memory_order_consume))&0x00000000ffffffff);}
 
-    bool CAS(cptr_local<T>& oldval, T* newval) {
-        cptr_local<T> replacement;
-        replacement.init(newval, oldval.sn() + 1);
-        uint64_t old = oldval.all();
-        return ui.compare_exchange_strong(old, replacement.all(),
-                                          std::memory_order_release);
-    }
-    bool CAS(cptr_local<T>& oldval, cptr_local<T>& newval) {
-        cptr_local<T> replacement;
-        replacement.init(newval.ptr(), oldval.sn() + 1);
-        uint64_t old = oldval.all();
-        return ui.compare_exchange_strong(old, replacement.all(),
-                                          std::memory_order_release);
-    }
-    bool CAS(cptr<T>& oldval, T* newval) {
-        cptr_local<T> replacement;
-        replacement.init(newval, oldval.sn() + 1);
-        uint64_t old = oldval.all();
-        return ui.compare_exchange_strong(old, replacement.all(),
-                                          std::memory_order_release);
-    }
-    bool CAS(cptr<T>& oldval, cptr_local<T>& newval) {
-        cptr_local<T> replacement;
-        replacement.init(newval.ptr(), oldval.sn() + 1);
-        uint64_t old = oldval.all();
-        return ui.compare_exchange_strong(old, replacement.all(),
-                                          std::memory_order_release);
-    }
+	uint64_t all() const{
+		return ui;
+	}	
 
-    bool CAS(cptr_local<T>& oldval, T* newval, uint32_t newSn) {
-        cptr_local<T> replacement;
-        replacement.init(newval, newSn);
-        uint64_t old = oldval.all();
-        return ui.compare_exchange_strong(old, replacement.all(),
-                                          std::memory_order_release);
-    }
+	bool CAS(cptr_local<T> &oldval,T* newval){
+		cptr_local<T> replacement;
+		replacement.init(newval,oldval.sn()+1);
+		uint64_t old= oldval.all();
+		return ui.compare_exchange_strong(old,replacement.all(),std::memory_order_release);
+	}
+	bool CAS(cptr_local<T> &oldval,cptr_local<T> &newval){
+		cptr_local<T> replacement;
+		replacement.init(newval.ptr(),oldval.sn()+1);
+		uint64_t old= oldval.all();
+		return ui.compare_exchange_strong(old,replacement.all(),std::memory_order_release);
+	}
+	bool CAS(cptr<T> &oldval,T* newval){
+		cptr_local<T> replacement;
+		replacement.init(newval,oldval.sn()+1);
+		uint64_t old= oldval.all();
+		return ui.compare_exchange_strong(old,replacement.all(),std::memory_order_release);
+	}
+	bool CAS(cptr<T> &oldval,cptr_local<T> &newval){
+		cptr_local<T> replacement;
+		replacement.init(newval.ptr(),oldval.sn()+1);
+		uint64_t old= oldval.all();
+		return ui.compare_exchange_strong(old,replacement.all(),std::memory_order_release);
+	}
 
-    void storeNull() { init(NULL, 0); }
+	bool CAS(cptr_local<T> &oldval,T* newval, uint32_t newSn){
+		cptr_local<T> replacement;
+		replacement.init(newval,newSn);
+		uint64_t old= oldval.all();
+		return ui.compare_exchange_strong(old,replacement.all(),std::memory_order_release);
+	}
 
-    void storePtr(T* newval) {
-        cptr_local<T> oldval;
-        while (true) {
-            oldval.init(all());
-            if (CAS(oldval, newval)) {
-                break;
-            }
-        };
-    }
+	void storeNull(){
+		init(NULL,0);
+	}
 
-    cptr<T>() { init(NULL, 0); }
-    cptr<T>(const cptr<T>& cp) { init(cp.all()); }
-    cptr<T>(const cptr_local<T>& cp) { init(cp.all()); }
-    cptr<T>(const uint64_t initer) { init(initer); }
-    cptr<T>(const T* ptr, const uint32_t sn) { init(ptr, sn); }
+	void storePtr(T* newval){
+		cptr_local<T> oldval;
+		while(true){
+			oldval.init(all());
+			if(CAS(oldval,newval)){break;}
+		};
+	}
 
-    /*bool operator==(cptr<T> &other){
-            return other.ui==this->ui;
-    }*/
+	cptr<T>(){
+		init(NULL,0);
+	}
+	cptr<T>(const cptr<T>& cp){
+		init(cp.all());
+	}
+	cptr<T>(const cptr_local<T>& cp){
+		init(cp.all());
+	}
+	cptr<T>(const uint64_t initer){
+		init(initer);
+	}
+	cptr<T>(const T* ptr, const uint32_t sn){
+		init(ptr,sn);
+	}
+
+	/*bool operator==(cptr<T> &other){
+		return other.ui==this->ui;
+	}*/
 };
+
 
 // A hand-over-hand lock holder.
-class HOHLockHolder {
-    int i;
-    std::mutex sentinel;
-    std::mutex* locked[2];
+class HOHLockHolder{
+	int i;
+	std::mutex sentinel;
+	std::mutex* locked[2];
 
-    int flip() {
-        // i should only be 0 or 1.
-        i ^= 1;
-        return i;
-    }
-
-   public:
-    HOHLockHolder() {
-        locked[0] = &sentinel;
-        locked[1] = &sentinel;
-        i = 1;
-    }
-    ~HOHLockHolder() { clear(); }
-    void hold(std::mutex* lock) {
-        locked[flip()]->unlock();
-        lock->lock();
-        locked[i] = lock;
-    }
-    void clear() {
-        locked[0]->unlock();
-        locked[0] = &sentinel;
-        locked[1]->unlock();
-        locked[1] = &sentinel;
-        i = 1;
-    }
+	int flip(){
+		// i should only be 0 or 1.
+		i ^= 1;
+		return i;
+	}
+public:
+	HOHLockHolder(){
+		locked[0] = &sentinel;
+		locked[1] = &sentinel;
+		i = 1;
+	}
+	~HOHLockHolder(){
+		clear();
+	}
+	void hold(std::mutex* lock){
+		locked[flip()]->unlock();
+		lock->lock();
+		locked[i] = lock;
+	}
+	void clear(){
+		locked[0]->unlock();
+		locked[0] = &sentinel;
+		locked[1]->unlock();
+		locked[1] = &sentinel;
+		i = 1;
+	}
 };
-
+	
 // OLD CODE
 /*template <typename T> struct padded_data{
 public:
-        T ui;
-        bool operator==(const struct padded_data<T>  &x)
-        {
-                return ui==x.ui;
-        }
+	T ui;
+	bool operator==(const struct padded_data<T>  &x)
+	{
+		return ui==x.ui;
+	}
 
-        operator T(void) const{
-                return ui;
-        }
+ 	operator T(void) const{
+		return ui;
+	}
 
 private:
-        //pad to cache line size
-        uint8_t pad[LEVEL1_DCACHE_LINESIZE-sizeof(T)];
+	//pad to cache line size
+	uint8_t pad[LEVEL1_DCACHE_LINESIZE-sizeof(T)];
 
 };
 // Pads data to cacheline size to eliminate false sharing (but volatile)
 template <typename T> struct volatile_padded_data{
 public:
-        volatile T ui;
-        bool operator==(const T  &x)
-        {
-                //return x.closed == closed && x.t == t;
-                return ui==x.ui;
-        }
+	volatile T ui;
+	bool operator==(const T  &x)
+	{
+		//return x.closed == closed && x.t == t;
+		return ui==x.ui;
+	}
 
 private:
-        //pad to cache line size
-        uint8_t pad[LEVEL1_DCACHE_LINESIZE-sizeof(T)];
+	//pad to cache line size
+	uint8_t pad[LEVEL1_DCACHE_LINESIZE-sizeof(T)];
 
 };*/
+
 
 // Barrier. Reusable.
 // WARN: we should use pthread_barrier_t instead.
@@ -355,5 +374,6 @@ private:
 // 		}
 // 	}
 // };
+
 
 #endif

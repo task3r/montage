@@ -1,20 +1,19 @@
-#include "persister.hpp"
-
 #include <stdio.h>
-
+#include "persister.hpp"
 #include "nv_object.hpp"
 #include "thread.hpp"
 
 #ifdef DEBUG
 static inline uint64_t rdtscp() {
-    uint32_t aux;
-    uint64_t rax, rdx;
-    asm volatile("rdtscp\n" : "=a"(rax), "=d"(rdx), "=c"(aux) : :);
-    return (rdx << 32) + rax;
+  uint32_t aux;
+  uint64_t rax, rdx;
+  asm volatile ( "rdtscp\n" : "=a" (rax), "=d" (rdx), "=c" (aux) : : );
+  return (rdx << 32) + rax;
 }
 #endif
 
 void *Savitar_persister_worker(void *arg) {
+
     NvMethodCall *buffer = ((TxBuffers *)arg)->buffer;
     uint64_t *tx_buffer = ((TxBuffers *)arg)->tx_buffer;
     int thread_id = ((TxBuffers *)arg)->thread_id;
@@ -28,8 +27,7 @@ void *Savitar_persister_worker(void *arg) {
      * method_tag == 0: let A = active_tx_id and B = tx_buffer[0]
      * * B == 0: no active transaction, keep waiting (set A = 0)
      * * A == B - 1: logged transaction still in progress, keep waiting
-     * * A > B - 1: set A = A - 1 as the last logged transaction is now
-     * committed
+     * * A > B - 1: set A = A - 1 as the last logged transaction is now committed
      * * A < B - 1: set A = A + 1 as there are pending transactions
      */
     uint64_t active_tx_id = 0;
@@ -41,16 +39,13 @@ void *Savitar_persister_worker(void *arg) {
                 active_tx_id = 0;
                 continue;
             }
-            if (active_tx_id > tx_buffer[0] - 1)
-                active_tx_id--;
-            else if (active_tx_id < tx_buffer[0] - 1)
-                active_tx_id++;
+            if (active_tx_id > tx_buffer[0] - 1) active_tx_id--;
+            else if (active_tx_id < tx_buffer[0] - 1) active_tx_id++;
         }
 
         // Check for TERM signal from main thread
         if (buffer[active_tx_id].method_tag == UINT64_MAX) {
-            PRINT("[%d] Received TERM signal from the main thread\n",
-                  thread_id);
+            PRINT("[%d] Received TERM signal from the main thread\n", thread_id);
             break;
         }
 #ifdef DEBUG
@@ -61,7 +56,7 @@ void *Savitar_persister_worker(void *arg) {
         nv_object = (PersistentObject *)buffer[active_tx_id].obj_ptr;
 
         uint64_t log_offset;
-        if (active_tx_id > 0) {  // dependant (nested) transaction
+        if (active_tx_id > 0) { // dependant (nested) transaction
             if (tx_buffer[active_tx_id] == 0) {
                 // we must first create undo-log for parent transaction
                 active_tx_id--;
@@ -71,23 +66,21 @@ void *Savitar_persister_worker(void *arg) {
             uint64_t nested_tx_tag = tx_buffer[active_tx_id] | NESTED_TX_TAG;
             vector[0].addr = &nested_tx_tag;
             vector[0].len = sizeof(nested_tx_tag);
-            vector[1].addr =
-                ((PersistentObject *)buffer[active_tx_id - 1].obj_ptr)
-                    ->getUUID();
+            vector[1].addr = ((PersistentObject *)buffer[active_tx_id - 1].obj_ptr)->getUUID();
             vector[1].len = sizeof(uuid_t);
             log_offset = nv_object->AppendLog(vector, 2);
 #ifdef DEBUG
             char parent_uuid_str[64];
-            uuid_unparse(((PersistentObject *)buffer[active_tx_id - 1].obj_ptr)
-                             ->getUUID(),
-                         parent_uuid_str);
+            uuid_unparse(((PersistentObject *)buffer[active_tx_id - 1].obj_ptr)->getUUID(),
+                    parent_uuid_str);
             PRINT("[%d] Creating dependant log with parent uuid = %s\n",
-                  thread_id, parent_uuid_str);
+                    thread_id, parent_uuid_str);
 #endif
-        } else {  // outer-most transaction
+        }
+        else { // outer-most transaction
             // Delegate log creation to the logger function
             log_offset = nv_object->Log(buffer[active_tx_id].method_tag,
-                                        buffer[active_tx_id].arg_ptrs);
+                    buffer[active_tx_id].arg_ptrs);
         }
         tx_buffer[active_tx_id + 1] = log_offset;
 
@@ -96,8 +89,8 @@ void *Savitar_persister_worker(void *arg) {
         buffer[active_tx_id].arg_ptrs[0] = cycle;
         char object_uuid_str[64];
         uuid_unparse(nv_object->getUUID(), object_uuid_str);
-        PRINT("[%d] Created semantic log for %s at offset %zu.\n", thread_id,
-              object_uuid_str, tx_buffer[active_tx_id + 1]);
+        PRINT("[%d] Created semantic log for %s at offset %zu.\n",
+                thread_id, object_uuid_str, tx_buffer[active_tx_id + 1]);
 #endif
         // Notify main thread
         asm volatile("mfence" : : : "memory");

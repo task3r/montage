@@ -1,44 +1,38 @@
-#include "nv_catalog.hpp"
-
 #include <assert.h>
 #include <string.h>
-
-#include "nvm_manager.hpp"
+#include "nv_catalog.hpp"
 #include "savitar.hpp"
+#include "nvm_manager.hpp"
 
 using namespace std;
 
-NVCatalog::NVCatalog(string path,
-                     list<pair<std::string, CatalogEntry *> > &objects) {
+NVCatalog::NVCatalog(string path, list< pair<std::string, CatalogEntry *> >& objects) {
     char catalog_path[255];
     strcpy(catalog_path, PMEM_PATH);
     strcat(catalog_path, path.c_str());
 
     size_t mapped_len;
-    catalog =
-        (Catalog *)pmem_map_file(catalog_path, 0, 0, 0, &mapped_len, NULL);
-    if (catalog != NULL) {  // open existing catalog
+    catalog = (Catalog *)pmem_map_file(catalog_path, 0, 0, 0,
+            &mapped_len, NULL);
+    if (catalog != NULL) { // open existing catalog
         assert(mapped_len == CatalogSize);
         assert(catalog->magic == CatalogMagic);
         PRINT("Opening existing catalog, total objects = %zu\n",
-              catalog->object_count);
+                catalog->object_count);
 
         for (uint64_t i = 0; i < catalog->object_count; i++) {
             char uuid_str[64];
             uuid_unparse(catalog->objects[i].uuid, uuid_str);
-            PRINT(
-                "Catalog found object with uuid = %s, type = %zu, arges_offset "
-                "= %zu\n",
-                uuid_str, catalog->objects[i].type,
-                catalog->objects[i].args_offset);
-            objects.push_back(pair<std::string, CatalogEntry *>(
-                uuid_str, &catalog->objects[i]));
+            PRINT("Catalog found object with uuid = %s, type = %zu, arges_offset = %zu\n",
+                    uuid_str, catalog->objects[i].type, catalog->objects[i].args_offset);
+            objects.push_back(pair<std::string, CatalogEntry *>(uuid_str,
+                        &catalog->objects[i]));
         }
-    } else {  // create new catalog
+    }
+    else { // create new catalog
         PRINT("Creating new catalog ...\n");
         catalog = (Catalog *)pmem_map_file(catalog_path, CatalogSize,
-                                           PMEM_FILE_CREATE | PMEM_FILE_EXCL,
-                                           0666, &mapped_len, NULL);
+                PMEM_FILE_CREATE | PMEM_FILE_EXCL, 0666, &mapped_len, NULL);
         assert(catalog != NULL);
         memset(catalog, 0, CACHE_LINE_WIDTH);
         catalog->free_offset = CATALOG_HEADER_SIZE;
@@ -48,7 +42,9 @@ NVCatalog::NVCatalog(string path,
     }
 }
 
-NVCatalog::~NVCatalog() { pmem_unmap(catalog, CatalogSize); }
+NVCatalog::~NVCatalog() {
+    pmem_unmap(catalog, CatalogSize);
+}
 
 CatalogEntry *NVCatalog::add(uuid_t uuid, uint64_t type) {
     uint64_t offset = catalog->object_count;
@@ -61,7 +57,7 @@ CatalogEntry *NVCatalog::add(uuid_t uuid, uint64_t type) {
 }
 
 void NVCatalog::addConstructorArgs(CatalogEntry *obj, void *buffer,
-                                   size_t size) {
+        size_t size) {
     uint64_t offset = __sync_fetch_and_add(&catalog->free_offset, size);
     assert(offset + size <= CATALOG_FILE_SIZE);
     pmem_persist(catalog, CACHE_LINE_WIDTH);

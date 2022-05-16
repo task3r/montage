@@ -8,24 +8,28 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <immer/config.hpp>
+
 #include <memory>
+#include <cstdlib>
 
 namespace immer {
 
 /*!
  * A heap that uses `std::malloc` and `std::free` to manage memory.
  */
-struct malloc_heap {
+struct malloc_heap
+{
     /*!
      * Returns a pointer to a memory region of size `size`, if the
      * allocation was successful and throws `std::bad_alloc` otherwise.
      */
     template <typename... Tags>
-    static void* allocate(std::size_t size, Tags...) {
+    static void* allocate(std::size_t size, Tags...)
+    {
         auto p = std::malloc(size);
-        if (IMMER_UNLIKELY(!p)) throw std::bad_alloc{};
+        if (IMMER_UNLIKELY(!p))
+            throw std::bad_alloc{};
         return p;
     }
 
@@ -34,7 +38,10 @@ struct malloc_heap {
      * `allocate`.  One must not use nor deallocate again a memory
      * region that once it has been deallocated.
      */
-    static void deallocate(std::size_t, void* data) { std::free(data); }
+    static void deallocate(std::size_t, void* data)
+    {
+        std::free(data);
+    }
 };
 
-}  // namespace immer
+} // namespace immer

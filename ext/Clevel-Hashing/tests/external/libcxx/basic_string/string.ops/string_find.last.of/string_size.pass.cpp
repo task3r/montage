@@ -11,27 +11,33 @@
 
 // size_type find_last_of(const basic_string& str, size_type pos = npos) const;
 
-#include <cassert>
 #include <string>
+#include <cassert>
 
-#include "min_allocator.h"
 #include "test_macros.h"
+#include "min_allocator.h"
 
 template <class S>
-void test(const S& s, const S& str, typename S::size_type pos,
-          typename S::size_type x) {
+void
+test(const S& s, const S& str, typename S::size_type pos, typename S::size_type x)
+{
     assert(s.find_last_of(str, pos) == x);
-    if (x != S::npos) assert(x <= pos && x < s.size());
+    if (x != S::npos)
+        assert(x <= pos && x < s.size());
 }
 
 template <class S>
-void test(const S& s, const S& str, typename S::size_type x) {
+void
+test(const S& s, const S& str, typename S::size_type x)
+{
     assert(s.find_last_of(str) == x);
-    if (x != S::npos) assert(x < s.size());
+    if (x != S::npos)
+        assert(x < s.size());
 }
 
 template <class S>
-void test0() {
+void test0()
+{
     test(S(""), S(""), 0, S::npos);
     test(S(""), S("laenf"), 0, S::npos);
     test(S(""), S("pqlnkmbdjo"), 0, S::npos);
@@ -115,7 +121,8 @@ void test0() {
 }
 
 template <class S>
-void test1() {
+void test1()
+{
     test(S(""), S(""), S::npos);
     test(S(""), S("laenf"), S::npos);
     test(S(""), S("pqlnkmbdjo"), S::npos);
@@ -134,26 +141,25 @@ void test1() {
     test(S("pniotcfrhqsmgdkjbael"), S("htaobedqikfplcgjsmrn"), 19);
 }
 
-int main() {
+int main()
+{
     {
-        typedef std::string S;
-        test0<S>();
-        test1<S>();
+    typedef std::string S;
+    test0<S>();
+    test1<S>();
     }
 #if TEST_STD_VER >= 11
     {
-        typedef std::basic_string<char, std::char_traits<char>,
-                                  min_allocator<char>>
-            S;
-        test0<S>();
-        test1<S>();
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0<S>();
+    test1<S>();
     }
 #endif
 
 #if TEST_STD_VER > 3
-    {  // LWG 2946
-        std::string s = " !";
-        assert(s.find_last_of({"abc", 1}) == std::string::npos);
+    {   // LWG 2946
+    std::string s = " !";
+    assert(s.find_last_of({"abc", 1}) == std::string::npos);
     }
 #endif
 }

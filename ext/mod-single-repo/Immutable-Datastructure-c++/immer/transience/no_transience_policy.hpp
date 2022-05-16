@@ -14,18 +14,23 @@ namespace immer {
  * Disables any special *transience* tracking.  To be used when
  * *reference counting* is available instead.
  */
-struct no_transience_policy {
+struct no_transience_policy
+{
     template <typename>
-    struct apply {
-        struct type {
+    struct apply
+    {
+        struct type
+        {
             struct edit {};
 
-            struct owner {
-                operator edit() const { return {}; }
+            struct owner
+            {
+                operator edit () const { return {}; }
                 owner& operator=(const owner&) { return *this; };
             };
 
-            struct ownee {
+            struct ownee
+            {
                 ownee& operator=(edit) { return *this; };
                 bool can_mutate(edit) const { return false; }
                 bool owned() const { return false; }
@@ -38,6 +43,6 @@ struct no_transience_policy {
 
 template <typename HP>
 typename no_transience_policy::apply<HP>::type::owner
-    no_transience_policy::apply<HP>::type::noone = {};
+no_transience_policy::apply<HP>::type::noone = {};
 
-}  // namespace immer
+} // namespace immer

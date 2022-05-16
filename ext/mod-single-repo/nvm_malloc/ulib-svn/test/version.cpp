@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <ulib/ulib_ver.h>
 
-int main() {
-    printf("%s\n", ulib_version());
+int main()
+{
+	printf("%s\n", ulib_version());
 
-    printf("passed\n");
+	printf("passed\n");
 
-    return 0;
+	return 0;
 }

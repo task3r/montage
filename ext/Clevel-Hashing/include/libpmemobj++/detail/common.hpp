@@ -38,9 +38,8 @@
 #ifndef LIBPMEMOBJ_CPP_COMMON_HPP
 #define LIBPMEMOBJ_CPP_COMMON_HPP
 
-#include <libpmemobj/tx_base.h>
-
 #include <libpmemobj++/pexceptions.hpp>
+#include <libpmemobj/tx_base.h>
 #include <string>
 #include <typeinfo>
 
@@ -64,9 +63,9 @@
 #define LIBPMEMOBJ_CPP_VG_DRD_ENABLED 1
 #endif
 
-#if LIBPMEMOBJ_CPP_VG_PMEMCHECK_ENABLED || \
-    LIBPMEMOBJ_CPP_VG_MEMCHECK_ENABLED ||  \
-    LIBPMEMOBJ_CPP_VG_HELGRIND_ENABLED || LIBPMEMOBJ_CPP_VG_DRD_ENABLED
+#if LIBPMEMOBJ_CPP_VG_PMEMCHECK_ENABLED ||                                     \
+	LIBPMEMOBJ_CPP_VG_MEMCHECK_ENABLED ||                                  \
+	LIBPMEMOBJ_CPP_VG_HELGRIND_ENABLED || LIBPMEMOBJ_CPP_VG_DRD_ENABLED
 #define LIBPMEMOBJ_CPP_ANY_VG_TOOL_ENABLED 1
 #endif
 
@@ -108,18 +107,21 @@
 #if LIBPMEMOBJ_CPP_USE_HAS_TRIVIAL_COPY
 #define LIBPMEMOBJ_CPP_IS_TRIVIALLY_COPYABLE(T) __has_trivial_copy(T)
 #else
-#define LIBPMEMOBJ_CPP_IS_TRIVIALLY_COPYABLE(T) \
-    std::is_trivially_copyable<T>::value
+#define LIBPMEMOBJ_CPP_IS_TRIVIALLY_COPYABLE(T)                                \
+	std::is_trivially_copyable<T>::value
 #endif
 
-namespace pmem {
+namespace pmem
+{
 
-namespace obj {
+namespace obj
+{
 template <typename T>
 class persistent_ptr;
 }
 
-namespace detail {
+namespace detail
+{
 
 /*
  * Conditionally add 'count' objects to a transaction.
@@ -132,61 +134,72 @@ namespace detail {
  * @param[in] count number of elements to be added to the transaction.
  */
 template <typename T>
-inline void conditional_add_to_tx(const T *that, std::size_t count = 1) {
-    if (count == 0) return;
+inline void
+conditional_add_to_tx(const T *that, std::size_t count = 1)
+{
+	if (count == 0)
+		return;
 
-    if (pmemobj_tx_stage() != TX_STAGE_WORK) return;
+	if (pmemobj_tx_stage() != TX_STAGE_WORK)
+		return;
 
-    /* 'that' is not in any open pool */
-    if (!pmemobj_pool_by_ptr(that)) return;
+	/* 'that' is not in any open pool */
+	if (!pmemobj_pool_by_ptr(that))
+		return;
 
-    if (pmemobj_tx_add_range_direct(that, sizeof(*that) * count)) {
-        if (errno == ENOMEM)
-            throw pmem::transaction_out_of_memory(
-                "Could not add object(s) to the transaction.")
-                .with_pmemobj_errormsg();
-        else
-            throw pmem::transaction_error(
-                "Could not add object(s) to the transaction.")
-                .with_pmemobj_errormsg();
-    }
+	if (pmemobj_tx_add_range_direct(that, sizeof(*that) * count)) {
+		if (errno == ENOMEM)
+			throw pmem::transaction_out_of_memory(
+				"Could not add object(s) to the transaction.")
+				.with_pmemobj_errormsg();
+		else
+			throw pmem::transaction_error(
+				"Could not add object(s) to the transaction.")
+				.with_pmemobj_errormsg();
+	}
 }
 
 /*
  * Return type number for given type.
  */
 template <typename T>
-uint64_t type_num() {
-    return typeid(T).hash_code();
+uint64_t
+type_num()
+{
+	return typeid(T).hash_code();
 }
 
 /**
  * Round up to the next lowest power of 2. Overload for uint64_t argument.
  */
-inline uint64_t next_pow_2(uint64_t v) {
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    v |= v >> 32;
-    ++v;
-    return v + (v == 0);
+inline uint64_t
+next_pow_2(uint64_t v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	v |= v >> 32;
+	++v;
+	return v + (v == 0);
 }
 
 /**
  * Round up to the next lowest power of 2. Overload for uint32_t argument.
  */
-inline uint64_t next_pow_2(uint32_t v) {
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    ++v;
-    return v + (v == 0);
+inline uint64_t
+next_pow_2(uint32_t v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	++v;
+	return v + (v == 0);
 }
 
 } /* namespace detail */

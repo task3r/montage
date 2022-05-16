@@ -16,16 +16,19 @@ namespace immer {
  * A heap that simply passes on to the parent heap.
  */
 template <typename Base>
-struct identity_heap : Base {
+struct identity_heap : Base
+{
     template <typename... Tags>
-    static void* allocate(std::size_t size, Tags... tags) {
+    static void* allocate(std::size_t size, Tags... tags)
+    {
         return Base::allocate(size, tags...);
     }
 
     template <typename... Tags>
-    static void deallocate(std::size_t size, void* data, Tags... tags) {
+    static void deallocate(std::size_t size, void* data, Tags... tags)
+    {
         Base::deallocate(size, data, tags...);
     }
 };
 
-}  // namespace immer
+} // namespace immer

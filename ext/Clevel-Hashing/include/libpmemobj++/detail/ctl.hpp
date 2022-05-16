@@ -39,79 +39,102 @@
 #define LIBPMEMOBJ_CPP_CTL_HPP
 
 #include <libpmemobj.h>
+#include <string>
 
 #include <cerrno>
 #include <cstring>
+
 #include <libpmemobj++/pexceptions.hpp>
-#include <string>
 
-namespace pmem {
+namespace pmem
+{
 
-namespace obj {
+namespace obj
+{
 
 template <typename T>
-T ctl_get_detail(PMEMobjpool *pool, const std::string &name) {
-    T tmp;
+T
+ctl_get_detail(PMEMobjpool *pool, const std::string &name)
+{
+	T tmp;
 
 #ifdef _WIN32
-    int ret = pmemobj_ctl_getU(pool, name.c_str(), &tmp);
+	int ret = pmemobj_ctl_getU(pool, name.c_str(), &tmp);
 #else
-    int ret = pmemobj_ctl_get(pool, name.c_str(), &tmp);
+	int ret = pmemobj_ctl_get(pool, name.c_str(), &tmp);
 #endif
-    if (ret) throw pmem::ctl_error("ctl_get failed").with_pmemobj_errormsg();
+	if (ret)
+		throw pmem::ctl_error("ctl_get failed").with_pmemobj_errormsg();
 
-    return tmp;
+	return tmp;
 }
 
 template <typename T>
-T ctl_set_detail(PMEMobjpool *pool, const std::string &name, T arg) {
+T
+ctl_set_detail(PMEMobjpool *pool, const std::string &name, T arg)
+{
 #ifdef _WIN32
-    int ret = pmemobj_ctl_setU(pool, name.c_str(), &arg);
+	int ret = pmemobj_ctl_setU(pool, name.c_str(), &arg);
 #else
-    int ret = pmemobj_ctl_set(pool, name.c_str(), &arg);
+	int ret = pmemobj_ctl_set(pool, name.c_str(), &arg);
 #endif
-    if (ret) throw pmem::ctl_error("ctl_set failed").with_pmemobj_errormsg();
+	if (ret)
+		throw pmem::ctl_error("ctl_set failed").with_pmemobj_errormsg();
 
-    return arg;
+	return arg;
 }
 
 template <typename T>
-T ctl_exec_detail(PMEMobjpool *pool, const std::string &name, T arg) {
+T
+ctl_exec_detail(PMEMobjpool *pool, const std::string &name, T arg)
+{
 #ifdef _WIN32
-    int ret = pmemobj_ctl_execU(pool, name.c_str(), &arg);
+	int ret = pmemobj_ctl_execU(pool, name.c_str(), &arg);
 #else
-    int ret = pmemobj_ctl_exec(pool, name.c_str(), &arg);
+	int ret = pmemobj_ctl_exec(pool, name.c_str(), &arg);
 #endif
-    if (ret) throw pmem::ctl_error("ctl_exec failed").with_pmemobj_errormsg();
+	if (ret)
+		throw pmem::ctl_error("ctl_exec failed")
+			.with_pmemobj_errormsg();
 
-    return arg;
+	return arg;
 }
 
 #ifdef _WIN32
 template <typename T>
-T ctl_get_detail(PMEMobjpool *pool, const std::wstring &name) {
-    T tmp;
+T
+ctl_get_detail(PMEMobjpool *pool, const std::wstring &name)
+{
+	T tmp;
 
-    int ret = pmemobj_ctl_getW(pool, name.c_str(), &tmp);
-    if (ret) throw pmem::ctl_error("ctl_get failed").with_pmemobj_errormsg();
+	int ret = pmemobj_ctl_getW(pool, name.c_str(), &tmp);
+	if (ret)
+		throw pmem::ctl_error("ctl_get failed").with_pmemobj_errormsg();
 
-    return tmp;
+	return tmp;
 }
 
 template <typename T>
-T ctl_set_detail(PMEMobjpool *pool, const std::wstring &name, T arg) {
-    int ret = pmemobj_ctl_setW(pool, name.c_str(), &arg);
-    if (ret) throw pmem::ctl_error("ctl_set failed").with_pmemobj_errormsg();
+T
+ctl_set_detail(PMEMobjpool *pool, const std::wstring &name, T arg)
+{
+	int ret = pmemobj_ctl_setW(pool, name.c_str(), &arg);
+	if (ret)
+		throw pmem::ctl_error("ctl_set failed").with_pmemobj_errormsg();
 
-    return arg;
+	return arg;
 }
 
 template <typename T>
-T ctl_exec_detail(PMEMobjpool *pool, const std::wstring &name, T arg) {
-    int ret = pmemobj_ctl_execW(pool, name.c_str(), &arg);
-    if (ret) throw pmem::ctl_error("ctl_exec failed").with_pmemobj_errormsg();
+T
+ctl_exec_detail(PMEMobjpool *pool, const std::wstring &name, T arg)
+{
+	int ret = pmemobj_ctl_execW(pool, name.c_str(), &arg);
+	if (ret)
+		throw pmem::ctl_error("ctl_exec failed")
+			.with_pmemobj_errormsg();
 
-    return arg;
+	return arg;
 }
 #endif
 

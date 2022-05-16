@@ -40,9 +40,11 @@
 
 #include <libpmemobj++/make_persistent.hpp>
 
-namespace pmem {
+namespace pmem
+{
 
-namespace detail {
+namespace detail
+{
 
 /**
  * Suggested maximum size of stack allocation for caching objects is 64kB.
@@ -68,15 +70,22 @@ struct temp_value;
  */
 template <typename T, bool NoExcept>
 struct temp_value<
-    T, NoExcept,
-    typename std::enable_if<
-        NoExcept && (sizeof(T) < LIBPMEMOBJ_CPP_MAX_STACK_ALLOC_SIZE)>::type> {
-    template <typename... Args>
-    temp_value(Args &&... args) noexcept : t(std::forward<Args>(args)...) {}
+	T, NoExcept,
+	typename std::enable_if<NoExcept &&
+				(sizeof(T) <
+				 LIBPMEMOBJ_CPP_MAX_STACK_ALLOC_SIZE)>::type> {
+	template <typename... Args>
+	temp_value(Args &&... args) noexcept : t(std::forward<Args>(args)...)
+	{
+	}
 
-    T &get() noexcept { return t; }
+	T &
+	get() noexcept
+	{
+		return t;
+	}
 
-    T t;
+	T t;
 };
 
 /**
@@ -86,20 +95,29 @@ struct temp_value<
  */
 template <typename T, bool NoExcept>
 struct temp_value<
-    T, NoExcept,
-    typename std::enable_if<!NoExcept ||
-                            (sizeof(T) >=
-                             LIBPMEMOBJ_CPP_MAX_STACK_ALLOC_SIZE)>::type> {
-    template <typename... Args>
-    temp_value(Args &&... args) {
-        ptr = pmem::obj::make_persistent<T>(std::forward<Args>(args)...);
-    }
+	T, NoExcept,
+	typename std::enable_if<!NoExcept ||
+				(sizeof(T) >=
+				 LIBPMEMOBJ_CPP_MAX_STACK_ALLOC_SIZE)>::type> {
+	template <typename... Args>
+	temp_value(Args &&... args)
+	{
+		ptr = pmem::obj::make_persistent<T>(
+			std::forward<Args>(args)...);
+	}
 
-    ~temp_value() { pmem::obj::delete_persistent<T>(ptr); }
+	~temp_value()
+	{
+		pmem::obj::delete_persistent<T>(ptr);
+	}
 
-    T &get() { return *ptr; }
+	T &
+	get()
+	{
+		return *ptr;
+	}
 
-    pmem::obj::persistent_ptr<T> ptr;
+	pmem::obj::persistent_ptr<T> ptr;
 };
 
 } /* namespace detail */

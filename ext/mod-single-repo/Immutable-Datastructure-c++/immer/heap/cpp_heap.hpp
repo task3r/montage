@@ -15,13 +15,15 @@ namespace immer {
 /*!
  * A heap that uses `operator new` and `operator delete`.
  */
-struct cpp_heap {
+struct cpp_heap
+{
     /*!
      * Returns a pointer to a memory region of size `size`, if the
      * allocation was successful, and throws otherwise.
      */
     template <typename... Tags>
-    static void* allocate(std::size_t size, Tags...) {
+    static void* allocate(std::size_t size, Tags...)
+    {
         return ::operator new(size);
     }
 
@@ -30,9 +32,10 @@ struct cpp_heap {
      * `allocate`.  One must not use nor deallocate again a memory
      * region that once it has been deallocated.
      */
-    static void deallocate(std::size_t size, void* data) {
+    static void deallocate(std::size_t size, void* data)
+    {
         ::operator delete(data);
     }
 };
 
-}  // namespace immer
+} // namespace immer

@@ -12,9 +12,9 @@
 // Modified to test pmem::obj containers
 //
 
-#include <libpmemobj++/experimental/string.hpp>
-
 #include "unittest.hpp"
+
+#include <libpmemobj++/experimental/string.hpp>
 
 namespace pmem_exp = pmem::obj::experimental;
 namespace nvobj = pmem::obj;
@@ -22,58 +22,64 @@ namespace nvobj = pmem::obj;
 using string_type = pmem_exp::string;
 
 struct root {
-    nvobj::persistent_ptr<string_type> s1, s2, s3, s4;
+	nvobj::persistent_ptr<string_type> s1, s2, s3, s4;
 };
 
 template <class S>
-void test_const(const S &s) {
-    typedef typename S::traits_type T;
-    const typename S::value_type *str = s.data();
-    if (s.size() > 0) {
-        UT_ASSERT(T::compare(str, &s[0], s.size()) == 0);
-        UT_ASSERT(T::eq(str[s.size()], typename S::value_type()));
-    } else
-        UT_ASSERT(T::eq(str[0], typename S::value_type()));
+void
+test_const(const S &s)
+{
+	typedef typename S::traits_type T;
+	const typename S::value_type *str = s.data();
+	if (s.size() > 0) {
+		UT_ASSERT(T::compare(str, &s[0], s.size()) == 0);
+		UT_ASSERT(T::eq(str[s.size()], typename S::value_type()));
+	} else
+		UT_ASSERT(T::eq(str[0], typename S::value_type()));
 }
 
-int main(int argc, char *argv[]) {
-    START();
+int
+main(int argc, char *argv[])
+{
+	START();
 
-    if (argc < 2) {
-        std::cerr << "usage: " << argv[0] << " file-name" << std::endl;
-        return 1;
-    }
+	if (argc < 2) {
+		std::cerr << "usage: " << argv[0] << " file-name" << std::endl;
+		return 1;
+	}
 
-    auto path = argv[1];
-    auto pop = nvobj::pool<root>::create(path, "string_test", PMEMOBJ_MIN_POOL,
-                                         S_IWUSR | S_IRUSR);
+	auto path = argv[1];
+	auto pop = nvobj::pool<root>::create(
+		path, "string_test", PMEMOBJ_MIN_POOL, S_IWUSR | S_IRUSR);
 
-    auto r = pop.root();
+	auto r = pop.root();
 
-    try {
-        nvobj::transaction::run(pop, [&] {
-            r->s1 = nvobj::make_persistent<string_type>("");
-            r->s2 = nvobj::make_persistent<string_type>("abcde");
-            r->s3 = nvobj::make_persistent<string_type>("abcdefghij");
-            r->s4 = nvobj::make_persistent<string_type>("abcdefghijklmnopqrst");
-        });
+	try {
+		nvobj::transaction::run(pop, [&] {
+			r->s1 = nvobj::make_persistent<string_type>("");
+			r->s2 = nvobj::make_persistent<string_type>("abcde");
+			r->s3 = nvobj::make_persistent<string_type>(
+				"abcdefghij");
+			r->s4 = nvobj::make_persistent<string_type>(
+				"abcdefghijklmnopqrst");
+		});
 
-        test_const(*r->s1);
-        test_const(*r->s2);
-        test_const(*r->s3);
-        test_const(*r->s4);
+		test_const(*r->s1);
+		test_const(*r->s2);
+		test_const(*r->s3);
+		test_const(*r->s4);
 
-        nvobj::transaction::run(pop, [&] {
-            nvobj::delete_persistent<string_type>(r->s1);
-            nvobj::delete_persistent<string_type>(r->s2);
-            nvobj::delete_persistent<string_type>(r->s3);
-            nvobj::delete_persistent<string_type>(r->s4);
-        });
-    } catch (std::exception &e) {
-        UT_FATALexc(e);
-    }
+		nvobj::transaction::run(pop, [&] {
+			nvobj::delete_persistent<string_type>(r->s1);
+			nvobj::delete_persistent<string_type>(r->s2);
+			nvobj::delete_persistent<string_type>(r->s3);
+			nvobj::delete_persistent<string_type>(r->s4);
+		});
+	} catch (std::exception &e) {
+		UT_FATALexc(e);
+	}
 
-    pop.close();
+	pop.close();
 
-    return 0;
+	return 0;
 }

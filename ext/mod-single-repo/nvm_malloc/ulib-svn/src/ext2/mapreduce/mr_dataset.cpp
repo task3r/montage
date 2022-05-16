@@ -23,38 +23,41 @@
    SOFTWARE.
 */
 
-#include "mr_dataset.h"
-
-#include <stdint.h>
 #include <stdio.h>
-
-#include "math_rand_prot.h"
+#include <stdint.h>
 #include "os_rdtsc.h"
+#include "math_rand_prot.h"
+#include "mr_dataset.h"
 
 namespace ulib {
 
 namespace mapreduce {
 
 dataset_zipf::dataset_zipf(size_t size, size_t range, float s)
-    : _buf(new int[size]), _size(size) {
-    zipf_rng rng;
-    zipf_rng_init(&rng, range, s);
-    for (size_t i = 0; i < size; ++i) _buf[i] = zipf_rng_next(&rng);
+	: _buf(new int[size]), _size(size)
+{
+	zipf_rng rng;
+	zipf_rng_init(&rng, range, s);
+	for (size_t i = 0; i < size; ++i)
+		_buf[i] = zipf_rng_next(&rng);
 }
 
-dataset_zipf::~dataset_zipf() { delete[] _buf; }
+dataset_zipf::~dataset_zipf()
+{ delete [] _buf; }
 
 dataset_random::dataset_random(size_t size, size_t range)
-    : _buf(new int[size]), _size(size) {
-    uint64_t t = rdtsc();
-    for (size_t i = 0; i < size; ++i) {
-        uint64_t r = i + t;
-        RAND_INT4_MIX64(r);
-        _buf[i] = r % range;
-    }
+	: _buf(new int[size]), _size(size)
+{
+	uint64_t t = rdtsc();
+	for (size_t i = 0; i < size; ++i) {
+		uint64_t r = i + t;
+		RAND_INT4_MIX64(r);
+		_buf[i] = r % range;
+	}
 }
 
-dataset_random::~dataset_random() { delete[] _buf; }
+dataset_random::~dataset_random()
+{ delete [] _buf; }
 
 }  // namespace mapreduce
 

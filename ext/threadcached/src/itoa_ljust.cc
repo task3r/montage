@@ -59,7 +59,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "itoa_ljust.h"
-
 #include <string.h>
 
 static const char lut[201] =
@@ -72,7 +71,7 @@ static const char lut[201] =
 #define dd(u) ((const uint16_t)(lut[u]))
 
 static inline char* out2(const int d, char* p) {
-    memcpy(p, &((uint16_t*)lut)[d], 2);
+    memcpy(p, &((uint16_t *)lut)[d], 2);
     return p + 2;
 }
 
@@ -81,68 +80,40 @@ static inline char* out1(const char in, char* p) {
     return p + 1;
 }
 
-static inline int digits(uint32_t u, unsigned k, int* d, char** p, int n) {
-    if (u < k * 10) {
+static inline int digits( uint32_t u, unsigned k, int* d, char** p, int n ) {
+    if (u < k*10) {
         *d = u / k;
-        *p = out1('0' + *d, *p);
+        *p = out1('0'+*d, *p);
         --n;
     }
     return n;
 }
 
 static inline char* itoa(uint32_t u, char* p, int d, int n) {
-    switch (n) {
-        case 10:
-            d = u / 100000000;
-            p = out2(d, p);
-            __attribute__((fallthrough));
-        case 9:
-            u -= d * 100000000;
-            __attribute__((fallthrough));
-        case 8:
-            d = u / 1000000;
-            p = out2(d, p);
-            __attribute__((fallthrough));
-        case 7:
-            u -= d * 1000000;
-            __attribute__((fallthrough));
-        case 6:
-            d = u / 10000;
-            p = out2(d, p);
-            __attribute__((fallthrough));
-        case 5:
-            u -= d * 10000;
-            __attribute__((fallthrough));
-        case 4:
-            d = u / 100;
-            p = out2(d, p);
-            __attribute__((fallthrough));
-        case 3:
-            u -= d * 100;
-            __attribute__((fallthrough));
-        case 2:
-            d = u / 1;
-            p = out2(d, p);
-            __attribute__((fallthrough));
-        case 1:;
+    switch(n) {
+    case 10: d  = u / 100000000; p = out2( d, p ); __attribute__ ((fallthrough));
+    case  9: u -= d * 100000000; __attribute__ ((fallthrough));
+    case  8: d  = u /   1000000; p = out2( d, p ); __attribute__ ((fallthrough));
+    case  7: u -= d *   1000000; __attribute__ ((fallthrough));
+    case  6: d  = u /     10000; p = out2( d, p ); __attribute__ ((fallthrough));
+    case  5: u -= d *     10000; __attribute__ ((fallthrough));
+    case  4: d  = u /       100; p = out2( d, p ); __attribute__ ((fallthrough));
+    case  3: u -= d *       100; __attribute__ ((fallthrough));
+    case  2: d  = u /         1; p = out2( d, p ); __attribute__ ((fallthrough));
+    case  1: ;
     }
     *p = '\0';
     return p;
 }
 
 char* itoa_u32(uint32_t u, char* p) {
-    int d = 0, n;
-    if (u >= 100000000)
-        n = digits(u, 100000000, &d, &p, 10);
-    else if (u < 100)
-        n = digits(u, 1, &d, &p, 2);
-    else if (u < 10000)
-        n = digits(u, 100, &d, &p, 4);
-    else if (u < 1000000)
-        n = digits(u, 10000, &d, &p, 6);
-    else
-        n = digits(u, 1000000, &d, &p, 8);
-    return itoa(u, p, d, n);
+    int d = 0,n;
+         if (u >=100000000) n = digits(u, 100000000, &d, &p, 10);
+    else if (u <       100) n = digits(u,         1, &d, &p,  2);
+    else if (u <     10000) n = digits(u,       100, &d, &p,  4);
+    else if (u <   1000000) n = digits(u,     10000, &d, &p,  6);
+    else                    n = digits(u,   1000000, &d, &p,  8);
+    return itoa( u, p, d, n );
 }
 
 char* itoa_32(int32_t i, char* p) {
@@ -164,8 +135,8 @@ char* itoa_u64(uint64_t u, char* p) {
     p = itoa_u64(upper, p);
     lower = u - (upper * 1000000000);
     d = lower / 100000000;
-    p = out1('0' + d, p);
-    return itoa(lower, p, d, 9);
+    p = out1('0'+d,p);
+    return itoa( lower, p, d, 9 );
 }
 
 char* itoa_64(int64_t i, char* p) {

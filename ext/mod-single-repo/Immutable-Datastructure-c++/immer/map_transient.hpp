@@ -8,19 +8,22 @@
 
 #pragma once
 
-#include <functional>
-#include <immer/detail/hamts/champ.hpp>
 #include <immer/memory_policy.hpp>
+#include <immer/detail/hamts/champ.hpp>
+
+#include <functional>
 
 namespace immer {
 
 /*!
  * **WORK IN PROGRESS**
  */
-template <typename K, typename T, typename Hash = std::hash<K>,
-          typename Equal = std::equal_to<K>,
-          typename MemoryPolicy = default_memory_policy,
+template <typename K,
+          typename T,
+          typename Hash          = std::hash<K>,
+          typename Equal         = std::equal_to<K>,
+          typename MemoryPolicy  = default_memory_policy,
           detail::hamts::bits_t B = default_bits>
 class map_transient;
 
-}  // namespace immer
+} // namespace immer

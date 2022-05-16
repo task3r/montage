@@ -1,114 +1,113 @@
 #ifndef UNBALANCED_TREE_HPP
 #define UNBALANCED_TREE_HPP
 
+#include "TestConfig.hpp"
+#include "RMap.hpp"
+#include "Recoverable.hpp"
+#include "CustomTypes.hpp"
 #include <mutex>
 #include <shared_mutex>
 
-#include "CustomTypes.hpp"
-#include "RMap.hpp"
-#include "Recoverable.hpp"
-#include "TestConfig.hpp"
 
-template <typename K, typename V>
-class UnbalancedTree : public RMap<K, V>, public Recoverable {
-    const optional<V> NONE =
-        {};  // to prevent compiler warnings. TODO: switch to std::optional<>.
-   public:
-    class Payload : public pds::PBlk {
+template<typename K, typename V>
+class UnbalancedTree : public RMap<K,V>, public Recoverable{
+    const optional<V> NONE = {}; // to prevent compiler warnings. TODO: switch to std::optional<>.
+public:
+    class Payload : public pds::PBlk{
         GENERATE_FIELD(K, key, Payload);
         GENERATE_FIELD(V, val, Payload);
         GENERATE_FIELD(int, deleted, Payload);
-
-       public:
-        Payload() {}
-        Payload(K x, V y) : m_key(x), m_val(y), m_deleted(false) {}
-        Payload(const Payload& oth)
-            : pds::PBlk(oth),
-              m_key(oth.m_key),
-              m_val(oth.m_val),
-              m_deleted(oth.m_deleted) {}
-        void persist() {}
+    public:
+        Payload(){}
+        Payload(K x, V y): m_key(x), m_val(y), m_deleted(false){}
+        Payload(const Payload& oth): pds::PBlk(oth), m_key(oth.m_key), m_val(oth.m_val), m_deleted(oth.m_deleted){}
+        void persist(){}
     };
 
-    struct TreeNode {
+    struct TreeNode{
         UnbalancedTree* ds;
         // Transient-to-persistent pointer
         Payload* payload = nullptr;
         // Transient-to-transient pointers
         TreeNode* left = nullptr;
         TreeNode* right = nullptr;
-
+        
         std::mutex lock;
 
-        TreeNode(UnbalancedTree* ds_, K key, V val) : ds(ds_) {
+        TreeNode(UnbalancedTree* ds_, K key, V val): ds(ds_){
             payload = ds->pnew<Payload>(key, val);
         }
-        K get_key() {
-            assert(payload != nullptr && "payload shouldn't be null");
+        K get_key(){
+            assert(payload!=nullptr && "payload shouldn't be null");
             return (K)payload->get_key(ds);
         }
-        V get_val() {
-            assert(payload != nullptr && "payload shouldn't be null");
+        V get_val(){
+            assert(payload!=nullptr && "payload shouldn't be null");
             return (V)payload->get_val(ds);
         }
-        int get_deleted() {
-            assert(payload != nullptr && "payload shouldn't be null");
+        int get_deleted(){
+            assert(payload!=nullptr && "payload shouldn't be null");
             return (int)payload->get_deleted(ds);
         }
-        void set_val(V v) {
-            assert(payload != nullptr && "payload shouldn't be null");
+        void set_val(V v){
+            assert(payload!=nullptr && "payload shouldn't be null");
             payload = payload->set_val(ds, v);
         }
-        void set_deleted(int d) {
-            assert(payload != nullptr && "payload shouldn't be null");
+        void set_deleted(int d){
+            assert(payload!=nullptr && "payload shouldn't be null");
             payload = payload->set_deleted(ds, d);
         }
-        ~TreeNode() { ds->pdelete(payload); }
+        ~TreeNode(){
+            ds->pdelete(payload);
+        }
     };
 
     TreeNode* root = nullptr;
 
-    UnbalancedTree(GlobalTestConfig* gtc) : Recoverable(gtc) { root = nullptr; }
+    UnbalancedTree(GlobalTestConfig* gtc): Recoverable(gtc){
+        root = nullptr;
+    }
 
-    int recover(bool simulated) {
+    int recover(bool simulated){
         errexit("recover of UnbalancedTree not implemented");
         return 0;
     }
 
-    optional<V> get(K key, int tid) {
-        while (true) {
+
+    optional<V> get(K key, int tid){
+        while(true){
             MontageOpHolder _holder(this);
-            if (!root) {
+            if (!root){
                 return NONE;
             } else {
-                try {
+                try{
                     HOHLockHolder lock_holder;
                     return do_get(&lock_holder, root, key);
-                } catch (pds::OldSeeNewException& e) {
+                } catch(pds::OldSeeNewException& e){
                     continue;
                 }
             }
         }
     }
 
-    optional<V> do_get(HOHLockHolder* lock_holder, TreeNode* curr, K key) {
+    optional<V> do_get(HOHLockHolder* lock_holder, TreeNode* curr, K key){
         // may throw OldSeeNewException:
         lock_holder->hold(&curr->lock);
         K curr_key = curr->get_key();
-        if (curr_key == key) {
-            if (curr->get_deleted()) {
+        if (curr_key == key){
+            if (curr->get_deleted()){
                 return NONE;
             }
             optional<V> ret = curr->get_val();
             return ret;
-        } else if (curr_key > key) {
-            if (curr->left) {
+        } else if (curr_key > key){
+            if (curr->left){
                 return do_get(lock_holder, curr->left, key);
             } else {
                 return NONE;
             }
         } else {
-            if (curr->right) {
+            if (curr->right){
                 return do_get(lock_holder, curr->right, key);
             } else {
                 return NONE;
@@ -116,45 +115,44 @@ class UnbalancedTree : public RMap<K, V>, public Recoverable {
         }
     }
 
-    optional<V> put(K key, V val, int tid) {
-        while (true) {
+    optional<V> put(K key, V val, int tid){
+        while(true){
             MontageOpHolder _holder(this);
-            if (!root) {
+            if (!root){
                 root = new TreeNode(key, val);
             } else {
-                try {
+                try{
                     HOHLockHolder lock_holder;
                     return do_put(&lock_holder, root, key, val);
-                } catch (pds::OldSeeNewException& e) {
+                } catch (pds::OldSeeNewException& e){
                     continue;
                 }
             }
         }
     }
 
-    optional<V> do_put(HOHLockHolder* lock_holder, TreeNode* curr, K key,
-                       V val) {
+    optional<V> do_put(HOHLockHolder* lock_holder, TreeNode* curr, K key, V val){
         // may throw OldSeeNewException:
         lock_holder->hold(&curr->lock);
         K curr_key = curr->get_key();
-        if (curr_key == key) {
+        if (curr_key == key){
             optional<V> ret = curr->get_val();
             curr->payload = curr->payload->set_val(val);
-            if (curr->get_deleted()) {
+            if (curr->get_deleted()){
                 curr->payload = curr->payload->set_deleted(false);
                 return NONE;
             } else {
                 return ret;
             }
-        } else if (curr_key > key) {
-            if (curr->left) {
+        } else if (curr_key > key){
+            if (curr->left){
                 return do_put(lock_holder, curr->left, key, val);
             } else {
                 curr->left = new TreeNode(key, val);
                 return NONE;
             }
         } else {
-            if (curr->right) {
+            if (curr->right){
                 return do_put(lock_holder, curr->right, key, val);
             } else {
                 curr->right = new TreeNode(key, val);
@@ -163,43 +161,43 @@ class UnbalancedTree : public RMap<K, V>, public Recoverable {
         }
     }
 
-    bool insert(K key, V val, int tid) {
-        while (true) {
+    bool insert(K key, V val, int tid){
+        while(true){
             MontageOpHolder _holder(this);
-            if (!root) {
+            if (!root){
                 root = new TreeNode(key, val);
                 return true;
             } else {
-                try {
+                try{
                     HOHLockHolder lock_holder;
                     return do_insert(&lock_holder, root, key, val);
-                } catch (pds::OldSeeNewException& e) {
+                } catch (pds::OldSeeNewException& e){
                     continue;
                 }
             }
         }
     }
 
-    bool do_insert(HOHLockHolder* lock_holder, TreeNode* curr, K key, V val) {
+    bool do_insert(HOHLockHolder* lock_holder, TreeNode* curr, K key, V val){
         lock_holder->hold(&curr->lock);
         K curr_key = curr->get_key();
-        if (curr_key == key) {
-            if (curr->get_deleted()) {
+        if (curr_key == key){
+            if (curr->get_deleted()){
                 curr->payload = curr->payload->set_deleted(false);
                 curr->payload = curr->payload->set_val(val);
                 return true;
             } else {
                 return false;
             }
-        } else if (curr_key > key) {
-            if (curr->left) {
+        } else if (curr_key > key){
+            if (curr->left){
                 return do_insert(lock_holder, curr->left, key, val);
             } else {
                 curr->left = new TreeNode(key, val);
                 return true;
             }
         } else {
-            if (curr->right) {
+            if (curr->right){
                 return do_insert(lock_holder, curr->right, key, val);
             } else {
                 curr->right = new TreeNode(key, val);
@@ -208,45 +206,45 @@ class UnbalancedTree : public RMap<K, V>, public Recoverable {
         }
     }
 
-    optional<V> replace(K key, V val, int tid) {
+    optional<V> replace(K key, V val, int tid){
         assert(false && "replace not implemented yet.");
         return NONE;
     }
 
-    optional<V> remove(K key, int tid) {
-        while (true) {
+    optional<V> remove(K key, int tid){
+        while(true){
             MontageOpHolder _holder(this);
-            if (!root) {
+            if (!root){
                 return NONE;
             } else {
-                try {
+                try{
                     HOHLockHolder lock_holder;
                     return do_remove(&lock_holder, root, key);
-                } catch (pds::OldSeeNewException& e) {
+                } catch (pds::OldSeeNewException& e){
                     continue;
                 }
             }
         }
     }
 
-    optional<V> do_remove(HOHLockHolder* lock_holder, TreeNode*& curr, K key) {
+    optional<V> do_remove(HOHLockHolder* lock_holder, TreeNode*& curr, K key){
         lock_holder->hold(&curr->lock);
         K curr_key = curr->get_key();
-        if (curr_key == key) {
-            if (curr->get_deleted()) {
+        if (curr_key == key){
+            if (curr->get_deleted()){
                 return NONE;
             } else {
                 curr->payload = curr->payload->set_deleted(true);
                 return curr->get_val();
             }
-        } else if (curr_key > key) {
-            if (curr->left) {
+        } else if (curr_key > key){
+            if (curr->left){
                 return do_remove(lock_holder, curr->left, key);
             } else {
                 return NONE;
             }
         } else {
-            if (curr->right) {
+            if (curr->right){
                 return do_remove(lock_holder, curr->right, key);
             } else {
                 return NONE;
@@ -315,31 +313,26 @@ class UnbalancedTree : public RMap<K, V>, public Recoverable {
     // }
 };
 
-template <class T>
-class UnbalancedTreeFactory : public RideableFactory {
-    Rideable* build(GlobalTestConfig* gtc) {
+template <class T> 
+class UnbalancedTreeFactory : public RideableFactory{
+    Rideable* build(GlobalTestConfig* gtc){
         return new UnbalancedTree<T, T>(gtc);
     }
 };
 
+
 /* Specialization for strings */
 #include <string>
-
 #include "InPlaceString.hpp"
 template <>
-class UnbalancedTree<std::string, std::string>::Payload : public pds::PBlk {
+class UnbalancedTree<std::string, std::string>::Payload : public pds::PBlk{
     GENERATE_FIELD(pds::InPlaceString<TESTS_KEY_SIZE>, key, Payload);
     GENERATE_FIELD(pds::InPlaceString<TESTS_VAL_SIZE>, val, Payload);
     GENERATE_FIELD(int, deleted, Payload);
 
-   public:
-    Payload(std::string k, std::string v)
-        : m_key(this, k), m_val(this, v), m_deleted(false) {}
-    Payload(const Payload& oth)
-        : pds::PBlk(oth),
-          m_key(this, oth.m_key),
-          m_val(this, oth.m_val),
-          m_deleted(oth.m_deleted) {}
-    void persist() {}
+public:
+    Payload(std::string k, std::string v) : m_key(this, k), m_val(this, v), m_deleted(false){}
+    Payload(const Payload& oth) : pds::PBlk(oth), m_key(this, oth.m_key), m_val(this, oth.m_val), m_deleted(oth.m_deleted){}
+    void persist(){}
 };
 #endif

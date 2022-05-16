@@ -16,8 +16,9 @@ struct disowned {};
  * Disables reference counting, to be used with an alternative garbage
  * collection strategy like a `gc_heap`.
  */
-struct no_refcount_policy {
-    no_refcount_policy(){};
+struct no_refcount_policy
+{
+    no_refcount_policy() {};
     no_refcount_policy(disowned) {}
 
     void inc() {}
@@ -26,4 +27,4 @@ struct no_refcount_policy {
     bool unique() { return false; }
 };
 
-}  // namespace immer
+} // namespace immer

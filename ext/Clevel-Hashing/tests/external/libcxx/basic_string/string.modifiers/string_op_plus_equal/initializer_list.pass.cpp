@@ -13,21 +13,20 @@
 
 // basic_string& operator+=(initializer_list<charT> il);
 
-#include <cassert>
 #include <string>
+#include <cassert>
 
 #include "min_allocator.h"
 
-int main() {
+int main()
+{
     {
         std::string s("123");
         s += {'a', 'b', 'c'};
         assert(s == "123abc");
     }
     {
-        typedef std::basic_string<char, std::char_traits<char>,
-                                  min_allocator<char>>
-            S;
+        typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
         S s("123");
         s += {'a', 'b', 'c'};
         assert(s == "123abc");

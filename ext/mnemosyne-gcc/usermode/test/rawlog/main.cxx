@@ -1,10 +1,10 @@
 /*
-    Copyright (C) 2011 Computer Sciences Department,
+    Copyright (C) 2011 Computer Sciences Department, 
     University of Wisconsin -- Madison
 
     ----------------------------------------------------------------------
 
-    This file is part of Mnemosyne: Lightweight Persistent Memory,
+    This file is part of Mnemosyne: Lightweight Persistent Memory, 
     originally developed at the University of Wisconsin -- Madison.
 
     Mnemosyne was originally developed primarily by Haris Volos
@@ -16,7 +16,7 @@
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation, version 2
     of the License.
-
+ 
     Mnemosyne is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -24,37 +24,38 @@
 
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor,
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, 
     Boston, MA  02110-1301, USA.
 
 ### END HEADER ###
 */
 
-#include <log.h>
-#include <pcm.h>
-#include <string.h>
-
 #include <iostream>
-
+#include <string.h>
+#include <pcm.h>
+#include <log.h>
 #include "../common/unittest.h"
 #include "rawlog_tornbit.helper.h"
 
-int init() {
-    pcm_storeset_t *pcm_storeset;
-    pcm_storeset = pcm_storeset_get();
+int init()
+{
+	pcm_storeset_t  *pcm_storeset;
+    pcm_storeset = pcm_storeset_get ();
     m_rawlog_tornbit_register(pcm_storeset);
 
-    return 0;
+	return 0;
 }
 
-int main(int argc, char **argv) {
-    extern char *optarg;
-    int c;
-    char *suiteName;
-    char *testName;
 
-    init();
+int main(int argc, char **argv)
+{
+	extern char  *optarg;
+	int          c;
+	char         *suiteName;
+	char         *testName;
 
-    getTest(argc, argv, &suiteName, &testName);
-    return runTests(suiteName, testName);
+	init();
+
+	getTest(argc, argv, &suiteName, &testName);
+	return runTests(suiteName, testName);
 }

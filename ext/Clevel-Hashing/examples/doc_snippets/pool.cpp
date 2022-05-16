@@ -36,90 +36,95 @@
 
 //! [pool_example]
 #include <fcntl.h>
-
 #include <libpmemobj++/p.hpp>
 #include <libpmemobj++/persistent_ptr.hpp>
 #include <libpmemobj++/pool.hpp>
 
 using namespace pmem::obj;
 
-void pool_example() {
-    // pool root structure
-    struct root {
-        p<int> some_array[42];
-        p<int> some_other_array[42];
-        p<double> some_variable;
-    };
+void
+pool_example()
+{
 
-    // create a pmemobj pool
-    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+	// pool root structure
+	struct root {
+		p<int> some_array[42];
+		p<int> some_other_array[42];
+		p<double> some_variable;
+	};
 
-    // close a pmemobj pool
-    pop.close();
+	// create a pmemobj pool
+	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
 
-    // or open a pmemobj pool
-    pop = pool<root>::open("poolfile", "layout");
+	// close a pmemobj pool
+	pop.close();
 
-    // typical usage schemes
-    auto root_obj = pop.root();
+	// or open a pmemobj pool
+	pop = pool<root>::open("poolfile", "layout");
 
-    // low-level memory manipulation
-    root_obj->some_variable = 3.2;
-    pop.persist(root_obj->some_variable);
+	// typical usage schemes
+	auto root_obj = pop.root();
 
-    pop.memset_persist(root_obj->some_array, 2, sizeof(root_obj->some_array));
+	// low-level memory manipulation
+	root_obj->some_variable = 3.2;
+	pop.persist(root_obj->some_variable);
 
-    pop.memcpy_persist(root_obj->some_other_array, root_obj->some_array,
-                       sizeof(root_obj->some_array));
+	pop.memset_persist(root_obj->some_array, 2,
+			   sizeof(root_obj->some_array));
 
-    pop.close();
+	pop.memcpy_persist(root_obj->some_other_array, root_obj->some_array,
+			   sizeof(root_obj->some_array));
 
-    // check pool consistency
-    pool<root>::check("poolfile", "layout");
+	pop.close();
+
+	// check pool consistency
+	pool<root>::check("poolfile", "layout");
 }
 //! [pool_example]
 
 //! [pool_base_example]
 #include <fcntl.h>
-
 #include <libpmemobj++/make_persistent_atomic.hpp>
 #include <libpmemobj++/p.hpp>
 #include <libpmemobj++/pool.hpp>
 
 using namespace pmem::obj;
 
-void pool_base_example() {
-    struct some_struct {
-        p<int> some_array[42];
-        p<int> some_other_array[42];
-        p<int> some_variable;
-    };
+void
+pool_base_example()
+{
 
-    // create a pmemobj pool
-    auto pop = pool_base::create("poolfile", "", PMEMOBJ_MIN_POOL);
+	struct some_struct {
+		p<int> some_array[42];
+		p<int> some_other_array[42];
+		p<int> some_variable;
+	};
 
-    // close a pmemobj pool
-    pop.close();
+	// create a pmemobj pool
+	auto pop = pool_base::create("poolfile", "", PMEMOBJ_MIN_POOL);
 
-    // or open a pmemobj pool
-    pop = pool_base::open("poolfile", "");
+	// close a pmemobj pool
+	pop.close();
 
-    // no "root" object available in pool_base
-    persistent_ptr<some_struct> pval;
-    make_persistent_atomic<some_struct>(pop, pval);
+	// or open a pmemobj pool
+	pop = pool_base::open("poolfile", "");
 
-    // low-level memory manipulation
-    pval->some_variable = 3;
-    pop.persist(pval->some_variable);
+	// no "root" object available in pool_base
+	persistent_ptr<some_struct> pval;
+	make_persistent_atomic<some_struct>(pop, pval);
 
-    pop.memset_persist(pval->some_array, 2, sizeof(pval->some_array));
+	// low-level memory manipulation
+	pval->some_variable = 3;
+	pop.persist(pval->some_variable);
 
-    pop.memcpy_persist(pval->some_other_array, pval->some_array,
-                       sizeof(pval->some_array));
+	pop.memset_persist(pval->some_array, 2, sizeof(pval->some_array));
 
-    pop.close();
+	pop.memcpy_persist(pval->some_other_array, pval->some_array,
+			   sizeof(pval->some_array));
 
-    // check pool consistency
-    pool_base::check("poolfile", "");
+	pop.close();
+
+	// check pool consistency
+	pool_base::check("poolfile", "");
 }
 //! [pool_base_example]

@@ -36,7 +36,6 @@
 
 //! [make_example]
 #include <fcntl.h>
-
 #include <libpmemobj++/make_persistent.hpp>
 #include <libpmemobj++/p.hpp>
 #include <libpmemobj++/persistent_ptr.hpp>
@@ -45,44 +44,53 @@
 
 using namespace pmem::obj;
 
-void make_persistent_example() {
-    struct compound_type {
-        compound_type(int val, double dval)
-            : some_variable(val), some_other_variable(dval) {}
+void
+make_persistent_example()
+{
 
-        void set_some_variable(int val) { some_variable = val; }
+	struct compound_type {
 
-        p<int> some_variable;
-        p<double> some_other_variable;
-    };
+		compound_type(int val, double dval)
+		    : some_variable(val), some_other_variable(dval)
+		{
+		}
 
-    // pool root structure
-    struct root {
-        persistent_ptr<compound_type> comp;  //
-    };
+		void
+		set_some_variable(int val)
+		{
+			some_variable = val;
+		}
 
-    // create a pmemobj pool
-    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
-    auto proot = pop.root();
+		p<int> some_variable;
+		p<double> some_other_variable;
+	};
 
-    // typical usage schemes
-    transaction::run(pop, [&] {
-        // allocation with constructor argument passing
-        proot->comp = make_persistent<compound_type>(1, 2.0);
+	// pool root structure
+	struct root {
+		persistent_ptr<compound_type> comp; //
+	};
 
-        // transactionally delete the object, ~compound_type() is called
-        delete_persistent<compound_type>(proot->comp);
-    });
+	// create a pmemobj pool
+	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+	auto proot = pop.root();
 
-    // throws an transaction_scope_error exception
-    auto arr1 = make_persistent<compound_type>(2, 15.0);
-    delete_persistent<compound_type>(arr1);
+	// typical usage schemes
+	transaction::run(pop, [&] {
+		// allocation with constructor argument passing
+		proot->comp = make_persistent<compound_type>(1, 2.0);
+
+		// transactionally delete the object, ~compound_type() is called
+		delete_persistent<compound_type>(proot->comp);
+	});
+
+	// throws an transaction_scope_error exception
+	auto arr1 = make_persistent<compound_type>(2, 15.0);
+	delete_persistent<compound_type>(arr1);
 }
 //! [make_example]
 
 //! [make_array_example]
 #include <fcntl.h>
-
 #include <libpmemobj++/make_persistent_array.hpp>
 #include <libpmemobj++/p.hpp>
 #include <libpmemobj++/persistent_ptr.hpp>
@@ -91,47 +99,56 @@ void make_persistent_example() {
 
 using namespace pmem::obj;
 
-void make_persistent_array_example() {
-    struct compound_type {
-        compound_type() : some_variable(0), some_other_variable(0) {}
+void
+make_persistent_array_example()
+{
 
-        void set_some_variable(int val) { some_variable = val; }
+	struct compound_type {
 
-        p<int> some_variable;
-        p<double> some_other_variable;
-    };
+		compound_type() : some_variable(0), some_other_variable(0)
+		{
+		}
 
-    // pool root structure
-    struct root {
-        persistent_ptr<compound_type[]> comp;  //
-    };
+		void
+		set_some_variable(int val)
+		{
+			some_variable = val;
+		}
 
-    // create a pmemobj pool
-    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
-    auto proot = pop.root();
+		p<int> some_variable;
+		p<double> some_other_variable;
+	};
 
-    // typical usage schemes
-    transaction::run(pop, [&] {
-        // allocate an array of 20 objects - compound_type must be
-        // default constructible
-        proot->comp = make_persistent<compound_type[]>(20);
-        // another allocation method
-        auto arr1 = make_persistent<compound_type[3]>();
+	// pool root structure
+	struct root {
+		persistent_ptr<compound_type[]> comp; //
+	};
 
-        // transactionally delete arrays , ~compound_type() is called
-        delete_persistent<compound_type[]>(proot->comp, 20);
-        delete_persistent<compound_type[3]>(arr1);
-    });
+	// create a pmemobj pool
+	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+	auto proot = pop.root();
 
-    // throws an transaction_scope_error exception
-    auto arr1 = make_persistent<compound_type[3]>();
-    delete_persistent<compound_type[3]>(arr1);
+	// typical usage schemes
+	transaction::run(pop, [&] {
+		// allocate an array of 20 objects - compound_type must be
+		// default constructible
+		proot->comp = make_persistent<compound_type[]>(20);
+		// another allocation method
+		auto arr1 = make_persistent<compound_type[3]>();
+
+		// transactionally delete arrays , ~compound_type() is called
+		delete_persistent<compound_type[]>(proot->comp, 20);
+		delete_persistent<compound_type[3]>(arr1);
+	});
+
+	// throws an transaction_scope_error exception
+	auto arr1 = make_persistent<compound_type[3]>();
+	delete_persistent<compound_type[3]>(arr1);
 }
 //! [make_array_example]
 
 //! [make_atomic_example]
 #include <fcntl.h>
-
 #include <libpmemobj++/make_persistent_atomic.hpp>
 #include <libpmemobj++/p.hpp>
 #include <libpmemobj++/persistent_ptr.hpp>
@@ -140,46 +157,55 @@ void make_persistent_array_example() {
 
 using namespace pmem::obj;
 
-void make_persistent_atomic_example() {
-    struct compound_type {
-        compound_type(int val, double dval)
-            : some_variable(val), some_other_variable(dval) {}
+void
+make_persistent_atomic_example()
+{
 
-        void set_some_variable(int val) { some_variable = val; }
+	struct compound_type {
 
-        p<int> some_variable;
-        p<double> some_other_variable;
-    };
+		compound_type(int val, double dval)
+		    : some_variable(val), some_other_variable(dval)
+		{
+		}
 
-    // pool root structure
-    struct root {
-        persistent_ptr<compound_type> comp;  //
-    };
+		void
+		set_some_variable(int val)
+		{
+			some_variable = val;
+		}
 
-    // create a pmemobj pool
-    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
-    auto proot = pop.root();
+		p<int> some_variable;
+		p<double> some_other_variable;
+	};
 
-    // typical usage schemes
+	// pool root structure
+	struct root {
+		persistent_ptr<compound_type> comp; //
+	};
 
-    // atomic allocation and construction with arguments passing
-    make_persistent_atomic<compound_type>(pop, proot->comp, 1, 2.0);
+	// create a pmemobj pool
+	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+	auto proot = pop.root();
 
-    // atomic object deallocation, ~compound_type() is not called
-    delete_persistent<compound_type>(proot->comp);
+	// typical usage schemes
 
-    // error prone cases
-    transaction::run(pop, [&] {
-        // possible invalid state in case of transaction abort
-        make_persistent_atomic<compound_type>(pop, proot->comp, 1, 1.3);
-        delete_persistent_atomic<compound_type>(proot->comp);
-    });
+	// atomic allocation and construction with arguments passing
+	make_persistent_atomic<compound_type>(pop, proot->comp, 1, 2.0);
+
+	// atomic object deallocation, ~compound_type() is not called
+	delete_persistent<compound_type>(proot->comp);
+
+	// error prone cases
+	transaction::run(pop, [&] {
+		// possible invalid state in case of transaction abort
+		make_persistent_atomic<compound_type>(pop, proot->comp, 1, 1.3);
+		delete_persistent_atomic<compound_type>(proot->comp);
+	});
 }
 //! [make_atomic_example]
 
 //! [make_array_atomic_example]
 #include <fcntl.h>
-
 #include <libpmemobj++/make_persistent_array_atomic.hpp>
 #include <libpmemobj++/p.hpp>
 #include <libpmemobj++/persistent_ptr.hpp>
@@ -188,43 +214,53 @@ void make_persistent_atomic_example() {
 
 using namespace pmem::obj;
 
-void make_persistent_array_atomic_example() {
-    struct compound_type {
-        compound_type() : some_variable(0), some_other_variable(0) {}
+void
+make_persistent_array_atomic_example()
+{
 
-        void set_some_variable(int val) { some_variable = val; }
+	struct compound_type {
 
-        p<int> some_variable;
-        p<double> some_other_variable;
-    };
+		compound_type() : some_variable(0), some_other_variable(0)
+		{
+		}
 
-    // pool root structure
-    struct root {
-        persistent_ptr<compound_type[]> comp;  //
-    };
+		void
+		set_some_variable(int val)
+		{
+			some_variable = val;
+		}
 
-    // create a pmemobj pool
-    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
-    auto proot = pop.root();
+		p<int> some_variable;
+		p<double> some_other_variable;
+	};
 
-    // typical usage schemes
+	// pool root structure
+	struct root {
+		persistent_ptr<compound_type[]> comp; //
+	};
 
-    // atomic array allocation and construction - the compound_type has to
-    // be default constructible
-    make_persistent_atomic<compound_type[]>(pop, proot->comp, 20);
+	// create a pmemobj pool
+	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+	auto proot = pop.root();
 
-    persistent_ptr<compound_type[42]> arr;
-    make_persistent_atomic<compound_type[42]>(pop, arr);
+	// typical usage schemes
 
-    // atomic array deallocation, no destructor being called
-    delete_persistent_atomic<compound_type[]>(proot->comp, 20);
-    delete_persistent_atomic<compound_type[42]>(arr);
+	// atomic array allocation and construction - the compound_type has to
+	// be default constructible
+	make_persistent_atomic<compound_type[]>(pop, proot->comp, 20);
 
-    // error prone cases
-    transaction::run(pop, [&] {
-        // possible invalid state in case of transaction abort
-        make_persistent_atomic<compound_type[]>(pop, proot->comp, 30);
-        delete_persistent_atomic<compound_type[]>(proot->comp, 30);
-    });
+	persistent_ptr<compound_type[42]> arr;
+	make_persistent_atomic<compound_type[42]>(pop, arr);
+
+	// atomic array deallocation, no destructor being called
+	delete_persistent_atomic<compound_type[]>(proot->comp, 20);
+	delete_persistent_atomic<compound_type[42]>(arr);
+
+	// error prone cases
+	transaction::run(pop, [&] {
+		// possible invalid state in case of transaction abort
+		make_persistent_atomic<compound_type[]>(pop, proot->comp, 30);
+		delete_persistent_atomic<compound_type[]>(proot->comp, 30);
+	});
 }
 //! [make_array_atomic_example]

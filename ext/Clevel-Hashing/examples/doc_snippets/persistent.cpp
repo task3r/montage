@@ -36,47 +36,53 @@
 
 //! [p_property_example]
 #include <fcntl.h>
-
 #include <libpmemobj++/p.hpp>
 #include <libpmemobj++/pool.hpp>
 #include <libpmemobj++/transaction.hpp>
 
 using namespace pmem::obj;
 
-void p_property_example() {
-    struct compound_type {
-        void set_some_variable(int val) { some_variable = val; }
+void
+p_property_example()
+{
 
-        int some_variable;
-        double some_other_variable;
-    };
+	struct compound_type {
 
-    // pool root structure
-    static struct root {
-        p<int> counter;           // this is OK
-        p<compound_type> whoops;  // this is hard to use
-    } proot;
+		void
+		set_some_variable(int val)
+		{
+			some_variable = val;
+		}
 
-    // create a pmemobj pool
-    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+		int some_variable;
+		double some_other_variable;
+	};
 
-    // typical usage schemes
-    transaction::run(pop, [&] {
-        proot.counter = 12;  // atomic
-        // one way to change `whoops`
-        proot.whoops.get_rw().set_some_variable(2);
-        proot.whoops.get_rw().some_other_variable = 3.0;
-    });
+	// pool root structure
+	static struct root {
+		p<int> counter;		 // this is OK
+		p<compound_type> whoops; // this is hard to use
+	} proot;
 
-    // Changing a p<> variable outside of a transaction is a volatile
-    // modification. No way to ensure persistence in case of power failure.
-    proot.counter = 12;
+	// create a pmemobj pool
+	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+
+	// typical usage schemes
+	transaction::run(pop, [&] {
+		proot.counter = 12; // atomic
+		// one way to change `whoops`
+		proot.whoops.get_rw().set_some_variable(2);
+		proot.whoops.get_rw().some_other_variable = 3.0;
+	});
+
+	// Changing a p<> variable outside of a transaction is a volatile
+	// modification. No way to ensure persistence in case of power failure.
+	proot.counter = 12;
 }
 //! [p_property_example]
 
 //! [persistent_ptr_example]
 #include <fcntl.h>
-
 #include <libpmemobj++/make_persistent.hpp>
 #include <libpmemobj++/persistent_ptr.hpp>
 #include <libpmemobj++/pool.hpp>
@@ -84,36 +90,44 @@ void p_property_example() {
 
 using namespace pmem::obj;
 
-void persistent_ptr_example() {
-    struct compound_type {
-        void set_some_variable(int val) { some_variable = val; }
+void
+persistent_ptr_example()
+{
 
-        int some_variable;
-        double some_other_variable;
-    };
+	struct compound_type {
 
-    // pool root structure
-    struct root {
-        persistent_ptr<compound_type> comp;
-    } proot;
+		void
+		set_some_variable(int val)
+		{
+			some_variable = val;
+		}
 
-    // create a pmemobj pool
-    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+		int some_variable;
+		double some_other_variable;
+	};
 
-    // typical usage schemes
-    transaction::run(pop, [&] {
-        proot.comp = make_persistent<compound_type>();  // allocation
-        proot.comp->set_some_variable(12);              // call function
-        proot.comp->some_other_variable = 2.3;          // set variable
-    });
+	// pool root structure
+	struct root {
+		persistent_ptr<compound_type> comp;
+	} proot;
 
-    // reading from the persistent_ptr
-    compound_type tmp = *proot.comp;
-    (void)tmp;
+	// create a pmemobj pool
+	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
 
-    // Changing a persistent_ptr<> variable outside of a transaction is a
-    // volatile modification. No way to ensure persistence in case of power
-    // failure.
-    proot.comp->some_variable = 12;
+	// typical usage schemes
+	transaction::run(pop, [&] {
+		proot.comp = make_persistent<compound_type>(); // allocation
+		proot.comp->set_some_variable(12);	     // call function
+		proot.comp->some_other_variable = 2.3;	 // set variable
+	});
+
+	// reading from the persistent_ptr
+	compound_type tmp = *proot.comp;
+	(void)tmp;
+
+	// Changing a persistent_ptr<> variable outside of a transaction is a
+	// volatile modification. No way to ensure persistence in case of power
+	// failure.
+	proot.comp->some_variable = 12;
 }
 //! [persistent_ptr_example]

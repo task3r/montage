@@ -1,12 +1,12 @@
 // This test is obsolete
-#if 0
+#if 0 
 
 #ifndef SETCHURNTEST_HPP
 #define SETCHURNTEST_HPP
 
 #include "ChurnTest.hpp"
-#include "RSet.hpp"
 #include "TestConfig.hpp"
+#include "RSet.hpp"
 
 template <class T>
 class SetChurnTest : public ChurnTest{
@@ -83,5 +83,5 @@ inline std::string SetChurnTest<std::string>::fromInt(uint64_t v){
 	return std::to_string(v);
 }
 
-#endif  // SETCHURNTEST_HPP
-#endif  // 0
+#endif // SETCHURNTEST_HPP
+#endif // 0

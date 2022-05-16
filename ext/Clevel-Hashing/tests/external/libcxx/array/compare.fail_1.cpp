@@ -12,28 +12,31 @@
 // Modified to test pmem::obj containers
 //
 
-#include <libpmemobj++/experimental/array.hpp>
-
 #include "unittest.hpp"
+
+#include <libpmemobj++/experimental/array.hpp>
 
 namespace pmem_exp = pmem::obj::experimental;
 
 template <int Dummy>
-struct NoCompare {};
+struct NoCompare {
+};
 
-int main() {
-    START();
+int
+main()
+{
+	START();
 
-    int result = 0;
-    {
-        typedef NoCompare<1> T;
-        typedef pmem_exp::array<T, 3> C;
-        C c1 = {{}};
-        // expected-error@algorithm:* 2 {{invalid operands to binary
-        // expression}}
-        result = (c1 != c1);
-        result = (c1 > c1);
-    }
+	int result = 0;
+	{
+		typedef NoCompare<1> T;
+		typedef pmem_exp::array<T, 3> C;
+		C c1 = {{}};
+		// expected-error@algorithm:* 2 {{invalid operands to binary
+		// expression}}
+		result = (c1 != c1);
+		result = (c1 > c1);
+	}
 
-    return result;
+	return result;
 }

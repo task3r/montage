@@ -33,16 +33,15 @@
 #ifndef LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_VIEW_HPP
 #define LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_VIEW_HPP
 
-#include <SFML/Graphics.hpp>
-
 #include "GameConstants.hpp"
 #include "PongGameStatus.hpp"
+#include <SFML/Graphics.hpp>
 
 class View {
-   public:
-    virtual ~View(){};
-    virtual void prepareView(PongGameStatus &gameStatus) = 0;
-    virtual void displayView(sf::RenderWindow *gameWindow) = 0;
+public:
+	virtual ~View(){};
+	virtual void prepareView(PongGameStatus &gameStatus) = 0;
+	virtual void displayView(sf::RenderWindow *gameWindow) = 0;
 };
 
 #endif /* LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_VIEW_HPP */

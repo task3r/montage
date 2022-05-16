@@ -1,24 +1,21 @@
 #include "snapshot.hpp"
-
-#include <assert.h>
-#include <emmintrin.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <sys/mman.h>
-#include <unistd.h>
-
-#include <algorithm>
-#include <thread>
-
 #include "ckpt_alloc.hpp"
-#include "nv_object.hpp"
 #include "nvm_manager.hpp"
-#include "recovery_context.hpp"
+#include "nv_object.hpp"
 #include "thread.hpp"
+#include "recovery_context.hpp"
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <assert.h>
+#include <unistd.h>
+#include <emmintrin.h>
+#include <thread>
+#include <errno.h>
+#include <inttypes.h>
+#include <algorithm>
 
-#define CAS(a, b, c) __sync_bool_compare_and_swap(a, b, c)
+#define CAS(a,b,c) __sync_bool_compare_and_swap(a,b,c)
 
 Snapshot *Snapshot::instance = NULL;
 
@@ -31,14 +28,18 @@ Snapshot::Snapshot(const char *snapshotPath) {
     instance = this;
 }
 
-Snapshot::~Snapshot() { instance = NULL; }
+Snapshot::~Snapshot() {
+    instance = NULL;
+}
 
 Snapshot *Snapshot::getInstance() {
     assert(instance != NULL);
     return instance;
 }
 
-bool Snapshot::anyActiveSnapshot() { return instance != NULL; }
+bool Snapshot::anyActiveSnapshot() {
+    return instance != NULL;
+}
 
 void Snapshot::getExistingSnapshots(std::vector<uint32_t> &snapshots) {
     for (auto &p : experimental::filesystem::directory_iterator(rootPath)) {
@@ -55,10 +56,8 @@ void Snapshot::getExistingSnapshots(std::vector<uint32_t> &snapshots) {
 uint32_t Snapshot::lastSnapshotID() {
     std::vector<uint32_t> snapshots;
     getExistingSnapshots(snapshots);
-    if (snapshots.empty())
-        return 0;
-    else
-        return snapshots.back();
+    if (snapshots.empty()) return 0;
+    else return snapshots.back();
 }
 
 /*
@@ -74,10 +73,10 @@ void Snapshot::prepareSnapshot() {
 
     uint32_t objectCount = 0;
     for (auto it = NVManager::getInstance().objects.begin();
-         it != NVManager::getInstance().objects.end(); it++) {
-        snapshotSize += sizeof(uint64_t);   // last committed log
-        snapshotSize += sizeof(uint64_t);   // log tail
-        snapshotSize += sizeof(uintptr_t);  // object pointer
+            it != NVManager::getInstance().objects.end(); it++) {
+        snapshotSize += sizeof(uint64_t); // last committed log
+        snapshotSize += sizeof(uint64_t); // log tail
+        snapshotSize += sizeof(uintptr_t); // object pointer
         snapshotSize += it->second->alloc->snapshotSize();
         objectCount++;
     }
@@ -94,8 +93,8 @@ void Snapshot::prepareSnapshot() {
     fd = open(poolPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0666);
     assert(fd > 0);
     assert(fallocate(fd, 0, 0, snapshotSize) == 0);
-    view = (snapshot_header_t *)mmap(NULL, snapshotSize, PROT_READ | PROT_WRITE,
-                                     MAP_SHARED_VALIDATE | MAP_SYNC, fd, 0);
+    view = (snapshot_header_t *)mmap(NULL, snapshotSize,
+            PROT_READ | PROT_WRITE, MAP_SHARED_VALIDATE | MAP_SYNC, fd, 0);
     assert(view != NULL);
     assert(madvise(view, snapshotSize, MADV_SEQUENTIAL | MADV_WILLNEED) == 0);
 
@@ -160,10 +159,10 @@ uint32_t Snapshot::create() {
     // Finalize the snapshot
     uint64_t latency = (t2.tv_sec - t1.tv_sec) * 1E9;
     latency += (t2.tv_nsec - t1.tv_nsec);
-    view->sync_latency = latency / 1E3;  // us
+    view->sync_latency = latency / 1E3; // us
     latency = (t3.tv_sec - t2.tv_sec) * 1E9;
     latency += (t3.tv_nsec - t2.tv_nsec);
-    view->async_latency = latency / 1E3;  // us
+    view->async_latency = latency / 1E3; // us
     cleanEnvironment();
     NVManager::getInstance().unlock();
 
@@ -171,23 +170,23 @@ uint32_t Snapshot::create() {
 }
 
 void Snapshot::pageFaultHandler(void *addr) {
+
     const uintptr_t LB = GlobalAlloc::BaseAddress;
     const uintptr_t UB = GlobalAlloc::BaseAddress + GlobalAlloc::MaxMemorySize;
     uintptr_t alignedAddr = (uintptr_t)addr & ~(FreeList::BlockSize - 1);
     assert(alignedAddr >= LB && alignedAddr < UB);
 
     const size_t PPBlk = FreeList::BlockSize / GlobalAlloc::BitmapGranularity;
-    off_t offset = (alignedAddr - LB) >> 21;  // 2 MB pages
+    off_t offset = (alignedAddr - LB) >> 21; // 2 MB pages
 
     if (!CAS(&context[offset], UsedHugePage, LockedHugePage)) {
         // Wait for the other thread who owns the lock
-        while (context[offset] != SavedHugePage) {
-        }
+        while (context[offset] != SavedHugePage) { }
         return;
     }
 
     uint64_t *bitmap = (uint64_t *)((char *)view + view->bitmap_offset);
-    bitmap += offset * PPBlk / 64;  // 8 * sizeof(uint64_t)
+    bitmap += offset * PPBlk / 64; // 8 * sizeof(uint64_t)
     char *src = (char *)alignedAddr;
     char *dst = (char *)view + view->data_offset + (offset << 21);
 
@@ -197,7 +196,8 @@ void Snapshot::pageFaultHandler(void *addr) {
         for (off_t p = 0; p < 64; p++) {
             if (bit & 0x0000000000000001) {
                 nonTemporalPageCopy(dst, src);
-            } else {
+            }
+            else {
                 nonTemporalCacheLineCopy(dst, src);
             }
             src = src + GlobalAlloc::BitmapGranularity;
@@ -208,13 +208,13 @@ void Snapshot::pageFaultHandler(void *addr) {
 
     _mm_sfence();
     assert(mprotect((void *)alignedAddr, FreeList::BlockSize,
-                    PROT_READ | PROT_WRITE) == 0);
+                PROT_READ | PROT_WRITE) == 0);
     assert(CAS(&context[offset], LockedHugePage, SavedHugePage));
 }
 
 void Snapshot::blockNewTransactions() {
     for (auto it = NVManager::getInstance().objects.begin();
-         it != NVManager::getInstance().objects.end(); it++) {
+            it != NVManager::getInstance().objects.end(); it++) {
         it->second->log->snapshot_lock = 1;
     }
     _mm_sfence();
@@ -227,7 +227,7 @@ void Snapshot::waitForRunningTransactions() {
     while (areThereTransactionsRunning) {
         areThereTransactionsRunning = false;
         for (auto it = nvm.program_threads.begin();
-             it != nvm.program_threads.end(); it++) {
+                it != nvm.program_threads.end(); it++) {
             // tx_buffer[0] == number of active transactions
             if (it->second->tx_buffer[0] != 0) {
                 areThereTransactionsRunning = true;
@@ -250,7 +250,7 @@ void Snapshot::saveAllocationTables() {
     // No need to lock since all threads are blocked
     snapshot = (char *)view + view->alloc_offset;
     for (auto it = NVManager::getInstance().objects.begin();
-         it != NVManager::getInstance().objects.end(); it++) {
+            it != NVManager::getInstance().objects.end(); it++) {
         ObjectAlloc *alloc = it->second->alloc;
         *((uint64_t *)snapshot) = it->second->log->last_commit;
         snapshot += sizeof(uint64_t);
@@ -266,6 +266,7 @@ void Snapshot::saveAllocationTables() {
 }
 
 void Snapshot::markPagesReadOnly() {
+
     GlobalAlloc *instance = GlobalAlloc::getInstance();
     size_t allocatedBlocks = instance->allocatedBlocks();
     uint64_t *bitmap = (uint64_t *)((char *)view + view->bitmap_offset);
@@ -276,19 +277,20 @@ void Snapshot::markPagesReadOnly() {
     uintptr_t addr = GlobalAlloc::BaseAddress;
 
     for (size_t b = 0; b < allocatedBlocks; b++) {
-        isAllocated = bitmap[bitmapOffset++] > 0;   // 0
-        isAllocated |= bitmap[bitmapOffset++] > 0;  // 1
-        isAllocated |= bitmap[bitmapOffset++] > 0;  // 2
-        isAllocated |= bitmap[bitmapOffset++] > 0;  // 3
-        isAllocated |= bitmap[bitmapOffset++] > 0;  // 4
-        isAllocated |= bitmap[bitmapOffset++] > 0;  // 5
-        isAllocated |= bitmap[bitmapOffset++] > 0;  // 6
-        isAllocated |= bitmap[bitmapOffset++] > 0;  // 7
+        isAllocated = bitmap[bitmapOffset++] > 0;  // 0
+        isAllocated |= bitmap[bitmapOffset++] > 0; // 1
+        isAllocated |= bitmap[bitmapOffset++] > 0; // 2
+        isAllocated |= bitmap[bitmapOffset++] > 0; // 3
+        isAllocated |= bitmap[bitmapOffset++] > 0; // 4
+        isAllocated |= bitmap[bitmapOffset++] > 0; // 5
+        isAllocated |= bitmap[bitmapOffset++] > 0; // 6
+        isAllocated |= bitmap[bitmapOffset++] > 0; // 7
 
         if (isAllocated) {
             context[b] = UsedHugePage;
             regionSize += FreeList::BlockSize;
-        } else {
+        }
+        else {
             context[b] = FreeHugePage;
             if (regionSize > 0) {
                 assert(mprotect((void *)addr, regionSize, PROT_READ) == 0);
@@ -323,8 +325,8 @@ void Snapshot::nonTemporalPageCopy(char *dst, char *src) {
     __m128i *dstPtr = (__m128i *)dst;
     __m128i *srcPtr = (__m128i *)src;
 
-// 4096 bytes = 32768 bits = 256 x 128 bits = 16 x 16 x 128 bits
-#pragma unroll(16)
+    // 4096 bytes = 32768 bits = 256 x 128 bits = 16 x 16 x 128 bits
+    #pragma unroll(16)
     for (int i = 0; i < 16; i++) {
         __m128i xmm0 = _mm_loadu_si128(srcPtr + 0);
         __m128i xmm1 = _mm_loadu_si128(srcPtr + 1);
@@ -343,7 +345,7 @@ void Snapshot::nonTemporalPageCopy(char *dst, char *src) {
         __m128i xmm14 = _mm_loadu_si128(srcPtr + 14);
         __m128i xmm15 = _mm_loadu_si128(srcPtr + 15);
 
-        _mm_stream_si128(dstPtr + 0, xmm0);  // 16 bytes
+        _mm_stream_si128(dstPtr + 0, xmm0); // 16 bytes
         _mm_stream_si128(dstPtr + 1, xmm1);
         _mm_stream_si128(dstPtr + 2, xmm2);
         _mm_stream_si128(dstPtr + 3, xmm3);
@@ -366,10 +368,11 @@ void Snapshot::nonTemporalPageCopy(char *dst, char *src) {
 }
 
 void Snapshot::snapshotWorker(off_t offset, size_t length) {
+
     GlobalAlloc *ga = GlobalAlloc::getInstance();
     const size_t BlockSize = FreeList::BlockSize;
     const size_t PPBlk = BlockSize / ga->BitmapGranularity;
-    const size_t BitmapStepSize = PPBlk / 64;  // 8 for 2 MB super-pages
+    const size_t BitmapStepSize = PPBlk / 64; // 8 for 2 MB super-pages
 
     // Setup data and bitmap pointers
     char *dst = (char *)view + view->data_offset + offset * BlockSize;
@@ -379,6 +382,7 @@ void Snapshot::snapshotWorker(off_t offset, size_t length) {
 
     for (off_t sp = 0; sp < length; sp++) {
         if (CAS(&context[offset + sp], UsedHugePage, LockedHugePage)) {
+
             // Copy modified 4 KB pages
             void *oldSrc = src;
             for (size_t b = 0; b < PPBlk; b += 64) {
@@ -386,7 +390,8 @@ void Snapshot::snapshotWorker(off_t offset, size_t length) {
                 for (off_t p = 0; p < 64; p++) {
                     if (bit & 0x0000000000000001) {
                         nonTemporalPageCopy(dst, src);
-                    } else {
+                    }
+                    else {
                         // TODO avoid this by filling unused pages at recovery
                         nonTemporalCacheLineCopy(dst, src);
                     }
@@ -401,10 +406,11 @@ void Snapshot::snapshotWorker(off_t offset, size_t length) {
             _mm_sfence();
 
             assert(mprotect(oldSrc, FreeList::BlockSize,
-                            PROT_READ | PROT_WRITE) == 0);
+                        PROT_READ | PROT_WRITE) == 0);
 
             assert(CAS(&context[offset + sp], LockedHugePage, SavedHugePage));
-        } else {
+        }
+        else {
             // Update pointers (skip by one block)
             src = src + BlockSize;
             dst = dst + BlockSize;
@@ -432,8 +438,8 @@ void Snapshot::extendSnapshot(size_t allocatedBlocks) {
     assert(fallocate(fd, 0, snapshotSize, dataSize) == 0);
     snapshotSize += dataSize;
     // TODO support for huge-pages
-    view = (snapshot_header_t *)mmap(NULL, snapshotSize, PROT_READ | PROT_WRITE,
-                                     MAP_SHARED_VALIDATE | MAP_SYNC, fd, 0);
+    view = (snapshot_header_t *)mmap(NULL, snapshotSize,
+            PROT_READ | PROT_WRITE, MAP_SHARED_VALIDATE | MAP_SYNC, fd, 0);
     assert(view != NULL);
 
     uintptr_t ptr = (uintptr_t)view + view->data_offset;
@@ -443,6 +449,7 @@ void Snapshot::extendSnapshot(size_t allocatedBlocks) {
 }
 
 void Snapshot::saveModifiedPages(size_t allocatedBlocks) {
+
     // Calculate shares for each snapshot thread
     assert(allocatedBlocks % SnapshotThreads == 0);
     size_t shareLength = allocatedBlocks / SnapshotThreads;
@@ -452,7 +459,7 @@ void Snapshot::saveModifiedPages(size_t allocatedBlocks) {
     vector<std::thread *> threads;
     for (size_t i = 0; i < SnapshotThreads; i++) {
         threads.push_back(new thread(&Snapshot::snapshotWorker, this,
-                                     threadIndex, shareLength));
+                    threadIndex, shareLength));
         threadIndex += shareLength;
     }
 
@@ -483,20 +490,21 @@ void Snapshot::loadSnapshot(uint32_t id) {
     fd = open(poolPath.c_str(), O_RDONLY, 0666);
     assert(fd > 0);
 
-    view = (snapshot_header_t *)mmap(NULL, sizeof(snapshot_header_t), PROT_READ,
-                                     MAP_SHARED_VALIDATE | MAP_SYNC, fd, 0);
+    view = (snapshot_header_t *)mmap(NULL, sizeof(snapshot_header_t),
+            PROT_READ, MAP_SHARED_VALIDATE | MAP_SYNC, fd, 0);
     assert(view != NULL);
     size_t snapshotSize = view->size;
     munmap(view, sizeof(snapshot_header_t));
 
-    view = (snapshot_header_t *)mmap(NULL, snapshotSize, PROT_READ,
-                                     MAP_SHARED_VALIDATE | MAP_SYNC, fd, 0);
+    view = (snapshot_header_t *)mmap(NULL, snapshotSize,
+            PROT_READ, MAP_SHARED_VALIDATE | MAP_SYNC, fd, 0);
     assert(view != NULL);
     PRINT("Mapped snapshot: %zu bytes at %p\n", snapshotSize, view);
 }
 
 // TODO merge the following with snapshotWorker
 void Snapshot::restoreWorker(off_t offset, size_t length) {
+
     GlobalAlloc *ga = GlobalAlloc::getInstance();
     const size_t PagesPerBlock = FreeList::BlockSize / ga->BitmapGranularity;
     const size_t BitmapStepSize = PagesPerBlock / 64;
@@ -508,9 +516,11 @@ void Snapshot::restoreWorker(off_t offset, size_t length) {
 
     for (size_t sp = 0; sp < length; sp++) {
         // Skip over unused super-pages (blocks)
-        if (bitmap[0] == 0 && bitmap[1] == 0 && bitmap[2] == 0 &&
-            bitmap[3] == 0 && bitmap[4] == 0 && bitmap[5] == 0 &&
+        if (bitmap[0] == 0 && bitmap[1] == 0 &&
+            bitmap[2] == 0 && bitmap[3] == 0 &&
+            bitmap[4] == 0 && bitmap[5] == 0 &&
             bitmap[6] == 0 && bitmap[7] == 0) {
+
             bitmap += 8;
             src = src + FreeList::BlockSize;
             dst = dst + FreeList::BlockSize;
@@ -522,7 +532,8 @@ void Snapshot::restoreWorker(off_t offset, size_t length) {
             for (off_t p = 0; p < 64; p++) {
                 if (bit & 0x0000000000000001) {
                     nonTemporalPageCopy(dst, src);
-                } else {
+                }
+                else {
                     nonTemporalCacheLineCopy(dst, src);
                 }
                 src = src + GlobalAlloc::BitmapGranularity;
@@ -535,6 +546,7 @@ void Snapshot::restoreWorker(off_t offset, size_t length) {
 }
 
 void Snapshot::load(uint32_t id, NVManager *manager) {
+
     loadSnapshot(id);
 
     // Global allocator and the bitmap
@@ -553,7 +565,7 @@ void Snapshot::load(uint32_t id, NVManager *manager) {
     vector<std::thread *> threads;
     for (size_t i = 0; i < SnapshotThreads; i++) {
         threads.push_back(new thread(&Snapshot::restoreWorker, this,
-                                     threadIndex, shareLength));
+                    threadIndex, shareLength));
         threadIndex += shareLength;
     }
 
@@ -576,9 +588,8 @@ void Snapshot::load(uint32_t id, NVManager *manager) {
         objCkpt += sizeof(uint64_t);
         uintptr_t objectPtr = *((uintptr_t *)objCkpt);
         objCkpt += sizeof(uintptr_t);
-        PRINT(
-            "Recovering object at %p, last commit = %zu, and log tail = %zu\n",
-            (void *)objectPtr, lastCommit, logTail);
+        PRINT("Recovering object at %p, last commit = %zu, and log tail = %zu\n",
+                (void*)objectPtr, lastCommit, logTail);
 
         uuid_t uuid;
         memcpy(uuid, objCkpt, sizeof(uuid_t));
@@ -591,20 +602,19 @@ void Snapshot::load(uint32_t id, NVManager *manager) {
             char uuid_str[64];
             uuid_unparse(uuid, uuid_str);
             manager->objects.insert(pair<string, PersistentObject *>(
-                uuid_str, (PersistentObject *)objectPtr));
+                        uuid_str, (PersistentObject *)objectPtr));
             lastCommitIDs.insert(pair<string, uint64_t>(uuid_str, lastCommit));
             RecoveryContext::getInstance().pushLogHeadOffset(uuid_str, logTail);
         }
     }
-    PRINT("Finished restoring allocators for %d object(s)\n",
-          view->object_count);
+    PRINT("Finished restoring allocators for %d object(s)\n", view->object_count);
 
     // Fix unused huge-pages (free blocks)
     objCkpt = (char *)view + view->alloc_offset;
     for (uint32_t i = 0; i < view->object_count; i++) {
-        objCkpt += sizeof(uint64_t);   // last commit
-        objCkpt += sizeof(uint64_t);   // log tail
-        objCkpt += sizeof(uintptr_t);  // object pointer
+        objCkpt += sizeof(uint64_t); // last commit
+        objCkpt += sizeof(uint64_t); // log tail
+        objCkpt += sizeof(uintptr_t); // object pointer
 
         uuid_t uuid;
         memcpy(uuid, objCkpt, sizeof(uuid_t));
@@ -618,8 +628,8 @@ void Snapshot::load(uint32_t id, NVManager *manager) {
     if (manager == NULL) return;
 
     // Reset last played commit IDs
-    for (auto it = manager->objects.begin(); it != manager->objects.end();
-         it++) {
+    for (auto it = manager->objects.begin();
+            it != manager->objects.end(); it++) {
         assert(lastCommitIDs.find(it->first) != lastCommitIDs.end());
         uint64_t commitID = lastCommitIDs.find(it->first)->second;
         it->second->last_played_commit_id = commitID;

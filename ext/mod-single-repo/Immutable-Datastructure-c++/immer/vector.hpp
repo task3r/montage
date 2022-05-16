@@ -8,9 +8,9 @@
 
 #pragma once
 
+#include <immer/memory_policy.hpp>
 #include <immer/detail/rbts/rbtree.hpp>
 #include <immer/detail/rbts/rbtree_iterator.hpp>
-#include <immer/memory_policy.hpp>
 #include <immer/nvm_utils.hpp>
 #include <iostream>
 #if IMMER_DEBUG_PRINT
@@ -19,11 +19,15 @@
 
 namespace immer {
 
-template <typename T, typename MemoryPolicy, detail::rbts::bits_t B,
+template <typename T,
+          typename MemoryPolicy,
+          detail::rbts::bits_t B,
           detail::rbts::bits_t BL>
 class flex_vector;
 
-template <typename T, typename MemoryPolicy, detail::rbts::bits_t B,
+template <typename T,
+          typename MemoryPolicy,
+          detail::rbts::bits_t B,
           detail::rbts::bits_t BL>
 class vector_transient;
 
@@ -64,24 +68,28 @@ class vector_transient;
  *
  * @endrst
  */
-template <typename T, typename MemoryPolicy = default_memory_policy,
-          detail::rbts::bits_t B = default_bits,
-          detail::rbts::bits_t BL =
-              detail::rbts::derive_bits_leaf<T, MemoryPolicy, B>>
-class vector {
+template <typename T,
+          typename MemoryPolicy   = default_memory_policy,
+          detail::rbts::bits_t B  = default_bits,
+          detail::rbts::bits_t BL = detail::rbts::derive_bits_leaf<T, MemoryPolicy, B>>
+class vector
+{
     using impl_t = detail::rbts::rbtree<T, MemoryPolicy, B, BL>;
     using flex_t = flex_vector<T, MemoryPolicy, B, BL>;
 
     using move_t =
         std::integral_constant<bool, MemoryPolicy::use_transient_rvalues>;
 
-    using memory = MemoryPolicy;
+    using memory      = MemoryPolicy;
     using heap_policy = typename memory::heap;
-    using heap =
-        typename heap_policy::template optimized<2 * sizeof(impl_t)>::type;
+    using heap = typename heap_policy::template
+        optimized<2*sizeof(impl_t)>::type;
 
-   public:
-    void* operator new(size_t size) { return heap::allocate(size); }
+    public:
+
+    void* operator new(size_t size) {
+        return heap::allocate(size);
+    }
 
     void operator delete(void* data) {
         heap::deallocate(sizeof(vector<T>), data);
@@ -100,11 +108,11 @@ class vector {
     using difference_type = std::ptrdiff_t;
     using const_reference = const T&;
 
-    using iterator = detail::rbts::rbtree_iterator<T, MemoryPolicy, B, BL>;
-    using const_iterator = iterator;
+    using iterator         = detail::rbts::rbtree_iterator<T, MemoryPolicy, B, BL>;
+    using const_iterator   = iterator;
     using reverse_iterator = std::reverse_iterator<iterator>;
 
-    using transient_type = vector_transient<T, MemoryPolicy, B, BL>;
+    using transient_type   = vector_transient<T, MemoryPolicy, B, BL>;
 
     /*!
      * Default constructor.  It creates a vector of `size() == 0`.  It
@@ -116,22 +124,27 @@ class vector {
      * Constructs a vector containing the elements in `values`.
      */
     vector(std::initializer_list<T> values)
-        : impl_{impl_t::from_initializer_list(values)} {}
+        : impl_{impl_t::from_initializer_list(values)}
+    {}
 
     /*!
      * Constructs a vector containing the elements in the range
      * defined by the input iterator `first` and range sentinel `last`.
      */
     template <typename Iter, typename Sent,
-              std::enable_if_t<detail::compatible_sentinel_v<Iter, Sent>,
-                               bool> = true>
-    vector(Iter first, Sent last) : impl_{impl_t::from_range(first, last)} {}
+              std::enable_if_t
+              <detail::compatible_sentinel_v<Iter, Sent>, bool> = true>
+    vector(Iter first, Sent last)
+        : impl_{impl_t::from_range(first, last)}
+    {}
 
     /*!
      * Constructs a vector containing the element `val` repeated `n`
      * times.
      */
-    vector(size_type n, T v = {}) : impl_{impl_t::from_fill(n, v)} {
+    vector(size_type n, T v = {})
+        : impl_{impl_t::from_fill(n, v)}
+    {
         NVM_FINALIZE();
     }
 
@@ -160,7 +173,7 @@ class vector {
      * pointing after the last element of the reversed collection. It
      * does not allocate memory and its complexity is @f$ O(1) @f$.
      */
-    reverse_iterator rend() const { return reverse_iterator{begin()}; }
+    reverse_iterator rend()   const { return reverse_iterator{begin()}; }
 
     /*!
      * Returns the number of elements in the container.  It does
@@ -190,7 +203,8 @@ class vector {
      * allocate memory and its complexity is *effectively* @f$ O(1)
      * @f$.
      */
-    reference operator[](size_type index) const { return impl_.get(index); }
+    reference operator[] (size_type index) const
+    { return impl_.get(index); }
 
     /*!
      * Returns a `const` reference to the element at position
@@ -198,15 +212,16 @@ class vector {
      * index \geq size() @f$.  It does not allocate memory and its
      * complexity is *effectively* @f$ O(1) @f$.
      */
-    reference at(size_type index) const { return impl_.get_check(index); }
+    reference at(size_type index) const
+    { return impl_.get_check(index); }
 
     /*!
      * Returns whether the vectors are equal.
      */
-    bool operator==(const vector& other) const {
-        return impl_.equals(other.impl_);
-    }
-    bool operator!=(const vector& other) const { return !(*this == other); }
+    bool operator==(const vector& other) const
+    { return impl_.equals(other.impl_); }
+    bool operator!=(const vector& other) const
+    { return !(*this == other); }
 
     /*!
      * Returns a vector with `value` inserted at the end.  It may
@@ -223,23 +238,23 @@ class vector {
      *
      * @endrst
      */
-    vector push_back(value_type value) const& {
-        return impl_.push_back(std::move(value));
-    }
+    vector push_back(value_type value) const&
+    { return impl_.push_back(std::move(value)); }
 
-    vector* push_back_ptr(value_type value) const& {
-        vector* return_vector = new vector(impl_.push_back(std::move(value)));
-        NOTE("oldvector:%p\n", (void*)this);
-        NOTE("vector:%p\n", (void*)return_vector);
-        NOTE("impl:%p\n", (void*)&impl_);
+    vector* push_back_ptr(value_type value) const&
+    { 
+        vector *return_vector = new vector 
+            (impl_.push_back(std::move(value)));
+        NOTE("oldvector:%p\n", (void*) this);
+        NOTE("vector:%p\n", (void*) return_vector);
+        NOTE("impl:%p\n", (void*) &impl_);
         NVM_PERSIST(return_vector, sizeof(vector));
         NVM_FINALIZE();
         return return_vector;
     }
 
-    decltype(auto) push_back(value_type value) && {
-        return push_back_move(move_t{}, std::move(value));
-    }
+    decltype(auto) push_back(value_type value) &&
+    { return push_back_move(move_t{}, std::move(value)); }
 
     /*!
      * Returns a vector containing value `value` at position `idx`.
@@ -258,24 +273,23 @@ class vector {
      *
      * @endrst
      */
-    vector set(size_type index, value_type value) const& {
-        return impl_.assoc(index, std::move(value));
-    }
+    vector set(size_type index, value_type value) const&
+    { return impl_.assoc(index, std::move(value)); }
 
-    vector* set_ptr(size_type index, value_type value) const& {
-        vector* return_vector =
-            new vector(std::move(impl_.assoc(index, std::move(value))));
-        NOTE("oldvector:%p\n", (void*)this);
-        NOTE("vector:%p\n", (void*)return_vector);
-        NOTE("impl:%p\n", (void*)&impl_);
+    vector* set_ptr(size_type index, value_type value) const&
+    { 
+        vector *return_vector = new vector 
+            (std::move(impl_.assoc(index, std::move(value))));
+        NOTE("oldvector:%p\n", (void*) this);
+        NOTE("vector:%p\n", (void*) return_vector);
+        NOTE("impl:%p\n", (void*) &impl_);
         NVM_PERSIST(return_vector, sizeof(vector));
         NVM_FINALIZE();
         return return_vector;
     }
 
-    decltype(auto) set(size_type index, value_type value) && {
-        return set_move(move_t{}, index, std::move(value));
-    }
+    decltype(auto) set(size_type index, value_type value) &&
+    { return set_move(move_t{}, index, std::move(value)); }
 
     /*!
      * Returns a vector containing the result of the expression
@@ -296,14 +310,12 @@ class vector {
      * @endrst
      */
     template <typename FnT>
-    vector update(size_type index, FnT&& fn) const& {
-        return impl_.update(index, std::forward<FnT>(fn));
-    }
+    vector update(size_type index, FnT&& fn) const&
+    { return impl_.update(index, std::forward<FnT>(fn)); }
 
     template <typename FnT>
-    decltype(auto) update(size_type index, FnT&& fn) && {
-        return update_move(move_t{}, index, std::forward<FnT>(fn));
-    }
+    decltype(auto) update(size_type index, FnT&& fn) &&
+    { return update_move(move_t{}, index, std::forward<FnT>(fn)); }
 
     /*!
      * Returns a vector containing only the first `min(elems, size())`
@@ -321,20 +333,23 @@ class vector {
      *
      * @endrst
      */
-    vector take(size_type elems) const& { return impl_.take(elems); }
+    vector take(size_type elems) const&
+    { return impl_.take(elems); }
 
-    decltype(auto) take(size_type elems) && {
-        return take_move(move_t{}, elems);
-    }
+    decltype(auto) take(size_type elems) &&
+    { return take_move(move_t{}, elems); }
 
     /*!
      * Returns an @a transient form of this container, an
      * `immer::vector_transient`.
      */
-    transient_type transient() const& { return transient_type{impl_}; }
-    transient_type transient() && { return transient_type{std::move(impl_)}; }
-
-    transient_type* transient_ptr() {
+    transient_type transient() const&
+    { return transient_type{ impl_ }; }
+    transient_type transient() &&
+    { return transient_type{ std::move(impl_) }; }
+    
+    transient_type* transient_ptr()
+    { 
         auto* transient_vector = new transient_type(impl_);
         NOTE("transient_vector:%p\n", transient_vector);
         NVM_PERSIST(transient_vector, sizeof(impl_t));
@@ -346,58 +361,47 @@ class vector {
     const impl_t& impl() const { return impl_; }
 
 #if IMMER_DEBUG_PRINT
-    void debug_print(std::ostream& out = std::cerr) const {
-        flex_t{*this}.debug_print(out);
-    }
+    void debug_print(std::ostream& out=std::cerr) const
+    { flex_t{*this}.debug_print(out); }
 #endif
 
-   private:
+private:
     friend flex_t;
     friend transient_type;
 
-    vector(impl_t impl) : impl_(std::move(impl)) {
+    vector(impl_t impl)
+        : impl_(std::move(impl))
+    {
 #if IMMER_DEBUG_PRINT
         // force the compiler to generate debug_print, so we can call
         // it from a debugger
-        [](volatile auto) {}(&vector::debug_print);
+        [](volatile auto){}(&vector::debug_print);
 #endif
     }
 
-    vector&& push_back_move(std::true_type, value_type value) {
-        impl_.push_back_mut({}, std::move(value));
-        return std::move(*this);
-    }
-    vector push_back_move(std::false_type, value_type value) {
-        return impl_.push_back(std::move(value));
-    }
+    vector&& push_back_move(std::true_type, value_type value)
+    { impl_.push_back_mut({}, std::move(value)); return std::move(*this); }
+    vector push_back_move(std::false_type, value_type value)
+    { return impl_.push_back(std::move(value)); }
 
-    vector&& set_move(std::true_type, size_type index, value_type value) {
-        impl_.assoc_mut({}, index, std::move(value));
-        return std::move(*this);
-    }
-    vector set_move(std::false_type, size_type index, value_type value) {
-        return impl_.assoc(index, std::move(value));
-    }
+    vector&& set_move(std::true_type, size_type index, value_type value)
+    { impl_.assoc_mut({}, index, std::move(value)); return std::move(*this); }
+    vector set_move(std::false_type, size_type index, value_type value)
+    { return impl_.assoc(index, std::move(value)); }
 
     template <typename Fn>
-    vector&& update_move(std::true_type, size_type index, Fn&& fn) {
-        impl_.update_mut({}, index, std::forward<Fn>(fn));
-        return std::move(*this);
-    }
+    vector&& update_move(std::true_type, size_type index, Fn&& fn)
+    { impl_.update_mut({}, index, std::forward<Fn>(fn)); return std::move(*this); }
     template <typename Fn>
-    vector update_move(std::false_type, size_type index, Fn&& fn) {
-        return impl_.update(index, std::forward<Fn>(fn));
-    }
+    vector update_move(std::false_type, size_type index, Fn&& fn)
+    { return impl_.update(index, std::forward<Fn>(fn)); }
 
-    vector&& take_move(std::true_type, size_type elems) {
-        impl_.take_mut({}, elems);
-        return std::move(*this);
-    }
-    vector take_move(std::false_type, size_type elems) {
-        return impl_.take(elems);
-    }
+    vector&& take_move(std::true_type, size_type elems)
+    { impl_.take_mut({}, elems); return std::move(*this); }
+    vector take_move(std::false_type, size_type elems)
+    { return impl_.take(elems); }
 
     impl_t impl_ = impl_t::empty();
 };
 
-}  // namespace immer
+} // namespace immer

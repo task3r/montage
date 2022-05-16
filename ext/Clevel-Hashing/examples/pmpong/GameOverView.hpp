@@ -33,24 +33,23 @@
 #ifndef LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_GAMEOVERVIEW_HPP
 #define LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_GAMEOVERVIEW_HPP
 
-#include <SFML/Graphics.hpp>
-
 #include "GameConstants.hpp"
 #include "PongGameStatus.hpp"
 #include "View.hpp"
+#include <SFML/Graphics.hpp>
 
 class GameOverView : public View {
-   public:
-    GameOverView(sf::Font &font);
-    ~GameOverView();
+public:
+	GameOverView(sf::Font &font);
+	~GameOverView();
 
-    virtual void prepareView(PongGameStatus &gameStatus);
-    virtual void displayView(sf::RenderWindow *gameWindow);
+	virtual void prepareView(PongGameStatus &gameStatus);
+	virtual void displayView(sf::RenderWindow *gameWindow);
 
-   private:
-    sf::Text gameOver;
-    sf::Text playerWinner;
-    sf::Text entContinue;
+private:
+	sf::Text gameOver;
+	sf::Text playerWinner;
+	sf::Text entContinue;
 };
 
 #endif /* LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_GAMEOVERVIEW_HPP */

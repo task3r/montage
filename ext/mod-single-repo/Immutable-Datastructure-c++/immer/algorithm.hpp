@@ -38,19 +38,22 @@ namespace immer {
  * @endrst
  */
 template <typename Range, typename Fn>
-void for_each_chunk(const Range& r, Fn&& fn) {
+void for_each_chunk(const Range& r, Fn&& fn)
+{
     r.impl().for_each_chunk(std::forward<Fn>(fn));
 }
 
 template <typename Iterator, typename Fn>
-void for_each_chunk(const Iterator& first, const Iterator& last, Fn&& fn) {
+void for_each_chunk(const Iterator& first, const Iterator& last, Fn&& fn)
+{
     assert(&first.impl() == &last.impl());
     first.impl().for_each_chunk(first.index(), last.index(),
                                 std::forward<Fn>(fn));
 }
 
 template <typename T, typename Fn>
-void for_each_chunk(const T* first, const T* last, Fn&& fn) {
+void for_each_chunk(const T* first, const T* last, Fn&& fn)
+{
     std::forward<Fn>(fn)(first, last);
 }
 
@@ -69,19 +72,22 @@ void for_each_chunk(const T* first, const T* last, Fn&& fn) {
  * @endrst
  */
 template <typename Range, typename Fn>
-bool for_each_chunk_p(const Range& r, Fn&& fn) {
+bool for_each_chunk_p(const Range& r, Fn&& fn)
+{
     return r.impl().for_each_chunk_p(std::forward<Fn>(fn));
 }
 
 template <typename Iterator, typename Fn>
-bool for_each_chunk_p(const Iterator& first, const Iterator& last, Fn&& fn) {
+bool for_each_chunk_p(const Iterator& first, const Iterator& last, Fn&& fn)
+{
     assert(&first.impl() == &last.impl());
     return first.impl().for_each_chunk_p(first.index(), last.index(),
                                          std::forward<Fn>(fn));
 }
 
 template <typename T, typename Fn>
-bool for_each_chunk_p(const T* first, const T* last, Fn&& fn) {
+bool for_each_chunk_p(const T* first, const T* last, Fn&& fn)
+{
     return std::forward<Fn>(fn)(first, last);
 }
 
@@ -89,16 +95,18 @@ bool for_each_chunk_p(const T* first, const T* last, Fn&& fn) {
  * Equivalent of `std::accumulate` applied to the range `r`.
  */
 template <typename Range, typename T>
-T accumulate(Range&& r, T init) {
-    for_each_chunk(r, [&](auto first, auto last) {
+T accumulate(Range&& r, T init)
+{
+    for_each_chunk(r, [&] (auto first, auto last) {
         init = std::accumulate(first, last, init);
     });
     return init;
 }
 
 template <typename Range, typename T, typename Fn>
-T accumulate(Range&& r, T init, Fn fn) {
-    for_each_chunk(r, [&](auto first, auto last) {
+T accumulate(Range&& r, T init, Fn fn)
+{
+    for_each_chunk(r, [&] (auto first, auto last) {
         init = std::accumulate(first, last, init, fn);
     });
     return init;
@@ -109,16 +117,18 @@ T accumulate(Range&& r, T init, Fn fn) {
  * last) @f$.
  */
 template <typename Iterator, typename T>
-T accumulate(Iterator first, Iterator last, T init) {
-    for_each_chunk(first, last, [&](auto first, auto last) {
+T accumulate(Iterator first, Iterator last, T init)
+{
+    for_each_chunk(first, last, [&] (auto first, auto last) {
         init = std::accumulate(first, last, init);
     });
     return init;
 }
 
 template <typename Iterator, typename T, typename Fn>
-T accumulate(Iterator first, Iterator last, T init, Fn fn) {
-    for_each_chunk(first, last, [&](auto first, auto last) {
+T accumulate(Iterator first, Iterator last, T init, Fn fn)
+{
+    for_each_chunk(first, last, [&] (auto first, auto last) {
         init = std::accumulate(first, last, init, fn);
     });
     return init;
@@ -128,9 +138,11 @@ T accumulate(Iterator first, Iterator last, T init, Fn fn) {
  * Equivalent of `std::for_each` applied to the range `r`.
  */
 template <typename Range, typename Fn>
-Fn&& for_each(Range&& r, Fn&& fn) {
-    for_each_chunk(r, [&](auto first, auto last) {
-        for (; first != last; ++first) fn(*first);
+Fn&& for_each(Range&& r, Fn&& fn)
+{
+    for_each_chunk(r, [&] (auto first, auto last) {
+        for (; first != last; ++first)
+            fn(*first);
     });
     return std::forward<Fn>(fn);
 }
@@ -140,9 +152,11 @@ Fn&& for_each(Range&& r, Fn&& fn) {
  * last) @f$.
  */
 template <typename Iterator, typename Fn>
-Fn&& for_each(Iterator first, Iterator last, Fn&& fn) {
-    for_each_chunk(first, last, [&](auto first, auto last) {
-        for (; first != last; ++first) fn(*first);
+Fn&& for_each(Iterator first, Iterator last, Fn&& fn)
+{
+    for_each_chunk(first, last, [&] (auto first, auto last) {
+        for (; first != last; ++first)
+            fn(*first);
     });
     return std::forward<Fn>(fn);
 }
@@ -151,9 +165,11 @@ Fn&& for_each(Iterator first, Iterator last, Fn&& fn) {
  * Equivalent of `std::copy` applied to the range `r`.
  */
 template <typename Range, typename OutIter>
-OutIter copy(Range&& r, OutIter out) {
-    for_each_chunk(
-        r, [&](auto first, auto last) { out = std::copy(first, last, out); });
+OutIter copy(Range&& r, OutIter out)
+{
+    for_each_chunk(r, [&] (auto first, auto last) {
+        out = std::copy(first, last, out);
+    });
     return out;
 }
 
@@ -162,8 +178,9 @@ OutIter copy(Range&& r, OutIter out) {
  * last) @f$.
  */
 template <typename InIter, typename OutIter>
-OutIter copy(InIter first, InIter last, OutIter out) {
-    for_each_chunk(first, last, [&](auto first, auto last) {
+OutIter copy(InIter first, InIter last, OutIter out)
+{
+    for_each_chunk(first, last, [&] (auto first, auto last) {
         out = std::copy(first, last, out);
     });
     return out;
@@ -173,9 +190,11 @@ OutIter copy(InIter first, InIter last, OutIter out) {
  * Equivalent of `std::all_of` applied to the range `r`.
  */
 template <typename Range, typename Pred>
-bool all_of(Range&& r, Pred p) {
-    return for_each_chunk_p(
-        r, [&](auto first, auto last) { return std::all_of(first, last, p); });
+bool all_of(Range&& r, Pred p)
+{
+    return for_each_chunk_p(r, [&] (auto first, auto last) {
+        return std::all_of(first, last, p);
+    });
 }
 
 /*!
@@ -183,12 +202,13 @@ bool all_of(Range&& r, Pred p) {
  * @f$.
  */
 template <typename Iter, typename Pred>
-bool all_of(Iter first, Iter last, Pred p) {
-    return for_each_chunk_p(first, last, [&](auto first, auto last) {
+bool all_of(Iter first, Iter last, Pred p)
+{
+    return for_each_chunk_p(first, last, [&] (auto first, auto last) {
         return std::all_of(first, last, p);
     });
 }
 
-/** @} */  // group: algorithm
+/** @} */ // group: algorithm
 
-}  // namespace immer
+} // namespace immer

@@ -1,10 +1,10 @@
+#include <stdio.h>
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 #include "memcached.h"
 
@@ -25,14 +25,14 @@ void uriencode_init(void) {
     }
 }
 
-bool uriencode(const char *src, char *dst, const size_t srclen,
-               const size_t dstlen) {
+bool uriencode(const char *src, char *dst, const size_t srclen, const size_t dstlen) {
     unsigned x;
     size_t d = 0;
     for (x = 0; x < srclen; x++) {
-        if (d + 4 > dstlen) return false;
-        if (uriencode_map[(unsigned char)src[x]] != NULL) {
-            memcpy(&dst[d], uriencode_map[(unsigned char)src[x]], 3);
+        if (d + 4 > dstlen)
+            return false;
+        if (uriencode_map[(unsigned char) src[x]] != NULL) {
+            memcpy(&dst[d], uriencode_map[(unsigned char) src[x]], 3);
             d += 3;
         } else {
             dst[d] = src[x];
@@ -43,8 +43,7 @@ bool uriencode(const char *src, char *dst, const size_t srclen,
     return true;
 }
 
-/* Avoid warnings on solaris, where isspace() is an index into an array, and gcc
- * uses signed chars */
+/* Avoid warnings on solaris, where isspace() is an index into an array, and gcc uses signed chars */
 #define xisspace(c) isspace((unsigned char)c)
 
 bool safe_strtoull(const char *str, uint64_t *out) {
@@ -58,7 +57,7 @@ bool safe_strtoull(const char *str, uint64_t *out) {
     }
 
     if (xisspace(*endptr) || (*endptr == '\0' && endptr != str)) {
-        if ((long long)ull < 0) {
+        if ((long long) ull < 0) {
             /* only check for negative signs in the uncommon case when
              * the unsigned number is so big that it's negative as a
              * signed number. */
@@ -88,7 +87,7 @@ bool safe_strtoull_hex(const char *str, uint64_t *out) {
     }
 
     if (xisspace(*endptr) || (*endptr == '\0' && endptr != str)) {
-        if ((long long)ull < 0) {
+        if ((long long) ull < 0) {
             /* only check for negative signs in the uncommon case when
              * the unsigned number is so big that it's negative as a
              * signed number. */
@@ -133,7 +132,7 @@ bool safe_strtoul(const char *str, uint32_t *out) {
     }
 
     if (xisspace(*endptr) || (*endptr == '\0' && endptr != str)) {
-        if ((long)l < 0) {
+        if ((long) l < 0) {
             /* only check for negative signs in the uncommon case when
              * the unsigned number is so big that it's negative as a
              * signed number. */
@@ -189,19 +188,19 @@ bool safe_strtod(const char *str, double *out) {
 // returns true if src was fully copied.
 // returns false if src was truncated into dst.
 bool safe_strcpy(char *dst, const char *src, const size_t dstmax) {
-    size_t x;
+   size_t x;
 
-    for (x = 0; x < dstmax - 1 && src[x] != '\0'; x++) {
+   for (x = 0; x < dstmax - 1 && src[x] != '\0'; x++) {
         dst[x] = src[x];
-    }
+   }
 
-    dst[x] = '\0';
+   dst[x] = '\0';
 
-    if (src[x] == '\0') {
-        return true;
-    } else {
-        return false;
-    }
+   if (src[x] == '\0') {
+       return true;
+   } else {
+       return false;
+   }
 }
 
 void vperror(const char *fmt, ...) {
@@ -224,13 +223,13 @@ void vperror(const char *fmt, ...) {
 static uint64_t mc_swap64(uint64_t in) {
 #ifdef ENDIAN_LITTLE
     /* Little endian, flip the bytes around until someone makes a faster/better
-     * way to do this. */
+    * way to do this. */
     int64_t rv = 0;
     int i = 0;
-    for (i = 0; i < 8; i++) {
+     for(i = 0; i<8; i++) {
         rv = (rv << 8) | (in & 0xff);
         in >>= 8;
-    }
+     }
     return rv;
 #else
     /* big-endian machines don't need byte swapping */
@@ -238,7 +237,12 @@ static uint64_t mc_swap64(uint64_t in) {
 #endif
 }
 
-uint64_t ntohll(uint64_t val) { return mc_swap64(val); }
+uint64_t ntohll(uint64_t val) {
+   return mc_swap64(val);
+}
 
-uint64_t htonll(uint64_t val) { return mc_swap64(val); }
+uint64_t htonll(uint64_t val) {
+   return mc_swap64(val);
+}
 #endif
+

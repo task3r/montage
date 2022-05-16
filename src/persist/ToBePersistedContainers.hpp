@@ -1,21 +1,20 @@
 #ifndef TO_BE_PERSISTED_CONTAINERS_HPP
 #define TO_BE_PERSISTED_CONTAINERS_HPP
 
-#include <hwloc.h>
-
-#include <atomic>
 #include <condition_variable>
 #include <thread>
+#include <hwloc.h>
+#include <atomic>
 
-#include "ConcurrentPrimitives.hpp"
-#include "PerThreadContainers.hpp"
-#include "PersistFunc.hpp"
-#include "Persistent.hpp"
 #include "TestConfig.hpp"
-#include "common_macros.hpp"
+#include "ConcurrentPrimitives.hpp"
+#include "PersistFunc.hpp"
+#include "PerThreadContainers.hpp"
 #include "persist_utils.hpp"
+#include "common_macros.hpp"
+#include "Persistent.hpp"
 
-namespace pds {
+namespace pds{
 
 class PBlk;
 class EpochSys;
@@ -31,8 +30,8 @@ class EpochSys;
 // To-be-persist Containers //
 //////////////////////////////
 
-class ToBePersistContainer {
-   public:
+class ToBePersistContainer{
+public:
     Ralloc* ral = nullptr;
     int task_num = -1;
     padded<void*>* descs_p = nullptr;
@@ -46,49 +45,50 @@ class ToBePersistContainer {
     virtual void persist_epoch_local(uint64_t c, int tid) = 0;
     virtual void help_persist_external(uint64_t c) {}
     virtual void clear() = 0;
-    ToBePersistContainer(Ralloc* r, int tn) : ral(r), task_num(tn) {
+    ToBePersistContainer(Ralloc* r, int tn): ral(r), task_num(tn){
         descs_p = new padded<void*>[task_num];
-        for (int i = 0; i < EPOCH_WINDOW; i++) {
+        for (int i = 0; i < EPOCH_WINDOW; i++){
             desc_persist_indicators[i] = new paddedAtomic<bool>[task_num];
         }
-        for (int i = 0; i < task_num; i++) {
+        for (int i = 0; i < task_num; i++){
             descs_p[i].ui = nullptr;
-            for (int j = 0; j < EPOCH_WINDOW; j++) {
+            for (int j = 0; j < EPOCH_WINDOW; j++){
                 desc_persist_indicators[j][i].ui = false;
             }
         }
     }
-    ToBePersistContainer() {}
+    ToBePersistContainer(){}
     virtual ~ToBePersistContainer() {
-        if (task_num > 0) {
+        if (task_num > 0){
             delete descs_p;
-            for (int i = 0; i < EPOCH_WINDOW; i++) {
+            for (int i = 0; i < EPOCH_WINDOW; i++){
                 delete desc_persist_indicators[i];
             }
         }
     }
 };
 
-class DirWB : public ToBePersistContainer {
-   public:
-    DirWB(Ralloc* r, int task_num) : ToBePersistContainer(r, task_num) {}
+class DirWB : public ToBePersistContainer{
+public:
+    DirWB(Ralloc* r, int task_num) : ToBePersistContainer(r, task_num){}
     void register_persist_desc_local(uint64_t c, int tid) {
         void* blk = descs_p[tid].ui;
+        persist_func::clwb_range_nofence(
+            blk, ral->malloc_size(blk));
+    }
+    void register_persist(PBlk* blk, uint64_t c){
+        assert(blk!=nullptr);
         persist_func::clwb_range_nofence(blk, ral->malloc_size(blk));
     }
-    void register_persist(PBlk* blk, uint64_t c) {
-        assert(blk != nullptr);
-        persist_func::clwb_range_nofence(blk, ral->malloc_size(blk));
-    }
-    void register_persist_raw(PBlk* blk, uint64_t c) {
+    void register_persist_raw(PBlk* blk, uint64_t c){
         persist_func::clwb(blk);
     }
-    void persist_epoch(uint64_t c) {}
-    void persist_epoch_local(uint64_t c, int tid) {}
-    void clear() {}
+    void persist_epoch(uint64_t c){}
+    void persist_epoch_local(uint64_t c, int tid){}
+    void clear(){}
 };
 
-class BufferedWB : public ToBePersistContainer {
+class BufferedWB : public ToBePersistContainer{
     // class Persister{
     // public:
     //     BufferedWB* con = nullptr;
@@ -151,37 +151,35 @@ class BufferedWB : public ToBePersistContainer {
     int buffer_size = 64;
     void do_persist(void*& addr);
     // void dump(uint64_t c);
-   public:
-    BufferedWB(GlobalTestConfig* _gtc, Ralloc* r)
-        : ToBePersistContainer(r, _gtc->task_num), gtc(_gtc) {
-        if (gtc->checkEnv("BufferSize")) {
+public:
+    BufferedWB (GlobalTestConfig* _gtc, Ralloc* r): 
+        ToBePersistContainer(r, _gtc->task_num), gtc(_gtc){
+        if (gtc->checkEnv("BufferSize")){
             buffer_size = stoi(gtc->getEnv("BufferSize"));
         } else {
             buffer_size = 64;
         }
         // persister = new WorkerThreadPersister(this);
-        if (gtc->checkEnv("Container")) {
+        if (gtc->checkEnv("Container")){
             std::string env_container = gtc->getEnv("Container");
-            if (env_container == "CircBuffer") {
-                container =
-                    new FixedCircBufferContainer<void*>(task_num, buffer_size);
-            } else if (env_container == "HashSet") {
+            if (env_container == "CircBuffer"){
+                container = new FixedCircBufferContainer<void*>(task_num, buffer_size);
+            } else if (env_container == "HashSet"){
                 container = new FixedHashSetContainer(task_num, buffer_size);
             } else {
                 errexit("unsupported container type by BufferedWB");
             }
         } else {
-            container =
-                new FixedCircBufferContainer<void*>(task_num, buffer_size);
+            container = new FixedCircBufferContainer<void*>(task_num, buffer_size);
         }
-
+        
         // if (gtc->checkEnv("Persister")){
         //     std::string env_persister = gtc->getEnv("Persister");
         //     if (env_persister == "PerThreadBusy"){
         //         persister = new PerThreadDedicatedBusy(this, gtc);
         //     } else if (env_persister == "PerThreadWait"){
-        //         persister = new PerThreadDedicatedWait(this, gtc);
-        //     } else
+        //         persister = new PerThreadDedicatedWait(this, gtc); 
+        //     } else 
         //     if (env_persister == "Worker"){
         //         persister = new WorkerThreadPersister(this);
         //     } else {
@@ -190,18 +188,15 @@ class BufferedWB : public ToBePersistContainer {
         // } else {
         //     persister = new WorkerThreadPersister(this);
         // }
+        
     }
-    ~BufferedWB() {
+    ~BufferedWB(){
         delete container;
         // delete persister;
     }
-    inline void* mark_raw(void* ptr) { return (void*)((uint64_t)ptr | 0x1ULL); }
-    inline bool is_raw(void* ptr) {
-        return (((uint64_t)ptr & 0x1ULL) == 0x1ULL);
-    }
-    inline void* unmark_raw(void* ptr) {
-        return (void*)((uint64_t)ptr & ~0x1ULL);
-    }
+    inline void* mark_raw(void* ptr) {return (void*)((uint64_t)ptr | 0x1ULL);}
+    inline bool is_raw(void* ptr) {return (((uint64_t)ptr & 0x1ULL) == 0x1ULL);}
+    inline void* unmark_raw(void* ptr) {return (void*)((uint64_t)ptr & ~0x1ULL);}
     void register_persist(PBlk* blk, uint64_t c);
     void register_persist_raw(PBlk* blk, uint64_t c);
     void persist_epoch(uint64_t c);
@@ -209,18 +204,18 @@ class BufferedWB : public ToBePersistContainer {
     void clear();
 };
 
-class NoToBePersistContainer : public ToBePersistContainer {
+class NoToBePersistContainer : public ToBePersistContainer{
     // a to-be-persist container that does absolutely nothing.
-    void init_desc_local(void* addr, int tid) {}
-    void register_persist_desc_local(uint64_t c, int tid) {}
-    void do_persist_desc_local(uint64_t c, int tid) {}
-    void register_persist(PBlk* blk, uint64_t c) {}
-    void register_persist_raw(PBlk* blk, uint64_t c) {}
-    void persist_epoch(uint64_t c) {}
-    void persist_epoch_local(uint64_t c, int tid) {}
-    void clear() {}
+    void init_desc_local(void* addr, int tid){}
+    void register_persist_desc_local(uint64_t c, int tid){}
+    void do_persist_desc_local(uint64_t c, int tid){}
+    void register_persist(PBlk* blk, uint64_t c){}
+    void register_persist_raw(PBlk* blk, uint64_t c){}
+    void persist_epoch(uint64_t c){}
+    void persist_epoch_local(uint64_t c, int tid){}
+    void clear(){}
 };
 
-}  // namespace pds
+}
 
 #endif

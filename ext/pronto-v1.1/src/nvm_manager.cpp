@@ -1,13 +1,10 @@
-#include "nvm_manager.hpp"
-
 #include <pthread.h>
-
 #include <list>
 #include <queue>
-
-#include "nv_catalog.hpp"
 #include "nv_factory.hpp"
 #include "nv_object.hpp"
+#include "nvm_manager.hpp"
+#include "nv_catalog.hpp"
 #include "recovery_context.hpp"
 #include "snapshot.hpp"
 
@@ -23,7 +20,7 @@ NVManager::NVManager() {
      * Reading catalog from NVM -- this will populate ex_objects
      * The catalog contains the superset of objects in any snapshot
      */
-    list<pair<std::string, CatalogEntry *> > ex_objects;
+    list< pair<std::string, CatalogEntry *> > ex_objects;
     catalog = new NVCatalog(CATALOG_FILE_NAME, ex_objects);
     PRINT("Finished creating/opening persistent catalog.\n");
     if (ex_objects.size() == 0) return;
@@ -56,10 +53,8 @@ NVManager::NVManager() {
     if ((cflags & CatalogFlagCleanShutdown) == 0) {
         PRINT("Manager: detected unclean shutdown, fixing redo-logs ...\n");
         int aborted_transactions = emulateRecoveryAndFixRedoLogs();
-        PRINT(
-            "Manager: finished fixing redo-logs, total aborted transactions = "
-            "%d\n",
-            aborted_transactions);
+        PRINT("Manager: finished fixing redo-logs, total aborted transactions = %d\n",
+                aborted_transactions);
     }
 
     /*
@@ -90,7 +85,7 @@ NVManager::NVManager() {
 
     PRINT("Manager: updating catalog flags.\n");
     cflags = catalog->getFlags();
-    cflags = (cflags & (~CatalogFlagCleanShutdown));  // unclean shutdown
+    cflags = (cflags & (~CatalogFlagCleanShutdown)); // unclean shutdown
     catalog->setFlags(cflags);
 
     uint64_t recoveryTime = (t2.tv_sec - t1.tv_sec) * 1E9;
@@ -129,7 +124,7 @@ void NVManager::createNew(uint64_t type_id, PersistentObject *object) {
     CatalogEntry *entry = catalog->add(object->getUUID(), type_id);
     if (object->const_args != NULL) {
         catalog->addConstructorArgs(entry, object->const_args,
-                                    object->const_args_size);
+                object->const_args_size);
     }
     char uuid_str[64];
     uuid_unparse(object->getUUID(), uuid_str);
@@ -143,21 +138,22 @@ void NVManager::destroy(PersistentObject *object) {
 }
 
 void NVManager::recoverObject(const char *uuid_str, CatalogEntry *object) {
-    if (objects.find(uuid_str) != objects.end()) {  // Recover from snapshot
+    if (objects.find(uuid_str) != objects.end()) { // Recover from snapshot
         PRINT("Recovering object from snapshot, uuid = %s\n", uuid_str);
         PersistentObject *pobj = objects.find(uuid_str)->second;
         assert(pobj != NULL);
         PersistentFactory::vTableUpdate(object->type, pobj);
         PRINT("Updated vTable to %p for persistent object, uuid = %s\n",
-              (void *)(((uintptr_t *)pobj)[0]), uuid_str);
+                (void*)(((uintptr_t*)pobj)[0]), uuid_str);
         pobj->recovering = true;
         pobj->log = Savitar_log_open(pobj->uuid);
         pobj->alloc = GlobalAlloc::getInstance()->findAllocator(pobj->uuid);
         pobj->assigned = false;
-    } else {
+    }
+    else {
         PRINT("Adding object to recovery queue, uuid = %s\n", uuid_str);
-        PersistentObject *pobj =
-            PersistentFactory::create(this, object->type, object);
+        PersistentObject *pobj = PersistentFactory::create(this,
+                object->type, object);
         assert(pobj != NULL);
         pobj->recovering = true;
         pobj->last_played_commit_id = 0;
@@ -207,6 +203,7 @@ void *NVManager::buildAbortChains(void *arg) {
     SavitarLog *log = object->log;
     priority_queue<uint64_t, vector<uint64_t>, greater<uint64_t> > min_heap;
 
+
     uint64_t max_committed_tx = 0;
     uint64_t offset = log->head;
     const char *data = (const char *)object->log;
@@ -215,11 +212,11 @@ void *NVManager::buildAbortChains(void *arg) {
         uint64_t commit_id = *((uint64_t *)&data[offset]);
         offset += sizeof(uint64_t);
         uint64_t magic = *((uint64_t *)&data[offset]);
-        offset += sizeof(uint64_t);
+        offset += sizeof (uint64_t);
         uint64_t method_tag = *((uint64_t *)&data[offset]);
         offset += sizeof(uint64_t);
 
-        if (magic != REDO_LOG_MAGIC) {  // Corrupted log entry
+        if (magic != REDO_LOG_MAGIC) { // Corrupted log entry
             offset += CACHE_LINE_WIDTH - 3 * sizeof(uint64_t);
             continue;
         }
@@ -234,8 +231,8 @@ void *NVManager::buildAbortChains(void *arg) {
 
         if ((method_tag & NESTED_TX_TAG) == 0) {
             assert(method_tag != 0);
-            offset += object->Play(method_tag, (uint64_t *)&data[offset],
-                                   true);  // dry run
+            offset += object->Play(method_tag,
+                    (uint64_t *)&data[offset], true); // dry run
             offset += CACHE_LINE_WIDTH - offset % CACHE_LINE_WIDTH;
             continue;
         }
@@ -250,9 +247,7 @@ void *NVManager::buildAbortChains(void *arg) {
             continue;
         }
 
-        typedef struct uuid_ptr {
-            uuid_t uuid;
-        } uuid_ptr;
+        typedef struct uuid_ptr { uuid_t uuid; } uuid_ptr;
 
         // Creating abort chain
         AbortChainNode *head = (AbortChainNode *)malloc(sizeof(AbortChainNode));
@@ -269,40 +264,36 @@ void *NVManager::buildAbortChains(void *arg) {
         uint64_t parent_offset = method_tag & (~NESTED_TX_TAG);
 
         /*
-         * Note: we always know the log entry for parent transactions are
-         * persistent before the child transactions, so it is safe to assume
-         * parent logs are not corrupted (i.e., partially persisted).
+         * Note: we always know the log entry for parent transactions are persistent
+         * before the child transactions, so it is safe to assume parent logs are
+         * not corrupted (i.e., partially persisted).
          */
         while (parent != NULL) {
+
             SavitarLog *parent_log = parent->log;
-            uint64_t *parent_ptr =
-                (uint64_t *)((char *)parent_log + parent_offset);
+            uint64_t *parent_ptr = (uint64_t *)((char *)parent_log + parent_offset);
             uint64_t parent_commit_id = parent_ptr[0];
             uint64_t parent_magic = parent_ptr[1];
             if (parent_magic != REDO_LOG_MAGIC) {
-                PRINT(
-                    "Invalid magic: (uuid, commit id, offset) = (%s, %zu, "
-                    "%zu)\n",
-                    parent->uuid_str, parent_commit_id, parent_offset);
+                PRINT("Invalid magic: (uuid, commit id, offset) = (%s, %zu, %zu)\n",
+                        parent->uuid_str, parent_commit_id, parent_offset);
             }
             assert(parent_magic == REDO_LOG_MAGIC);
             uint64_t parent_method_tag = parent_ptr[2];
 
             // Adding parent to the chain
-            AbortChainNode *node =
-                (AbortChainNode *)malloc(sizeof(AbortChainNode));
+            AbortChainNode *node = (AbortChainNode *)malloc(sizeof(AbortChainNode));
             node->next = head;
             node->object = parent;
             node->log_offset = parent_offset;
             node->commit_id = parent_commit_id;
             head = node;
 
-            if ((parent_method_tag & NESTED_TX_TAG) ==
-                0) {                          // outer-most transaction
-                if (parent_commit_id == 0) {  // aborted transaction
-                    ((AbortChainBuilderArg *)arg)
-                        ->abort_chains->push_back(head);
-                } else {
+            if ((parent_method_tag & NESTED_TX_TAG) == 0) { // outer-most transaction
+                if (parent_commit_id == 0) { // aborted transaction
+                    ((AbortChainBuilderArg *)arg)->abort_chains->push_back(head);
+                }
+                else {
                     // Chain clean-up
                     while (head != NULL) {
                         AbortChainNode *t = head;
@@ -311,9 +302,9 @@ void *NVManager::buildAbortChains(void *arg) {
                     }
                 }
                 parent = NULL;
-            } else {
-                uuid_unparse(((uuid_ptr *)((char *)parent_ptr + 24))->uuid,
-                             uuid_str);
+            }
+            else {
+                uuid_unparse(((uuid_ptr *)((char *)parent_ptr + 24))->uuid, uuid_str);
                 auto parent_it = me->objects.find(uuid_str);
                 assert(parent_it != me->objects.end());
                 parent = parent_it->second;
@@ -329,10 +320,11 @@ void *NVManager::buildAbortChains(void *arg) {
 }
 
 int NVManager::emulateRecoveryAndFixRedoLogs() {
+
     size_t counter = 0;
     const size_t obj_count = objects.size();
-    AbortChainBuilderArg *builders = (AbortChainBuilderArg *)malloc(
-        obj_count * sizeof(AbortChainBuilderArg));
+    AbortChainBuilderArg *builders = (AbortChainBuilderArg *)malloc(obj_count *
+            sizeof(AbortChainBuilderArg));
 
     PRINT("Manager: building abort chains for %zu objects.\n", obj_count);
     for (auto it = objects.begin(); it != objects.end(); ++it) {
@@ -341,7 +333,7 @@ int NVManager::emulateRecoveryAndFixRedoLogs() {
         builders[counter].object = it->second;
         builders[counter].abort_chains = new list<AbortChainNode *>();
         pthread_create(&builders[counter].thread, NULL, buildAbortChains,
-                       &builders[counter]);
+                &builders[counter]);
         counter++;
     }
 
@@ -350,7 +342,7 @@ int NVManager::emulateRecoveryAndFixRedoLogs() {
         pthread_join(builders[i].thread, NULL);
         AbortChainNode *chain = NULL;
         PRINT("Manager: processing abort chain for %s (max commit = %zu)\n",
-              builders[i].object->uuid_str, builders[i].max_committed_tx);
+                builders[i].object->uuid_str, builders[i].max_committed_tx);
         if (!builders[i].abort_chains->empty()) {
             PRINT("Aborted nested transactions are not yet supported!");
         }
