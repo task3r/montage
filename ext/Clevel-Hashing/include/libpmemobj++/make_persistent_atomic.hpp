@@ -40,6 +40,8 @@
 #ifndef LIBPMEMOBJ_CPP_MAKE_PERSISTENT_ATOMIC_HPP
 #define LIBPMEMOBJ_CPP_MAKE_PERSISTENT_ATOMIC_HPP
 
+#include <libpmemobj/atomic_base.h>
+
 #include <libpmemobj++/allocation_flag.hpp>
 #include <libpmemobj++/detail/check_persistent_ptr_array.hpp>
 #include <libpmemobj++/detail/common.hpp>
@@ -48,15 +50,11 @@
 #include <libpmemobj++/make_persistent_array_atomic.hpp>
 #include <libpmemobj++/pexceptions.hpp>
 #include <libpmemobj++/pool.hpp>
-#include <libpmemobj/atomic_base.h>
-
 #include <tuple>
 
-namespace pmem
-{
+namespace pmem {
 
-namespace obj
-{
+namespace obj {
 
 /**
  * Atomically allocate and construct an object.
@@ -75,20 +73,16 @@ namespace obj
  * @throw std::bad_alloc on allocation failure.
  */
 template <typename T, typename... Args>
-void
-make_persistent_atomic(pool_base &pool,
-		       typename detail::pp_if_not_array<T>::type &ptr,
-		       allocation_flag_atomic flag, Args &&... args)
-{
-	auto arg_pack = std::forward_as_tuple(std::forward<Args>(args)...);
-	auto ret = pmemobj_xalloc(
-		pool.handle(), ptr.raw_ptr(), sizeof(T), detail::type_num<T>(),
-		flag.value,
-		&detail::obj_constructor<T, decltype(arg_pack), Args...>,
-		static_cast<void *>(&arg_pack));
+void make_persistent_atomic(pool_base &pool,
+                            typename detail::pp_if_not_array<T>::type &ptr,
+                            allocation_flag_atomic flag, Args &&... args) {
+    auto arg_pack = std::forward_as_tuple(std::forward<Args>(args)...);
+    auto ret = pmemobj_xalloc(
+        pool.handle(), ptr.raw_ptr(), sizeof(T), detail::type_num<T>(),
+        flag.value, &detail::obj_constructor<T, decltype(arg_pack), Args...>,
+        static_cast<void *>(&arg_pack));
 
-	if (ret != 0)
-		throw std::bad_alloc();
+    if (ret != 0) throw std::bad_alloc();
 }
 
 /**
@@ -107,14 +101,13 @@ make_persistent_atomic(pool_base &pool,
  * @throw std::bad_alloc on allocation failure.
  */
 template <typename T, typename... Args>
-typename std::enable_if<!detail::is_first_arg_same<allocation_flag_atomic,
-						   Args...>::value>::type
+typename std::enable_if<
+    !detail::is_first_arg_same<allocation_flag_atomic, Args...>::value>::type
 make_persistent_atomic(pool_base &pool,
-		       typename detail::pp_if_not_array<T>::type &ptr,
-		       Args &&... args)
-{
-	make_persistent_atomic<T>(pool, ptr, allocation_flag_atomic::none(),
-				  std::forward<Args>(args)...);
+                       typename detail::pp_if_not_array<T>::type &ptr,
+                       Args &&... args) {
+    make_persistent_atomic<T>(pool, ptr, allocation_flag_atomic::none(),
+                              std::forward<Args>(args)...);
 }
 
 /**
@@ -128,15 +121,12 @@ make_persistent_atomic(pool_base &pool,
  * deallocated.
  */
 template <typename T>
-void
-delete_persistent_atomic(
-	typename detail::pp_if_not_array<T>::type &ptr) noexcept
-{
-	if (ptr == nullptr)
-		return;
+void delete_persistent_atomic(
+    typename detail::pp_if_not_array<T>::type &ptr) noexcept {
+    if (ptr == nullptr) return;
 
-	/* we CAN'T call the destructor */
-	pmemobj_free(ptr.raw_ptr());
+    /* we CAN'T call the destructor */
+    pmemobj_free(ptr.raw_ptr());
 }
 
 } /* namespace obj */

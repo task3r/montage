@@ -1,10 +1,11 @@
-#include <signal.h>
-#include <pthread.h>
-#include "savitar.hpp"
-#include "thread.hpp"
-#include "nvm_manager.hpp"
-#include "snapshot.hpp"
 #include <execinfo.h>
+#include <pthread.h>
+#include <signal.h>
+
+#include "nvm_manager.hpp"
+#include "savitar.hpp"
+#include "snapshot.hpp"
+#include "thread.hpp"
 
 static pthread_t snapshot_thread;
 static pthread_mutex_t snapshot_lock;
@@ -30,8 +31,7 @@ static void signal_handler(int sig, siginfo_t *si, void *unused) {
             exit(1);
         }
         Snapshot::getInstance()->pageFaultHandler(addr);
-    }
-    else { // SIGUSR1
+    } else {  // SIGUSR1
         pthread_mutex_lock(&snapshot_lock);
         if (!Snapshot::anyActiveSnapshot()) {
             Snapshot *snap = new Snapshot(PMEM_PATH);
@@ -55,11 +55,10 @@ static void *main_wrapper(void *arg) {
 }
 
 int Savitar_main(MainFunction main_function, int argc, char **argv) {
-
-// #ifndef SYNC_SL
+    // #ifndef SYNC_SL
     Savitar_core_init();
-// #endif // SYNC_SL
-    NVManager::getInstance(); // recover persistent objects (blocking)
+    // #endif // SYNC_SL
+    NVManager::getInstance();  // recover persistent objects (blocking)
 
     // Register signal handler for snapshots
     pthread_mutex_init(&snapshot_lock, NULL);
@@ -73,11 +72,7 @@ int Savitar_main(MainFunction main_function, int argc, char **argv) {
 
     int *status;
     pthread_t main_thread;
-    MainArguments args = {
-        .main = main_function,
-        .argc = argc,
-        .argv = argv
-    };
+    MainArguments args = {.main = main_function, .argc = argc, .argv = argv};
     Savitar_thread_create(&main_thread, NULL, main_wrapper, &args);
     pthread_join(main_thread, (void **)&status);
 
@@ -88,9 +83,9 @@ int Savitar_main(MainFunction main_function, int argc, char **argv) {
     }
     pthread_mutex_unlock(&snapshot_lock);
 
-// #ifndef SYNC_SL
+    // #ifndef SYNC_SL
     Savitar_core_finalize();
-// #endif // SYNC_SL
+    // #endif // SYNC_SL
     pthread_mutex_destroy(&snapshot_lock);
 
     int ret_val = *status;

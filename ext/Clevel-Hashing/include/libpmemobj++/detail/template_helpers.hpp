@@ -40,15 +40,13 @@
 
 #include <type_traits>
 
-namespace pmem
-{
+namespace pmem {
 
-namespace detail
-{
+namespace detail {
 
 template <typename... Ts>
 struct make_void {
-	typedef void type;
+    typedef void type;
 };
 template <typename... Ts>
 using void_t = typename make_void<Ts...>::type;
@@ -57,11 +55,11 @@ using void_t = typename make_void<Ts...>::type;
  * in ISO C++ paper n4502 */
 template <typename T, typename, template <typename> class... Checks>
 struct supports_impl {
-	using type = std::false_type;
+    using type = std::false_type;
 };
 template <typename T, template <typename> class... Checks>
 struct supports_impl<T, void_t<Checks<T>...>, Checks...> {
-	using type = std::true_type;
+    using type = std::true_type;
 };
 
 template <typename T, template <typename> class... Checks>

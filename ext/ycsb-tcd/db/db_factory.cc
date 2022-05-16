@@ -9,15 +9,16 @@
 #include "db/db_factory.h"
 
 #include <string>
+
 #include "db/tcd_db.h"
 
 using namespace std;
 using ycsbc::DB;
 using ycsbc::DBFactory;
 
-DB* DBFactory::CreateDB(utils::Properties &props) {
-  if (props["dbname"] == "tcd") {
-    return new TCDDB; 
-  } else return NULL;
+DB* DBFactory::CreateDB(utils::Properties& props) {
+    if (props["dbname"] == "tcd") {
+        return new TCDDB;
+    } else
+        return NULL;
 }
-

@@ -12,7 +12,4 @@
 
 #include <string>
 
-int main()
-{
-    std::basic_string<char, std::char_traits<wchar_t>> s;
-}
+int main() { std::basic_string<char, std::char_traits<wchar_t>> s; }

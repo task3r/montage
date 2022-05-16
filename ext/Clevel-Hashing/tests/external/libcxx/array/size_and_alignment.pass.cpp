@@ -12,59 +12,51 @@
 // Modified to test pmem::obj containers
 //
 
-#include "unittest.hpp"
 #include <cstddef>
-
 #include <libpmemobj++/experimental/array.hpp>
+
+#include "unittest.hpp"
 
 namespace pmem_exp = pmem::obj::experimental;
 
 template <class T, size_t Size>
 struct MyArray {
-	T elems[Size];
+    T elems[Size];
 };
 
 template <class T, size_t Size>
-void
-test()
-{
-	typedef T CArrayT[Size];
-	typedef pmem_exp::array<T, Size> ArrayT;
-	typedef MyArray<T, Size> MyArrayT;
-	static_assert(sizeof(ArrayT) == sizeof(CArrayT), "");
-	static_assert(sizeof(ArrayT) == sizeof(MyArrayT), "");
-	static_assert(alignof(ArrayT) == alignof(MyArrayT), "");
+void test() {
+    typedef T CArrayT[Size];
+    typedef pmem_exp::array<T, Size> ArrayT;
+    typedef MyArray<T, Size> MyArrayT;
+    static_assert(sizeof(ArrayT) == sizeof(CArrayT), "");
+    static_assert(sizeof(ArrayT) == sizeof(MyArrayT), "");
+    static_assert(alignof(ArrayT) == alignof(MyArrayT), "");
 }
 
 template <class T>
-void
-test_zero_sized()
-{
-	typedef pmem_exp::array<T, 0> ArrayT;
-	static_assert(sizeof(ArrayT) == sizeof(T), "");
+void test_zero_sized() {
+    typedef pmem_exp::array<T, 0> ArrayT;
+    static_assert(sizeof(ArrayT) == sizeof(T), "");
 }
 
 template <class T>
-void
-test_type()
-{
-	test<T, 1>();
-	test<T, 42>();
-	test_zero_sized<T>();
+void test_type() {
+    test<T, 1>();
+    test<T, 42>();
+    test_zero_sized<T>();
 }
 
 // static_assert(sizeof(void*) == 4, "");
 
-int
-main()
-{
-	START();
+int main() {
+    START();
 
-	test_type<char>();
-	test_type<int>();
-	test_type<double>();
-	test_type<long double>();
-	test_type<std::max_align_t>();
+    test_type<char>();
+    test_type<int>();
+    test_type<double>();
+    test_type<long double>();
+    test_type<std::max_align_t>();
 
-	return 0;
+    return 0;
 }

@@ -4,16 +4,17 @@
 #ifndef KVTEST_HPP
 #define KVTEST_HPP
 
-#include "TestConfig.hpp"
-#include "RMap.hpp"
-#include <string>
-#include <vector>
+#include <cstdlib>
 #include <fstream>
-#include <sstream>
-#include <thread>
 #include <iostream>
 #include <limits>
-#include <cstdlib>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <vector>
+
+#include "RMap.hpp"
+#include "TestConfig.hpp"
 
 using namespace std;
 

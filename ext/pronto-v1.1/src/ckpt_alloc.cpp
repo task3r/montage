@@ -1,8 +1,10 @@
-#include <assert.h>
-#include <sys/mman.h>
-#include "savitar.hpp"
 #include "ckpt_alloc.hpp"
+
+#include <assert.h>
 #include <emmintrin.h>
+#include <sys/mman.h>
+
+#include "savitar.hpp"
 #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
 
 /*
@@ -10,25 +12,26 @@
  * Global Allocator
  * * * * * * * * * *
  */
-GlobalAlloc* GlobalAlloc::instance = NULL;
+GlobalAlloc *GlobalAlloc::instance = NULL;
 
 GlobalAlloc::GlobalAlloc(const char *snapshot, const char *bitmap) {
-
     assert(instance == NULL);
     assert(MinPoolSize % FreeList::BlockSize == 0);
 
     // Reserve allocators memory
     // TODO handle object deletes (holes in allocators memory)
     const uintptr_t baseAddress = BaseAddress + MaxMemorySize;
-    allocatorsMemory = (ObjectAlloc *)mmap((void *)baseAddress,
-            MaxAllocatorMemorySize, PROT_READ | PROT_WRITE,
-            MAP_SHARED | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_2MB, -1, 0);
+    allocatorsMemory = (ObjectAlloc *)mmap(
+        (void *)baseAddress, MaxAllocatorMemorySize, PROT_READ | PROT_WRITE,
+        MAP_SHARED | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_2MB, -1, 0);
     assert(allocatorsMemory != NULL);
 
     // Allocation map
     alloc_bitmap = (uint64_t *)malloc(bitmapSize());
-    if (bitmap != NULL) memcpy(alloc_bitmap, bitmap, bitmapSize());
-    else memset(alloc_bitmap, 0, bitmapSize());
+    if (bitmap != NULL)
+        memcpy(alloc_bitmap, bitmap, bitmapSize());
+    else
+        memset(alloc_bitmap, 0, bitmapSize());
 
     assert(pthread_mutex_init(&allocators_mutex, NULL) == 0);
     assert(pthread_mutex_init(&free_list_mutex, NULL) == 0);
@@ -72,16 +75,21 @@ size_t GlobalAlloc::bitmapSize() const {
     return (MaxMemorySize / BitmapGranularity) >> 3;
 }
 
-bool GlobalAlloc::newBlock(memory_region_t *region, uintptr_t addr, size_t size) {
+bool GlobalAlloc::newBlock(memory_region_t *region, uintptr_t addr,
+                           size_t size) {
 #ifdef DEBUG
-    fprintf(stdout, "Requesting %zu bytes at %p from the kernel\n", size, (void*)addr);
+    fprintf(stdout, "Requesting %zu bytes at %p from the kernel\n", size,
+            (void *)addr);
 #endif
-    region->ptr = mmap((void *)addr, size, PROT_READ | PROT_WRITE, MAP_SHARED |
-            MAP_ANONYMOUS | MAP_POPULATE | MAP_HUGETLB | MAP_HUGE_2MB, -1, 0);
+    region->ptr = mmap(
+        (void *)addr, size, PROT_READ | PROT_WRITE,
+        MAP_SHARED | MAP_ANONYMOUS | MAP_POPULATE | MAP_HUGETLB | MAP_HUGE_2MB,
+        -1, 0);
     if (region->ptr == NULL) return false;
     if (region->ptr != (void *)addr) return false;
     region->size = size;
-    if (madvise(region->ptr, region->size, MADV_SEQUENTIAL | MADV_WILLNEED) != 0)
+    if (madvise(region->ptr, region->size, MADV_SEQUENTIAL | MADV_WILLNEED) !=
+        0)
         return false;
     return true;
 }
@@ -93,7 +101,7 @@ void *GlobalAlloc::alloc(const size_t size) {
     // TODO find a way to replace locks
     pthread_mutex_lock(&free_list_mutex);
 
-    while (ptr == NULL && head != NULL) { // allocate from pool
+    while (ptr == NULL && head != NULL) {  // allocate from pool
         if (head->size < size) {
             head = head->next;
             continue;
@@ -103,17 +111,21 @@ void *GlobalAlloc::alloc(const size_t size) {
         ptr = (char *)head + head->size;
         if (head->size == 0) {
             if (head->next != NULL) head->next->prev = head->prev;
-            if (head->prev != NULL) head->prev->next = head->next;
-            else free_list = head->next;
+            if (head->prev != NULL)
+                head->prev->next = head->next;
+            else
+                free_list = head->next;
         }
     }
 
-    if (ptr == NULL) { // map a new region and allocate from there
+    if (ptr == NULL) {  // map a new region and allocate from there
         memory_region_t last_region = mapped_regions.back();
         uintptr_t new_region_va = (uintptr_t)last_region.ptr + last_region.size;
         memory_region_t new_region;
         size_t allocSize = MinPoolSize;
-        while (allocSize < size) { allocSize *= 2; }
+        while (allocSize < size) {
+            allocSize *= 2;
+        }
         assert(newBlock(&new_region, new_region_va, allocSize));
         asm volatile("" ::: "memory");
         mapped_regions.push_back(new_region);
@@ -151,22 +163,24 @@ void GlobalAlloc::tryMergingRegions(free_header_t *r) {
             if (cPtr != rPtr + r->size && rPtr != cPtr + c->size) continue;
 
 #ifdef DEBUG
-            fprintf(stdout, "Merging %p (%d bytes) and %p (%d bytes)\n",
-                    c, c->size, r, r->size);
+            fprintf(stdout, "Merging %p (%d bytes) and %p (%d bytes)\n", c,
+                    c->size, r, r->size);
 #endif
 
             // we extend `c` to include `r`
             if (rPtr < cPtr) {
                 // swap `c` and `r`
-                c = (free_header_t*)((uintptr_t)c ^ (uintptr_t)r);
-                r = (free_header_t*)((uintptr_t)c ^ (uintptr_t)r);
-                c = (free_header_t*)((uintptr_t)c ^ (uintptr_t)r);
+                c = (free_header_t *)((uintptr_t)c ^ (uintptr_t)r);
+                r = (free_header_t *)((uintptr_t)c ^ (uintptr_t)r);
+                c = (free_header_t *)((uintptr_t)c ^ (uintptr_t)r);
             }
             c->size += r->size;
 
             // delete `r` from the free list
-            if (r->prev != NULL) r->prev->next = r->next;
-            else free_list = r->next;
+            if (r->prev != NULL)
+                r->prev->next = r->next;
+            else
+                free_list = r->next;
             if (r->next != NULL) r->next->prev = r->prev;
 
             r = c;
@@ -189,7 +203,6 @@ void GlobalAlloc::release(void *ptr, size_t size) {
 }
 
 void GlobalAlloc::setBitmap(uintptr_t ptr, size_t size) {
-
     // TODO optimize for large regions
     uintptr_t limit = ptr + size;
     uintptr_t aligned_ptr = ptr & ~(BitmapGranularity - 1);
@@ -224,8 +237,8 @@ void GlobalAlloc::setBitmapForBigAlloc(uintptr_t ptr, size_t size) {
     uintptr_t alignedPtr = ptr & ~(FreeList::BlockSize - 1);
     assert(alignedPtr == ptr);
     const uintptr_t limit = ptr + size;
-    uint64_t offset = (ptr - BaseAddress) >> 18; // 12 + 6
-    const size_t stepSize = BitmapGranularity << 6; // 64-bit cells
+    uint64_t offset = (ptr - BaseAddress) >> 18;     // 12 + 6
+    const size_t stepSize = BitmapGranularity << 6;  // 64-bit cells
 
     while (ptr + stepSize <= limit) {
         alloc_bitmap[offset++] = UINT64_MAX;
@@ -239,8 +252,8 @@ void GlobalAlloc::unsetBitmapForBigDealloc(uintptr_t ptr, size_t blocks) {
     uintptr_t alignedPtr = ptr & ~(FreeList::BlockSize - 1);
     assert(alignedPtr == ptr);
 
-    uint64_t offset = (ptr - BaseAddress) >> 18; // 12 + 6
-    const size_t bitmapCells = blocks << 3; // 8 x 64 x 4 KB = 2 MB
+    uint64_t offset = (ptr - BaseAddress) >> 18;  // 12 + 6
+    const size_t bitmapCells = blocks << 3;       // 8 x 64 x 4 KB = 2 MB
     for (size_t i = 0; i < bitmapCells; i++) {
         alloc_bitmap[offset + i] = 0;
     }
@@ -269,7 +282,7 @@ void GlobalAlloc::saveBitmap(char *nvm) const {
         __m128i xmm14 = _mm_loadu_si128(src + 14);
         __m128i xmm15 = _mm_loadu_si128(src + 15);
 
-        _mm_stream_si128(dst + 0, xmm0); // 16 bytes
+        _mm_stream_si128(dst + 0, xmm0);  // 16 bytes
         _mm_stream_si128(dst + 1, xmm1);
         _mm_stream_si128(dst + 2, xmm2);
         _mm_stream_si128(dst + 3, xmm3);
@@ -298,8 +311,8 @@ void GlobalAlloc::loadBitmap(const char *nvm) {
 
 size_t GlobalAlloc::snapshotSize() {
     size_t sz = 0;
-    sz += sizeof(uint64_t); // Total allocated
-    sz += sizeof(uint64_t); // Size of free-list
+    sz += sizeof(uint64_t);  // Total allocated
+    sz += sizeof(uint64_t);  // Size of free-list
     // Max number of free pages (address and size)
     sz += ((MinPoolSize >> 21) << 1);
     return sz;
@@ -319,8 +332,8 @@ void GlobalAlloc::save(char *nvm) const {
     *free_list_length = 0;
     free_header_t *f = free_list;
     while (f != NULL) {
-        _mm_stream_si64(ptr++, (long long)f); // address
-        _mm_stream_si64(ptr++, f->size); // size
+        _mm_stream_si64(ptr++, (long long)f);  // address
+        _mm_stream_si64(ptr++, f->size);       // size
         *free_list_length = *free_list_length + 1;
         f = f->next;
     }
@@ -348,8 +361,10 @@ void GlobalAlloc::load(const char *nvm) {
         free_header_t *f = (free_header_t *)ptr[0];
         f->size = ptr[1];
 
-        if (prev == NULL) free_list = f;
-        else prev->next = f;
+        if (prev == NULL)
+            free_list = f;
+        else
+            prev->next = f;
         f->prev = prev;
         f->next = NULL;
 
@@ -376,19 +391,18 @@ size_t GlobalAlloc::allocatedBlocks() {
     size_t blocks = 0;
     pthread_mutex_lock(&free_list_mutex);
     memory_region_t last_region = mapped_regions.back();
-    blocks = ((uintptr_t)last_region.ptr - BaseAddress +
-        last_region.size) / FreeList::BlockSize;
+    blocks = ((uintptr_t)last_region.ptr - BaseAddress + last_region.size) /
+             FreeList::BlockSize;
     pthread_mutex_unlock(&free_list_mutex);
     return blocks;
 }
 
 void GlobalAlloc::report() {
-
     pthread_mutex_lock(&free_list_mutex);
 
     memory_region_t last_region = mapped_regions.back();
-    size_t allocatedBytes = ((uintptr_t)last_region.ptr - BaseAddress) +
-        last_region.size;
+    size_t allocatedBytes =
+        ((uintptr_t)last_region.ptr - BaseAddress) + last_region.size;
     size_t allocatedBlocks = allocatedBytes / FreeList::BlockSize;
 
     size_t modifiedBits = 0, unmodifiedBits = 0;
@@ -396,8 +410,10 @@ void GlobalAlloc::report() {
         for (unsigned int c = 0; c < 8; c++) {
             uint64_t bit = alloc_bitmap[b * 8 + c];
             for (unsigned int p = 0; p < 64; p++) {
-                if (bit & 0x0000000000000001) modifiedBits++;
-                else unmodifiedBits++;
+                if (bit & 0x0000000000000001)
+                    modifiedBits++;
+                else
+                    unmodifiedBits++;
                 bit = bit >> 1;
             }
         }
@@ -455,7 +471,6 @@ void GlobalAlloc::restoreAllocator(ObjectAlloc *alloc) {
 void get_cpu_info(uint8_t *core_map, int *map_size);
 
 ObjectAlloc::ObjectAlloc(const uuid_t uuid, const char *snapshot) {
-
     int cores;
     uint8_t core_info[MAX_CORES];
     get_cpu_info(core_info, &cores);
@@ -493,7 +508,6 @@ off_t ObjectAlloc::getOffset(const pthread_t thread_id) const {
 }
 
 void *ObjectAlloc::alloc(const size_t size) {
-
     size_t chunk_size = size + sizeof(chunk_header_t);
     if (chunk_size % Alignment != 0) {
         chunk_size += Alignment - (chunk_size % Alignment);
@@ -507,15 +521,13 @@ void *ObjectAlloc::alloc(const size_t size) {
         chunk_header_t *chunk = free_list->alloc(chunk_size);
         if (chunk != NULL) {
             ptr = (char *)chunk + sizeof(chunk_header_t);
-            GlobalAlloc::getInstance()->setBitmap(
-                    (uintptr_t)chunk, chunk_size);
+            GlobalAlloc::getInstance()->setBitmap((uintptr_t)chunk, chunk_size);
         }
-    }
-    else {
+    } else {
         chunk_header_t *chunk = free_list->big_alloc(chunk_size);
         if (chunk != NULL) {
-            GlobalAlloc::getInstance()->setBitmapForBigAlloc(
-                    (uintptr_t)chunk, chunk_size);
+            GlobalAlloc::getInstance()->setBitmapForBigAlloc((uintptr_t)chunk,
+                                                             chunk_size);
             ptr = (char *)chunk + sizeof(chunk_header_t);
         }
     }
@@ -530,12 +542,14 @@ void *ObjectAlloc::alloc(const size_t size) {
  */
 void ObjectAlloc::dealloc(void *ptr) {
     if (ptr == NULL) return;
-    chunk_header_t *chunk = (chunk_header_t *)((char *)ptr -
-            sizeof(chunk_header_t));
+    chunk_header_t *chunk =
+        (chunk_header_t *)((char *)ptr - sizeof(chunk_header_t));
     FreeList *free_list = free_lists[chunk->free_list_id];
     free_list->lock();
-    if (chunk->size <= FreeList::BlockSize) free_list->dealloc(chunk);
-    else free_list->big_dealloc(chunk);
+    if (chunk->size <= FreeList::BlockSize)
+        free_list->dealloc(chunk);
+    else
+        free_list->big_dealloc(chunk);
     free_list->unlock();
 }
 
@@ -549,8 +563,8 @@ void *ObjectAlloc::realloc(void *ptr, const size_t size) {
     // TODO add support for regions larger than block size
     if (new_size > block_size) return NULL;
 
-    chunk_header_t *chunk = (chunk_header_t *)((char *)ptr -
-            sizeof(chunk_header_t));
+    chunk_header_t *chunk =
+        (chunk_header_t *)((char *)ptr - sizeof(chunk_header_t));
     FreeList *free_list = free_lists[chunk->free_list_id];
     free_list->lock();
     chunk = free_list->realloc(chunk, new_size);
@@ -590,7 +604,7 @@ void ObjectAlloc::load(const char *nvm) {
     // Only supports same number of cores for now
     long long *ptr = (long long *)nvm + 2;
     assert(*ptr == total_cores);
-    ptr += 2; // Skip object pointer
+    ptr += 2;  // Skip object pointer
 
 #ifdef DEBUG
     fprintf(stdout, "------------------------------------------\n");
@@ -617,8 +631,8 @@ void ObjectAlloc::load(const char *nvm) {
 size_t ObjectAlloc::snapshotSize() const {
     size_t sz = 0;
     sz += sizeof(uuid_t);
-    sz += sizeof(uint64_t); // total cores
-    sz += sizeof(uintptr_t); // this
+    sz += sizeof(uint64_t);   // total cores
+    sz += sizeof(uintptr_t);  // this
     sz += total_cores * FreeList::snapshotSize();
     return sz;
 }
@@ -635,13 +649,13 @@ void ObjectAlloc::releaseFreeBlocks() {
  * * * * * *
  */
 const uint64_t FreeList::BucketCaps[14] = {
-    0x00040, 0x00080, // 64 bytes and 128 bytes
-    0x00100, 0x00200, // 256 bytes and 512 bytes
-    0x00400, 0x00800, // 1 KB and 2 KB
-    0x01000, 0x02000, // 4 KB and 8 KB
-    0x04000, 0x08000, // 16 KB and 32 KB
-    0x10000, 0x20000, // 64 KB and 128 KB
-    0x40000, UINT64_MAX // 256 KB and above
+    0x00040, 0x00080,    // 64 bytes and 128 bytes
+    0x00100, 0x00200,    // 256 bytes and 512 bytes
+    0x00400, 0x00800,    // 1 KB and 2 KB
+    0x01000, 0x02000,    // 4 KB and 8 KB
+    0x04000, 0x08000,    // 16 KB and 32 KB
+    0x10000, 0x20000,    // 64 KB and 128 KB
+    0x40000, UINT64_MAX  // 256 KB and above
 };
 
 FreeList::FreeList(uint16_t id) {
@@ -666,7 +680,8 @@ FreeList::~FreeList() {
 }
 
 void FreeList::lock() {
-    while (!__sync_bool_compare_and_swap(&xlock, 0, 1));
+    while (!__sync_bool_compare_and_swap(&xlock, 0, 1))
+        ;
 #ifndef __OPTIMIZE__
     assert(__sync_add_and_fetch(&lock_holders, 1) == 1);
 #endif
@@ -708,7 +723,6 @@ chunk_header_t *FreeList::nextChunk(chunk_header_t *chunk) const {
 }
 
 chunk_header_t *FreeList::findBestMatch(size_t size) {
-
     // Look for a chunk with proper size
     off_t bucket = findBucket(size);
 #ifndef __OPTIMIZE__
@@ -719,7 +733,7 @@ chunk_header_t *FreeList::findBestMatch(size_t size) {
     while (chunk == NULL && bucket < TOTAL_ALLOC_BUCKETS) {
         free_header_t *fc = (free_header_t *)buckets[bucket];
         while (++chain_lookups && fc != NULL) {
-            if (size <= fc->size) { // Found a big enough free chunk
+            if (size <= fc->size) {  // Found a big enough free chunk
                 size_t remainder = fc->size - size;
                 if (bucket > 0 && remainder > BucketCaps[bucket - 1]) {
                     // No need to remove free chunk
@@ -735,11 +749,12 @@ chunk_header_t *FreeList::findBestMatch(size_t size) {
                     fc->last = 0;
                     fc->size = remainder;
                     // no change for used, prev_offset and free_list_id
-                }
-                else { // Remove free chunk
+                } else {  // Remove free chunk
                     chunk = (chunk_header_t *)fc;
-                    if (fc->prev != NULL) fc->prev->next = fc->next;
-                    else buckets[bucket] = (uintptr_t)fc->next;
+                    if (fc->prev != NULL)
+                        fc->prev->next = fc->next;
+                    else
+                        buckets[bucket] = (uintptr_t)fc->next;
                     if (fc->next != NULL) fc->next->prev = fc->prev;
 
                     // Split free chunk if necessary
@@ -751,17 +766,17 @@ chunk_header_t *FreeList::findBestMatch(size_t size) {
                         fc->used = 0;
                         fc->size = remainder;
                         if (fc->last != 1) {
-                            ((chunk_header_t *)((char *)fc +
-                                fc->size))->prev_offset = chunkOffset(fc);
+                            ((chunk_header_t *)((char *)fc + fc->size))
+                                ->prev_offset = chunkOffset(fc);
                         }
                         addFreeChunk(fc, fc->size);
                     }
                 }
-                break; // Found free chunk (skips to bucket++)
+                break;  // Found free chunk (skips to bucket++)
             }
-            fc = fc->next; // Does not run if chunk != NULL
+            fc = fc->next;  // Does not run if chunk != NULL
         }
-        bucket++; // no effect if chunk != NULL
+        bucket++;  // no effect if chunk != NULL
     }
 
 #ifndef __OPTIMIZE__
@@ -812,23 +827,24 @@ chunk_header_t *FreeList::alloc(size_t size) {
 }
 
 void FreeList::removeChunkFromBuckets(free_header_t *chunk) {
-        if (chunk->prev != NULL) chunk->prev->next = chunk->next;
-        else buckets[findBucket(chunk->size)] = (uintptr_t)chunk->next;
-        if (chunk->next != NULL) chunk->next->prev = chunk->prev;
+    if (chunk->prev != NULL)
+        chunk->prev->next = chunk->next;
+    else
+        buckets[findBucket(chunk->size)] = (uintptr_t)chunk->next;
+    if (chunk->next != NULL) chunk->next->prev = chunk->prev;
 }
 
 free_header_t *FreeList::freeAndCoalesce(chunk_header_t *chunk) {
-
     free_header_t *prev = (free_header_t *)prevChunk(chunk);
     free_header_t *next = (free_header_t *)nextChunk(chunk);
     chunk->used = 0;
 
     // No need for coalescing when chunk.size == BlockSize
     // Wentao: commenting this out to disable coalescing since it's buggy.
-    // if (prev == NULL && next == NULL) 
-        return (free_header_t *)chunk;
+    // if (prev == NULL && next == NULL)
+    return (free_header_t *)chunk;
 
-    if (prev != NULL && prev->used == 0) { // coalesce with previous
+    if (prev != NULL && prev->used == 0) {  // coalesce with previous
         removeChunkFromBuckets(prev);
 
         // Extend prev to include chunk
@@ -842,7 +858,7 @@ free_header_t *FreeList::freeAndCoalesce(chunk_header_t *chunk) {
         }
     }
 
-    if (next != NULL && next->used == 0) { // coalesce with next
+    if (next != NULL && next->used == 0) {  // coalesce with next
         removeChunkFromBuckets(next);
 
         // Expand chunk to include next
@@ -878,12 +894,10 @@ void FreeList::dealloc(chunk_header_t *chunk) {
     uintptr_t lb = (uintptr_t)chunk & mask;
     uintptr_t ub = ((uintptr_t)chunk + chunk_size) & mask;
 
-    if (lb < (uintptr_t)fc)
-        lb += GlobalAlloc::BitmapGranularity;
+    if (lb < (uintptr_t)fc) lb += GlobalAlloc::BitmapGranularity;
     if (ub + GlobalAlloc::BitmapGranularity <= (uintptr_t)fc + fc->size)
         ub = ub + GlobalAlloc::BitmapGranularity;
-    if (ub - lb > 0)
-        GlobalAlloc::getInstance()->unsetBitmap(lb, ub - lb);
+    if (ub - lb > 0) GlobalAlloc::getInstance()->unsetBitmap(lb, ub - lb);
 }
 
 void FreeList::addFreeChunk(void *ptr, size_t size) {
@@ -905,32 +919,28 @@ chunk_header_t *FreeList::realloc(chunk_header_t *chunk, size_t new_size) {
         char *src = (char *)chunk + sizeof(chunk_header_t);
         char *dst = (char *)new_chunk + sizeof(chunk_header_t);
         memcpy(dst, src, chunk->size - sizeof(chunk_header_t));
-        dealloc(chunk); // clears the bitmap
+        dealloc(chunk);  // clears the bitmap
         chunk = new_chunk;
         // Set the bitmap for the larger chunk
         GlobalAlloc::getInstance()->setBitmap((uintptr_t)chunk, new_size);
-    }
-    else { // chunk can be extended
+    } else {  // chunk can be extended
         free_header_t *fc = (free_header_t *)next;
         removeChunkFromBuckets(fc);
         next = nextChunk((chunk_header_t *)fc);
 
-        if (fc->size > increase) { // split
+        if (fc->size > increase) {  // split
             memcpy((char *)fc + increase, fc, sizeof(chunk_header_t));
             fc = (free_header_t *)((char *)fc + increase);
             fc->size -= increase;
-            if (next != NULL)
-                next->prev_offset = chunkOffset(fc);
+            if (next != NULL) next->prev_offset = chunkOffset(fc);
             addFreeChunk(fc, fc->size);
-        }
-        else { // use the entire chunk
-            if (next != NULL)
-                next->prev_offset = fc->prev_offset;
+        } else {  // use the entire chunk
+            if (next != NULL) next->prev_offset = fc->prev_offset;
             chunk->last = fc->last;
         }
 
         GlobalAlloc::getInstance()->setBitmap((uintptr_t)chunk + chunk->size,
-                increase);
+                                              increase);
         chunk->size = new_size;
     }
 
@@ -938,7 +948,6 @@ chunk_header_t *FreeList::realloc(chunk_header_t *chunk, size_t new_size) {
 }
 
 chunk_header_t *FreeList::big_alloc(size_t size) {
-
     size_t allocSize = size & ~(BlockSize - 1);
     if (size > allocSize) allocSize += BlockSize;
 
@@ -959,8 +968,8 @@ void FreeList::big_dealloc(chunk_header_t *chunk) {
     size_t blocks = chunk->size / BlockSize;
     if (chunk->size % BlockSize != 0) blocks++;
     memset(chunk, 0, sizeof(chunk_header_t));
-    GlobalAlloc::getInstance()->unsetBitmapForBigDealloc(
-            (uintptr_t)chunk, blocks);
+    GlobalAlloc::getInstance()->unsetBitmapForBigDealloc((uintptr_t)chunk,
+                                                         blocks);
     GlobalAlloc::getInstance()->release(chunk, blocks * BlockSize);
 }
 
@@ -989,8 +998,8 @@ void FreeList::print(bool detailed) const {
 
 void FreeList::printState(const char *tag) const {
     fprintf(stdout, "|> %s: ", tag);
-    fprintf(stdout, "-- ID: %d\tAllocated: %zu\tGlobal: %zu\n",
-            my_id, total_allocated, global_allocs);
+    fprintf(stdout, "-- ID: %d\tAllocated: %zu\tGlobal: %zu\n", my_id,
+            total_allocated, global_allocs);
     for (int i = 0; i < TOTAL_ALLOC_BUCKETS; i++) {
         free_header_t *chunk = (free_header_t *)buckets[i];
         if (chunk == NULL) continue;
@@ -1024,10 +1033,9 @@ void FreeList::printChunk(chunk_header_t *c) const {
         chunk_header_t *chunk = chunks[i];
         if (chunk != NULL) {
             char fill = chunk->used ? 'U' : 'F';
-            fprintf(stdout, "<%c>%d|%d<%c>",
-                    fill, chunk->prev_offset * 64, chunk->size, fill);
-        }
-        else {
+            fprintf(stdout, "<%c>%d|%d<%c>", fill, chunk->prev_offset * 64,
+                    chunk->size, fill);
+        } else {
             fprintf(stdout, "|------|");
         }
     }
@@ -1075,10 +1083,10 @@ void FreeList::load(const char *nvm) {
 
 size_t FreeList::snapshotSize() {
     size_t sz = 0;
-    sz += sizeof(uint64_t); // my_id
-    sz += sizeof(uint64_t); // total_allocated
-    sz += sizeof(uint64_t); // global_allocs
-    sz += sizeof(uint64_t); // chain_lookups
+    sz += sizeof(uint64_t);  // my_id
+    sz += sizeof(uint64_t);  // total_allocated
+    sz += sizeof(uint64_t);  // global_allocs
+    sz += sizeof(uint64_t);  // chain_lookups
     sz += TOTAL_ALLOC_BUCKETS * sizeof(uint64_t);
     return sz;
 }
@@ -1090,8 +1098,10 @@ void FreeList::releaseFreeBlocks() {
         free_header_t *next = chunk->next;
 
         if (chunk->size == BlockSize) {
-            if (prev != NULL) prev->next = next;
-            else buckets[TOTAL_ALLOC_BUCKETS - 1] = (uintptr_t)next;
+            if (prev != NULL)
+                prev->next = next;
+            else
+                buckets[TOTAL_ALLOC_BUCKETS - 1] = (uintptr_t)next;
             if (next != NULL) next->prev = prev;
 
             GlobalAlloc::getInstance()->release(chunk, BlockSize);

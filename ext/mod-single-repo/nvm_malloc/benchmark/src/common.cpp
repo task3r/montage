@@ -6,4 +6,4 @@ namespace nvb {
 object_table_t _object_table;
 #endif
 
-}
+}  // namespace nvb

@@ -4,17 +4,19 @@
 #ifndef PRONTO_QUEUETEST_HPP
 #define PRONTO_QUEUETEST_HPP
 
+#include <execinfo.h>
+#include <signal.h>
+
+#include <random>
+
 #include "AllocatorMacro.hpp"
 #include "Persistent.hpp"
-#include "TestConfig.hpp"
 #include "ProntoQueue.hpp"
-#include <random>
-#include <signal.h>
-#include "savitar.hpp"
-#include "thread.hpp"
+#include "TestConfig.hpp"
 #include "nvm_manager.hpp"
+#include "savitar.hpp"
 #include "snapshot.hpp"
-#include <execinfo.h>
+#include "thread.hpp"
 
 class ProntoQueueTest : public Test{
     static pthread_t snapshot_thread;

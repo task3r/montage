@@ -1,11 +1,15 @@
-#include <libpmem.h>
-#include <uuid/uuid.h>
-#include <fstream>
-#include <string.h>
 #include "nv_log.hpp"
+
+#include <libpmem.h>
+#include <string.h>
+#include <uuid/uuid.h>
+
+#include <fstream>
+
 #include "savitar.hpp"
 
-#define CHECKSUM(log) ((&log->checksum)[1] ^ (&log->checksum)[2] ^ (&log->checksum)[3])
+#define CHECKSUM(log) \
+    ((&log->checksum)[1] ^ (&log->checksum)[2] ^ (&log->checksum)[3])
 
 static const uint64_t LogMagic = REDO_LOG_MAGIC;
 
@@ -32,8 +36,8 @@ SavitarLog *Savitar_log_open(uuid_t id) {
     Savitar_log_path(id, path);
 
     PRINT("Opening existing log at %s\n", path);
-    SavitarLog *log = (SavitarLog *)pmem_map_file(path, 0, 0, 0,
-            &mapped_len, NULL);
+    SavitarLog *log =
+        (SavitarLog *)pmem_map_file(path, 0, 0, 0, &mapped_len, NULL);
     assert(log == NULL || log->size == mapped_len);
     assert(log == NULL || log->checksum == CHECKSUM(log));
     if (log != NULL) log->snapshot_lock = 0;
@@ -45,8 +49,8 @@ SavitarLog *Savitar_log_create(uuid_t id, size_t size) {
     size_t mapped_len;
     Savitar_log_path(id, path);
 
-    SavitarLog *log = (SavitarLog *)pmem_map_file(path, size,
-            PMEM_FILE_CREATE | PMEM_FILE_EXCL, 0666, &mapped_len, NULL);
+    SavitarLog *log = (SavitarLog *)pmem_map_file(
+        path, size, PMEM_FILE_CREATE | PMEM_FILE_EXCL, 0666, &mapped_len, NULL);
     if (log != NULL) {
         assert(mapped_len == size);
         log->size = size;
@@ -59,9 +63,8 @@ SavitarLog *Savitar_log_create(uuid_t id, size_t size) {
         log->checksum = CHECKSUM(log);
         pmem_persist(log, sizeof(struct RedoLog));
         PRINT("Created new semantic log at %s\n", path);
-    }
-    else {
-      PRINT("Failed to create semantic log at %s\n", path);
+    } else {
+        PRINT("Failed to create semantic log at %s\n", path);
     }
     return log;
 }
@@ -75,7 +78,7 @@ void Savitar_log_close(SavitarLog *log) {
 
 uint64_t Savitar_log_append(struct RedoLog *log, ArgVector *v, size_t v_size) {
     assert(v_size > 0);
-    size_t entry_size = 2 * sizeof(uint64_t); // Hole for commit_id and magic
+    size_t entry_size = 2 * sizeof(uint64_t);  // Hole for commit_id and magic
     for (size_t i = 0; i < v_size; i++) {
         entry_size += v[i].len;
     }
@@ -85,7 +88,7 @@ uint64_t Savitar_log_append(struct RedoLog *log, ArgVector *v, size_t v_size) {
 
     uint64_t offset = __sync_fetch_and_add(&log->tail, entry_size);
     assert(offset + entry_size <= log->size);
-    char *dst = (char *)log + offset + sizeof(uint64_t); // Hole for commit_id
+    char *dst = (char *)log + offset + sizeof(uint64_t);  // Hole for commit_id
 
     pmem_memcpy_nodrain(dst, &LogMagic, sizeof(LogMagic));
     dst += sizeof(uint64_t);
@@ -107,5 +110,5 @@ void Savitar_log_commit(SavitarLog *log, uint64_t entry_offset) {
     *ptr = commit_id;
     pmem_persist(ptr, sizeof(commit_id));
     PRINT("[%d] Marked log entry (%zu) as committed with id = %zu\n",
-            (int)pthread_self(), entry_offset, commit_id);
+          (int)pthread_self(), entry_offset, commit_id);
 }

@@ -2,6 +2,7 @@
 
 #include <pthread.h>
 #include <stdarg.h>
+
 #include "savitar.hpp"
 
 typedef struct NvMethodCall {
@@ -13,7 +14,7 @@ typedef struct NvMethodCall {
 typedef struct TxBuffers {
     NvMethodCall *buffer;
     uint64_t *tx_buffer;
-    int thread_id; // pthread_self() for main thread
+    int thread_id;  // pthread_self() for main thread
 } TxBuffers;
 
 typedef struct ThreadConfig {
@@ -28,7 +29,7 @@ void Savitar_core_init();
 void Savitar_core_finalize();
 
 int Savitar_thread_create(pthread_t *, const pthread_attr_t *,
-    void *(*start_routine)(void *), void *);
+                          void *(*start_routine)(void *), void *);
 
 /*
  * The main thread communicates with the logger thread through

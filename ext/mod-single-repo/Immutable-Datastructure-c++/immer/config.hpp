@@ -30,17 +30,16 @@
 #else
 #define IMMER_TRACE(...)
 #endif
-#define IMMER_TRACE_F(...)                                              \
+#define IMMER_TRACE_F(...) \
     IMMER_TRACE(__FILE__ << ":" << __LINE__ << ": " << __VA_ARGS__)
-#define IMMER_TRACE_E(expr)                             \
-    IMMER_TRACE("    " << #expr << " = " << (expr))
+#define IMMER_TRACE_E(expr) IMMER_TRACE("    " << #expr << " = " << (expr))
 
-#define IMMER_UNREACHABLE    __builtin_unreachable()
-#define IMMER_LIKELY(cond)   __builtin_expect(!!(cond), 1)
+#define IMMER_UNREACHABLE __builtin_unreachable()
+#define IMMER_LIKELY(cond) __builtin_expect(!!(cond), 1)
 #define IMMER_UNLIKELY(cond) __builtin_expect(!!(cond), 0)
 // #define IMMER_PREFETCH(p)    __builtin_prefetch(p)
 #define IMMER_PREFETCH(p)
-#define IMMER_FORCEINLINE    inline __attribute__ ((always_inline))
+#define IMMER_FORCEINLINE inline __attribute__((always_inline))
 
 #define IMMER_DESCENT_DEEP 0
 
@@ -55,4 +54,4 @@ namespace immer {
 const auto default_bits = 5;
 const auto default_free_list_size = 1 << 10;
 
-} // namespace immer
+}  // namespace immer

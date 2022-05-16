@@ -40,14 +40,11 @@
 
 #include <libpmemobj++/experimental/basic_string.hpp>
 
-namespace pmem
-{
+namespace pmem {
 
-namespace obj
-{
+namespace obj {
 
-namespace experimental
-{
+namespace experimental {
 
 using string = basic_string<char>;
 using wstring = basic_string<wchar_t>;

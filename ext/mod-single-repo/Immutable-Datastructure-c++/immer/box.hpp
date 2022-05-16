@@ -22,18 +22,14 @@ namespace immer {
  * operations are never called.  Since a box is immutable, copying or
  * moving just copy the underlying pointers.
  */
-template <typename T,
-          typename MemoryPolicy   = default_memory_policy>
-class box
-{
-    struct holder : MemoryPolicy::refcount
-    {
+template <typename T, typename MemoryPolicy = default_memory_policy>
+class box {
+    struct holder : MemoryPolicy::refcount {
         // TODO: The problem is that value is created on the stack?
         T value;
 
         template <typename... Args>
-        holder(Args&&... args) : value{std::forward<Args>(args)...} {
-        }
+        holder(Args&&... args) : value{std::forward<Args>(args)...} {}
     };
 
     using heap = typename MemoryPolicy::heap::type;
@@ -42,8 +38,8 @@ class box
 
     box(holder* impl) : impl_{impl} {}
 
-public:
-    using value_type    = T;
+   public:
+    using value_type = T;
     using memory_policy = MemoryPolicy;
 
     /*!
@@ -58,46 +54,45 @@ public:
     /*!
      * Constructs a box holding `T{arg}`
      */
-    template <typename Arg,
-              typename Enable=std::enable_if_t<
-                  !std::is_same<box, std::decay_t<Arg>>::value &&
-                  std::is_constructible<T, Arg>::value>>
-    box(Arg&& arg)
-        : impl_{detail::make<heap, holder>(std::forward<Arg>(arg))} {
+    template <typename Arg, typename Enable = std::enable_if_t<
+                                !std::is_same<box, std::decay_t<Arg>>::value &&
+                                std::is_constructible<T, Arg>::value>>
+    box(Arg&& arg) : impl_{detail::make<heap, holder>(std::forward<Arg>(arg))} {
 #if IMMER_USE_NVM
         NVM_PERSIST(impl_, sizeof(holder));
 #endif
-        }
+    }
 
     /*!
      * Constructs a box holding `T{arg1, arg2, args...}`
      */
     template <typename Arg1, typename Arg2, typename... Args>
-    box(Arg1&& arg1, Arg2&& arg2, Args&& ...args)
-        : impl_{detail::make<heap, holder>(
-            std::forward<Arg1>(arg1),
-            std::forward<Arg2>(arg2),
-            std::forward<Args>(args)...)}
-    {
+    box(Arg1&& arg1, Arg2&& arg2, Args&&... args)
+        : impl_{detail::make<heap, holder>(std::forward<Arg1>(arg1),
+                                           std::forward<Arg2>(arg2),
+                                           std::forward<Args>(args)...)} {
 #if IMMER_USE_NVM
         NVM_PERSIST(impl_, sizeof(holder));
 #endif
     }
 
-    friend void swap(box& a, box& b)
-    { using std::swap; swap(a.impl_, b.impl_); }
+    friend void swap(box& a, box& b) {
+        using std::swap;
+        swap(a.impl_, b.impl_);
+    }
 
     box(box&& other) { swap(*this, other); }
     box(const box& other) : impl_(other.impl_) { impl_->inc(); }
-    box& operator=(box&& other) { swap(*this, other); return *this; }
-    box& operator=(const box& other)
-    {
+    box& operator=(box&& other) {
+        swap(*this, other);
+        return *this;
+    }
+    box& operator=(const box& other) {
         auto aux = other;
         swap(*this, aux);
         return *this;
     }
-    ~box()
-    {
+    ~box() {
         if (impl_ && impl_->dec()) {
             impl_->~holder();
             heap::deallocate(sizeof(holder), impl_);
@@ -111,22 +106,25 @@ public:
     operator const T&() const { return get(); }
 
     /*! Access via dereference */
-    const T& operator* () const { return get(); }
+    const T& operator*() const { return get(); }
 
     /*! Access via pointer member access */
-    const T* operator-> () const { return &get(); }
+    const T* operator->() const { return &get(); }
 
     /*! Comparison. */
-    bool operator==(detail::exact_t<const box&> other) const
-    { return impl_ == other.value.impl_ || get() == other.value.get(); }
+    bool operator==(detail::exact_t<const box&> other) const {
+        return impl_ == other.value.impl_ || get() == other.value.get();
+    }
     // Note that the `exact_t` disambiguates comparisons against `T{}`
     // directly.  In that case we want to use `operator T&` and
     // compare directly.  We definitely never want to convert a value
     // to a box (which causes an allocation) just to compare it.
-    bool operator!=(detail::exact_t<const box&> other) const
-    { return !(*this == other.value); }
-    bool operator<(detail::exact_t<const box&> other) const
-    { return get() < other.value.get(); }
+    bool operator!=(detail::exact_t<const box&> other) const {
+        return !(*this == other.value);
+    }
+    bool operator<(detail::exact_t<const box&> other) const {
+        return get() < other.value.get();
+    }
 
     /*!
      * Returns a new box built by applying the `fn` to the underlying
@@ -144,22 +142,19 @@ public:
      * @endrst
      */
     template <typename Fn>
-    box update(Fn&& fn) const&
-    {
+    box update(Fn&& fn) const& {
         return std::forward<Fn>(fn)(get());
     }
     template <typename Fn>
-    box* update_ptr(Fn&& fn) const&
-    {
-        box *mem = (box*) nvm_reserve_id("box", sizeof(box));
-        box *new_box = new (mem) box{std::forward<Fn>(fn)(get())};
+    box* update_ptr(Fn&& fn) const& {
+        box* mem = (box*)nvm_reserve_id("box", sizeof(box));
+        box* new_box = new (mem) box{std::forward<Fn>(fn)(get())};
         NVM_PERSIST(mem, sizeof(box));
         nvm_activate_id("box");
         return new_box;
     }
     template <typename Fn>
-    box&& update(Fn&& fn) &&
-    {
+    box&& update(Fn&& fn) && {
         if (impl_->unique())
             impl_->value = std::forward<Fn>(fn)(std::move(impl_->value));
         else
@@ -168,17 +163,15 @@ public:
     }
 };
 
-} // namespace immer
+}  // namespace immer
 
 namespace std {
 
 template <typename T, typename MP>
-struct hash<immer::box<T, MP>>
-{
-    std::size_t operator() (const immer::box<T, MP>& x) const
-    {
+struct hash<immer::box<T, MP>> {
+    std::size_t operator()(const immer::box<T, MP>& x) const {
         return std::hash<T>{}(*x);
     }
 };
 
-} // namespace std
+}  // namespace std

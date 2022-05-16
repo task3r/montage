@@ -1,95 +1,98 @@
 #ifndef MONTAGE_HASHTALE_HPP
 #define MONTAGE_HASHTALE_HPP
 
-#include "TestConfig.hpp"
-#include "RMap.hpp"
-#include "CustomTypes.hpp"
-#include "ConcurrentPrimitives.hpp"
-#include "Recoverable.hpp"
-#include <mutex>
 #include <omp.h>
 
-template<typename K, typename V, size_t idxSize=1000000>
-class MontageHashTable : public RMap<K,V>, public Recoverable{
-public:
+#include <mutex>
 
-    class Payload : public pds::PBlk{
+#include "ConcurrentPrimitives.hpp"
+#include "CustomTypes.hpp"
+#include "RMap.hpp"
+#include "Recoverable.hpp"
+#include "TestConfig.hpp"
+
+template <typename K, typename V, size_t idxSize = 1000000>
+class MontageHashTable : public RMap<K, V>, public Recoverable {
+   public:
+    class Payload : public pds::PBlk {
         GENERATE_FIELD(K, key, Payload);
         GENERATE_FIELD(V, val, Payload);
-    public:
-        Payload(){}
-        Payload(K x, V y): m_key(x), m_val(y){}
-        Payload(const Payload& oth): pds::PBlk(oth), m_key(oth.m_key), m_val(oth.m_val){}
-        void persist(){}
-    }__attribute__((aligned(CACHELINE_SIZE)));
 
-    struct ListNode{
+       public:
+        Payload() {}
+        Payload(K x, V y) : m_key(x), m_val(y) {}
+        Payload(const Payload& oth)
+            : pds::PBlk(oth), m_key(oth.m_key), m_val(oth.m_val) {}
+        void persist() {}
+    } __attribute__((aligned(CACHELINE_SIZE)));
+
+    struct ListNode {
         MontageHashTable* ds;
         // Transient-to-persistent pointer
         Payload* payload = nullptr;
         // Transient-to-transient pointers
         ListNode* next = nullptr;
-        ListNode(){}
-        ListNode(MontageHashTable* ds_, K key, V val): ds(ds_){
+        ListNode() {}
+        ListNode(MontageHashTable* ds_, K key, V val) : ds(ds_) {
             payload = ds->pnew<Payload>(key, val);
         }
-        ListNode(Payload* _payload) : payload(_payload) {} // for recovery
-        K get_key(){
-            assert(payload!=nullptr && "payload shouldn't be null");
+        ListNode(Payload* _payload) : payload(_payload) {}  // for recovery
+        K get_key() {
+            assert(payload != nullptr && "payload shouldn't be null");
             // old-see-new never happens for locking ds
             return (K)payload->get_unsafe_key(ds);
         }
-        V get_val(){
-            assert(payload!=nullptr && "payload shouldn't be null");
+        V get_val() {
+            assert(payload != nullptr && "payload shouldn't be null");
             return (V)payload->get_unsafe_val(ds);
         }
-        void set_val(V v){
-            assert(payload!=nullptr && "payload shouldn't be null");
+        void set_val(V v) {
+            assert(payload != nullptr && "payload shouldn't be null");
             payload = payload->set_val(ds, v);
         }
-        ~ListNode(){
-            if (payload){
+        ~ListNode() {
+            if (payload) {
                 ds->pdelete(payload);
             }
         }
-    }__attribute__((aligned(CACHELINE_SIZE)));
-    struct Bucket{
+    } __attribute__((aligned(CACHELINE_SIZE)));
+    struct Bucket {
         std::mutex lock;
         ListNode head;
-        Bucket():head(){};
-    }__attribute__((aligned(CACHELINE_SIZE)));
+        Bucket() : head(){};
+    } __attribute__((aligned(CACHELINE_SIZE)));
 
     std::hash<K> hash_fn;
     Bucket buckets[idxSize];
     GlobalTestConfig* gtc;
-    MontageHashTable(GlobalTestConfig* gtc_): Recoverable(gtc_), gtc(gtc_){};
+    MontageHashTable(GlobalTestConfig* gtc_) : Recoverable(gtc_), gtc(gtc_){};
 
-    void init_thread(GlobalTestConfig* gtc, LocalTestConfig* ltc){
+    void init_thread(GlobalTestConfig* gtc, LocalTestConfig* ltc) {
         Recoverable::init_thread(gtc, ltc);
     }
 
-    optional<V> get(K key, int tid){
-        size_t idx=hash_fn(key)%idxSize;
+    optional<V> get(K key, int tid) {
+        size_t idx = hash_fn(key) % idxSize;
         // while(true){
         std::lock_guard<std::mutex> lk(buckets[idx].lock);
         MontageOpHolderReadOnly(this);
-            // try{
+        // try{
         ListNode* curr = buckets[idx].head.next;
-        while(curr){
-            if (curr->get_key() == key){
+        while (curr) {
+            if (curr->get_key() == key) {
                 return curr->get_val();
             }
             curr = curr->next;
         }
         return {};
-            // } catch(OldSeeNewException& e){
-                // continue;
-            // }
+        // } catch(OldSeeNewException& e){
+        // continue;
+        // }
         // }
     }
 
-    optional<V> put(K key, V val, int tid){
-        size_t idx=hash_fn(key)%idxSize;
+    optional<V> put(K key, V val, int tid) {
+        size_t idx = hash_fn(key) % idxSize;
         ListNode* new_node = new ListNode(this, key, val);
         // while(true){
         std::lock_guard<std::mutex> lk(buckets[idx].lock);
@@ -97,14 +100,14 @@ public:
         // try{
         ListNode* curr = buckets[idx].head.next;
         ListNode* prev = &buckets[idx].head;
-        while(curr){
+        while (curr) {
             K curr_key = curr->get_key();
-            if (curr_key == key){
+            if (curr_key == key) {
                 optional<V> ret = curr->get_val();
                 curr->set_val(val);
                 delete new_node;
                 return ret;
-            } else if (curr_key > key){
+            } else if (curr_key > key) {
                 new_node->next = curr;
                 prev->next = new_node;
                 return {};
@@ -121,8 +124,8 @@ public:
         // }
     }
 
-    bool insert(K key, V val, int tid){
-        size_t idx=hash_fn(key)%idxSize;
+    bool insert(K key, V val, int tid) {
+        size_t idx = hash_fn(key) % idxSize;
         ListNode* new_node = new ListNode(this, key, val);
         // while(true){
         std::lock_guard<std::mutex> lk(buckets[idx].lock);
@@ -130,12 +133,12 @@ public:
         // try{
         ListNode* curr = buckets[idx].head.next;
         ListNode* prev = &buckets[idx].head;
-        while(curr){
+        while (curr) {
             K curr_key = curr->get_key();
-            if (curr_key == key){
+            if (curr_key == key) {
                 delete new_node;
                 return false;
-            } else if (curr_key > key){
+            } else if (curr_key > key) {
                 new_node->next = curr;
                 prev->next = new_node;
                 return true;
@@ -152,27 +155,27 @@ public:
         // }
     }
 
-    optional<V> replace(K key, V val, int tid){
+    optional<V> replace(K key, V val, int tid) {
         assert(false && "replace not implemented yet.");
         return {};
     }
 
-    optional<V> remove(K key, int tid){
-        size_t idx=hash_fn(key)%idxSize;
+    optional<V> remove(K key, int tid) {
+        size_t idx = hash_fn(key) % idxSize;
         // while(true){
         std::lock_guard<std::mutex> lk(buckets[idx].lock);
         MontageOpHolder _holder(this);
         // try{
         ListNode* curr = buckets[idx].head.next;
         ListNode* prev = &buckets[idx].head;
-        while(curr){
+        while (curr) {
             K curr_key = curr->get_key();
-            if (curr_key == key){
+            if (curr_key == key) {
                 optional<V> ret = curr->get_val();
                 prev->next = curr->next;
-                delete(curr);
+                delete (curr);
                 return ret;
-            } else if (curr_key > key){
+            } else if (curr_key > key) {
                 return {};
             } else {
                 prev = curr;
@@ -186,11 +189,11 @@ public:
         // }
     }
 
-    void clear(){
-        for (uint64_t i = 0; i < idxSize; i++){
+    void clear() {
+        for (uint64_t i = 0; i < idxSize; i++) {
             ListNode* curr = buckets[i].head.next;
             ListNode* next = nullptr;
-            while(curr){
+            while (curr) {
                 next = curr->next;
                 delete curr;
                 curr = next;
@@ -199,38 +202,42 @@ public:
         }
     }
 
-
-    int recover(bool simulated){
-        if (simulated){
-            recover_mode(); // PDELETE --> noop
+    int recover(bool simulated) {
+        if (simulated) {
+            recover_mode();  // PDELETE --> noop
             // clear transient structures.
             clear();
-            online_mode(); // re-enable PDELETE.
+            online_mode();  // re-enable PDELETE.
         }
 
         int rec_cnt = 0;
         int rec_thd = gtc->task_num;
-        if (gtc->checkEnv("RecoverThread")){
+        if (gtc->checkEnv("RecoverThread")) {
             rec_thd = stoi(gtc->getEnv("RecoverThread"));
         }
         auto begin = chrono::high_resolution_clock::now();
-        std::unordered_map<uint64_t, pds::PBlk*>* recovered = recover_pblks(rec_thd); 
+        std::unordered_map<uint64_t, pds::PBlk*>* recovered =
+            recover_pblks(rec_thd);
         auto end = chrono::high_resolution_clock::now();
         auto dur = end - begin;
-        auto dur_ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-        std::cout << "Spent " << dur_ms << "ms getting PBlk(" << recovered->size() << ")" << std::endl;
+        auto dur_ms =
+            std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+        std::cout << "Spent " << dur_ms << "ms getting PBlk("
+                  << recovered->size() << ")" << std::endl;
         std::vector<Payload*> payloadVector;
         payloadVector.reserve(recovered->size());
         begin = chrono::high_resolution_clock::now();
-        for (auto itr = recovered->begin(); itr != recovered->end(); itr++){
+        for (auto itr = recovered->begin(); itr != recovered->end(); itr++) {
             rec_cnt++;
             Payload* payload = reinterpret_cast<Payload*>(itr->second);
-                        payloadVector.push_back(payload);
+            payloadVector.push_back(payload);
         }
         end = chrono::high_resolution_clock::now();
         dur = end - begin;
-        auto dur_ms_vec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-        std::cout << "Spent " << dur_ms_vec << "ms building vector" << std::endl;
+        auto dur_ms_vec =
+            std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+        std::cout << "Spent " << dur_ms_vec << "ms building vector"
+                  << std::endl;
         begin = chrono::high_resolution_clock::now();
         std::vector<std::thread> workers;
         for (int rec_tid = 0; rec_tid < rec_thd; rec_tid++) {
@@ -239,8 +246,9 @@ public:
                 hwloc_set_cpubind(gtc->topology,
                                   gtc->affinities[rec_tid]->cpuset,
                                   HWLOC_CPUBIND_THREAD);
-                for (size_t i = rec_tid; i < payloadVector.size(); i += rec_thd){
-                    //re-insert payload.
+                for (size_t i = rec_tid; i < payloadVector.size();
+                     i += rec_thd) {
+                    // re-insert payload.
                     ListNode* new_node = new ListNode(payloadVector[i]);
                     K key = new_node->get_key();
                     size_t idx = hash_fn(key) % idxSize;
@@ -263,7 +271,7 @@ public:
                     prev->next = new_node;
                 }
             }));  // workers.emplace_back()
-        }// for (rec_thd)
+        }         // for (rec_thd)
         for (auto& worker : workers) {
             if (worker.joinable()) {
                 worker.join();
@@ -271,33 +279,40 @@ public:
         }
         end = chrono::high_resolution_clock::now();
         dur = end - begin;
-        auto dur_ms_ins = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-        std::cout << "Spent " << dur_ms_ins << "ms inserting(" << recovered->size() << ")" << std::endl;
-        std::cout << "Total time to recover: " << dur_ms+dur_ms_vec+dur_ms_ins << "ms" << std::endl;
+        auto dur_ms_ins =
+            std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+        std::cout << "Spent " << dur_ms_ins << "ms inserting("
+                  << recovered->size() << ")" << std::endl;
+        std::cout << "Total time to recover: "
+                  << dur_ms + dur_ms_vec + dur_ms_ins << "ms" << std::endl;
         delete recovered;
         return rec_cnt;
     }
-        };
+};
 
-template <class T> 
-class MontageHashTableFactory : public RideableFactory{
-    Rideable* build(GlobalTestConfig* gtc){
-        return new MontageHashTable<T,T>(gtc);
+template <class T>
+class MontageHashTableFactory : public RideableFactory {
+    Rideable* build(GlobalTestConfig* gtc) {
+        return new MontageHashTable<T, T>(gtc);
     }
 };
 
 /* Specialization for strings */
 #include <string>
+
 #include "InPlaceString.hpp"
 template <>
-class MontageHashTable<std::string, std::string, 1000000>::Payload : public pds::PBlk{
+class MontageHashTable<std::string, std::string, 1000000>::Payload
+    : public pds::PBlk {
     GENERATE_FIELD(pds::InPlaceString<TESTS_KEY_SIZE>, key, Payload);
     GENERATE_FIELD(pds::InPlaceString<TESTS_VAL_SIZE>, val, Payload);
 
-public:
-    Payload(const std::string& k, const std::string& v) : m_key(this, k), m_val(this, v){}
-    Payload(const Payload& oth) : pds::PBlk(oth), m_key(this, oth.m_key), m_val(this, oth.m_val){}
-    void persist(){}
+   public:
+    Payload(const std::string& k, const std::string& v)
+        : m_key(this, k), m_val(this, v) {}
+    Payload(const Payload& oth)
+        : pds::PBlk(oth), m_key(this, oth.m_key), m_val(this, oth.m_val) {}
+    void persist() {}
 };
 
 #endif

@@ -37,18 +37,13 @@
 /*
  * The following might be necessary to compile the examples on older compilers.
  */
-#if !defined(__cpp_lib_uncaught_exceptions) && !defined(_MSC_VER) ||           \
-	(_MSC_VER < 1900)
+#if !defined(__cpp_lib_uncaught_exceptions) && !defined(_MSC_VER) || \
+    (_MSC_VER < 1900)
 
 #define __cpp_lib_uncaught_exceptions 201411
-namespace std
-{
+namespace std {
 
-int
-uncaught_exceptions() noexcept
-{
-	return 0;
-}
+int uncaught_exceptions() noexcept { return 0; }
 
 } /* namespace std */
 #endif /* __cpp_lib_uncaught_exceptions */
@@ -64,41 +59,39 @@ uncaught_exceptions() noexcept
 
 using namespace pmem::obj;
 
-void
-general_tx_example()
-{
-	// pool root structure
-	struct root {
-		mutex pmutex;
-		shared_mutex shared_pmutex;
-		p<int> count;
-		persistent_ptr<root> another_root;
-	};
+void general_tx_example() {
+    // pool root structure
+    struct root {
+        mutex pmutex;
+        shared_mutex shared_pmutex;
+        p<int> count;
+        persistent_ptr<root> another_root;
+    };
 
-	// create a pmemobj pool
-	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
-	auto proot = pop.root();
+    // create a pmemobj pool
+    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+    auto proot = pop.root();
 
-	// typical usage schemes
-	try {
-		// take locks and start a transaction
-		transaction::run(
-			pop,
-			[&]() {
-				// atomically allocate objects
-				proot->another_root = make_persistent<root>();
+    // typical usage schemes
+    try {
+        // take locks and start a transaction
+        transaction::run(
+            pop,
+            [&]() {
+                // atomically allocate objects
+                proot->another_root = make_persistent<root>();
 
-				// atomically modify objects
-				proot->count++;
-			},
-			proot->pmutex, proot->shared_pmutex);
-	} catch (pmem::transaction_error &) {
-		// a transaction error occurred, transaction got aborted
-		// reacquire locks if necessary
-	} catch (...) {
-		// some other exception got propagated from within the tx
-		// reacquire locks if necessary
-	}
+                // atomically modify objects
+                proot->count++;
+            },
+            proot->pmutex, proot->shared_pmutex);
+    } catch (pmem::transaction_error &) {
+        // a transaction error occurred, transaction got aborted
+        // reacquire locks if necessary
+    } catch (...) {
+        // some other exception got propagated from within the tx
+        // reacquire locks if necessary
+    }
 }
 //! [general_tx_example]
 
@@ -113,46 +106,43 @@ general_tx_example()
 
 using namespace pmem::obj;
 
-int
-manual_tx_example()
-{
-	// pool root structure
-	struct root {
-		mutex pmutex;
-		shared_mutex shared_pmutex;
-		p<int> count;
-		persistent_ptr<root> another_root;
-	};
+int manual_tx_example() {
+    // pool root structure
+    struct root {
+        mutex pmutex;
+        shared_mutex shared_pmutex;
+        p<int> count;
+        persistent_ptr<root> another_root;
+    };
 
-	// create a pmemobj pool
-	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+    // create a pmemobj pool
+    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
 
-	auto proot = pop.root();
+    auto proot = pop.root();
 
-	try {
-		transaction::manual tx(pop, proot->pmutex,
-				       proot->shared_pmutex);
+    try {
+        transaction::manual tx(pop, proot->pmutex, proot->shared_pmutex);
 
-		// atomically allocate objects
-		proot->another_root = make_persistent<root>();
+        // atomically allocate objects
+        proot->another_root = make_persistent<root>();
 
-		// atomically modify objects
-		proot->count++;
+        // atomically modify objects
+        proot->count++;
 
-		// It's necessary to commit the transaction manually and
-		// it has to be the last operation in the transaction.
-		transaction::commit();
-	} catch (pmem::transaction_error &) {
-		// an internal transaction error occurred, tx aborted
-		// reacquire locks if necessary
-	} catch (...) {
-		// some other exception thrown, tx aborted
-		// reacquire locks if necessary
-	}
+        // It's necessary to commit the transaction manually and
+        // it has to be the last operation in the transaction.
+        transaction::commit();
+    } catch (pmem::transaction_error &) {
+        // an internal transaction error occurred, tx aborted
+        // reacquire locks if necessary
+    } catch (...) {
+        // some other exception thrown, tx aborted
+        // reacquire locks if necessary
+    }
 
-	// In complex cases with library calls, remember to check the status of
-	// the previous transaction.
-	return transaction::error();
+    // In complex cases with library calls, remember to check the status of
+    // the previous transaction.
+    return transaction::error();
 }
 //! [manual_tx_example]
 
@@ -167,42 +157,39 @@ manual_tx_example()
 
 using namespace pmem::obj;
 
-int
-automatic_tx_example()
-{
-	// pool root structure
-	struct root {
-		mutex pmutex;
-		shared_mutex shared_pmutex;
-		p<int> count;
-		persistent_ptr<root> another_root;
-	};
+int automatic_tx_example() {
+    // pool root structure
+    struct root {
+        mutex pmutex;
+        shared_mutex shared_pmutex;
+        p<int> count;
+        persistent_ptr<root> another_root;
+    };
 
-	// create a pmemobj pool
-	auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
-	auto proot = pop.root();
+    // create a pmemobj pool
+    auto pop = pool<root>::create("poolfile", "layout", PMEMOBJ_MIN_POOL);
+    auto proot = pop.root();
 
-	try {
-		transaction::automatic tx(pop, proot->pmutex,
-					  proot->shared_pmutex);
+    try {
+        transaction::automatic tx(pop, proot->pmutex, proot->shared_pmutex);
 
-		// atomically allocate objects
-		proot->another_root = make_persistent<root>();
+        // atomically allocate objects
+        proot->another_root = make_persistent<root>();
 
-		// atomically modify objects
-		proot->count++;
+        // atomically modify objects
+        proot->count++;
 
-		// manual transaction commit is no longer necessary
-	} catch (pmem::transaction_error &) {
-		// an internal transaction error occurred, tx aborted
-		// reacquire locks if necessary
-	} catch (...) {
-		// some other exception thrown, tx aborted
-		// reacquire locks if necessary
-	}
+        // manual transaction commit is no longer necessary
+    } catch (pmem::transaction_error &) {
+        // an internal transaction error occurred, tx aborted
+        // reacquire locks if necessary
+    } catch (...) {
+        // some other exception thrown, tx aborted
+        // reacquire locks if necessary
+    }
 
-	// In complex cases with library calls, remember to check the status of
-	// the previous transaction.
-	return transaction::error();
+    // In complex cases with library calls, remember to check the status of
+    // the previous transaction.
+    return transaction::error();
 }
 //! [automatic_tx_example]

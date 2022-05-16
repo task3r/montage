@@ -1,16 +1,17 @@
+#include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <assert.h>
-#include <vector>
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 #define MAX_SOCKETS 2
 
-bool core_info_compare(std::pair<long,long> a, std::pair<long,long> b) {
+bool core_info_compare(std::pair<long, long> a, std::pair<long, long> b) {
     if (a.first != b.first) return a.first < b.first;
     return a.second < b.second;
 }
@@ -21,13 +22,13 @@ void get_cpu_info(uint8_t *core_map, int *map_size) {
     char tag[128];
     char value[1024];
 
-    long processor; // core id (with HT)
-    long core_id; // physical core id (no HT)
-    long physical_id; // socket id
-    long cpu_cores; // physical cores per socket
+    long processor;    // core id (with HT)
+    long core_id;      // physical core id (no HT)
+    long physical_id;  // socket id
+    long cpu_cores;    // physical cores per socket
 
     *map_size = 0;
-    std::vector<std::pair<long,long>> sockets[MAX_SOCKETS];
+    std::vector<std::pair<long, long>> sockets[MAX_SOCKETS];
 
     while (fgets(line, sizeof(line), f) != NULL) {
         if (strlen(line) == 1) continue;
@@ -35,19 +36,16 @@ void get_cpu_info(uint8_t *core_map, int *map_size) {
 
         if (strcmp(tag, "core id") == 0) {
             core_id = strtol(value, NULL, 10);
-        }
-        else if (strcmp(tag, "physical id") == 0) {
+        } else if (strcmp(tag, "physical id") == 0) {
             physical_id = strtol(value, NULL, 10);
-        }
-        else if (strcmp(tag, "processor") == 0) {
+        } else if (strcmp(tag, "processor") == 0) {
             processor = strtol(value, NULL, 10);
-        }
-        else if (strcmp(tag, "cpu cores") == 0) {
+        } else if (strcmp(tag, "cpu cores") == 0) {
             cpu_cores = strtol(value, NULL, 10);
-        }
-        else if (strcmp(tag, "flags") == 0) {
+        } else if (strcmp(tag, "flags") == 0) {
             assert(physical_id < MAX_SOCKETS);
-            sockets[physical_id].push_back(std::pair<long,long>(core_id, processor));
+            sockets[physical_id].push_back(
+                std::pair<long, long>(core_id, processor));
             *map_size = *map_size + 1;
         }
     }
@@ -55,12 +53,12 @@ void get_cpu_info(uint8_t *core_map, int *map_size) {
     fclose(f);
 
     for (int i = 0; i < MAX_SOCKETS; i++) {
-        assert(i < 7); // 3 bits
+        assert(i < 7);  // 3 bits
         std::sort(sockets[i].begin(), sockets[i].end(), core_info_compare);
 
         // <first, second> = <core_id, processor>
         for (auto core = sockets[i].begin(); core != sockets[i].end(); core++) {
-            assert(core->first < 32); // 5 bits
+            assert(core->first < 32);  // 5 bits
             core_map[core->second] = core->first | (i << 5);
         }
 

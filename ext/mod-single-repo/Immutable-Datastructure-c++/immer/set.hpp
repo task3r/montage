@@ -8,19 +8,15 @@
 
 #pragma once
 
-#include <immer/memory_policy.hpp>
+#include <functional>
 #include <immer/detail/hamts/champ.hpp>
 #include <immer/detail/hamts/champ_iterator.hpp>
+#include <immer/memory_policy.hpp>
 #include <immer/nvm_utils.hpp>
-
-#include <functional>
 
 namespace immer {
 
-template <typename T,
-          typename Hash,
-          typename Equal,
-          typename MemoryPolicy,
+template <typename T, typename Hash, typename Equal, typename MemoryPolicy,
           detail::hamts::bits_t B>
 class set_transient;
 
@@ -54,16 +50,14 @@ class set_transient;
  * @endrst
  *
  */
-template <typename T,
-          typename Hash          = std::hash<T>,
-          typename Equal         = std::equal_to<T>,
-          typename MemoryPolicy  = default_memory_policy,
+template <typename T, typename Hash = std::hash<T>,
+          typename Equal = std::equal_to<T>,
+          typename MemoryPolicy = default_memory_policy,
           detail::hamts::bits_t B = default_bits>
-class set
-{
+class set {
     using impl_t = detail::hamts::champ<T, Hash, Equal, MemoryPolicy, B>;
 
-public:
+   public:
     using key_type = T;
     using value_type = T;
     using size_type = detail::hamts::size_t;
@@ -73,24 +67,19 @@ public:
     using reference = const T&;
     using const_reference = const T&;
 
-    using iterator         = detail::hamts::champ_iterator<T, Hash, Equal,
-                                                         MemoryPolicy, B>;
-    using const_iterator   = iterator;
+    using iterator =
+        detail::hamts::champ_iterator<T, Hash, Equal, MemoryPolicy, B>;
+    using const_iterator = iterator;
 
-    using transient_type   = set_transient<T, Hash, Equal, MemoryPolicy, B>;
+    using transient_type = set_transient<T, Hash, Equal, MemoryPolicy, B>;
 
-    using memory      = MemoryPolicy;
+    using memory = MemoryPolicy;
     using heap_policy = typename memory::heap;
-    using heap = typename heap_policy::template
-        optimized<sizeof(impl_t)>::type;
+    using heap = typename heap_policy::template optimized<sizeof(impl_t)>::type;
 
-    void* operator new(size_t size) {
-        return heap::allocate(size);
-    }
+    void* operator new(size_t size) { return heap::allocate(size); }
 
-    void operator delete(void* data) {
-        heap::deallocate(sizeof(set<T>), data);
-    }
+    void operator delete(void* data) { heap::deallocate(sizeof(set<T>), data); }
 
     void operator delete(void* data, size_t size) {
         heap::deallocate(size, data);
@@ -126,29 +115,28 @@ public:
      * otherwise. It won't allocate memory and its complexity is
      * *effectively* @f$ O(1) @f$.
      */
-    size_type count(const T& value) const
-    { return impl_.template get<detail::constantly<size_type, 1>,
-                                detail::constantly<size_type, 0>>(value); }
+    size_type count(const T& value) const {
+        return impl_.template get<detail::constantly<size_type, 1>,
+                                  detail::constantly<size_type, 0>>(value);
+    }
 
     /*!
      * Returns whether the sets are equal.
      */
-    bool operator==(const set& other) const
-    { return impl_.equals(other.impl_); }
-    bool operator!=(const set& other) const
-    { return !(*this == other); }
+    bool operator==(const set& other) const {
+        return impl_.equals(other.impl_);
+    }
+    bool operator!=(const set& other) const { return !(*this == other); }
 
     /*!
      * Returns a set containing `value`.  If the `value` is already in
      * the set, it returns the same set.  It may allocate memory and
      * its complexity is *effectively* @f$ O(1) @f$.
      */
-    set insert(T value) const
-    { return impl_.add(std::move(value)); }
+    set insert(T value) const { return impl_.add(std::move(value)); }
 
-    set* insert_ptr(T value) const
-    {
-        set* new_set = new set (impl_.add(std::move(value))); 
+    set* insert_ptr(T value) const {
+        set* new_set = new set(impl_.add(std::move(value)));
 #if IMMER_USE_NVM
         NVM_PERSIST_NOW(new_set, sizeof(set));
         NVM_FINALIZE();
@@ -161,12 +149,10 @@ public:
      * set it returns the same set.  It may allocate memory and its
      * complexity is *effectively* @f$ O(1) @f$.
      */
-    set erase(const T& value) const
-    { return impl_.sub(value); }
+    set erase(const T& value) const { return impl_.sub(value); }
 
-    set* erase_ptr(const T& value) const
-    {
-        set* new_set = new set (impl_.sub(value)); 
+    set* erase_ptr(const T& value) const {
+        set* new_set = new set(impl_.sub(value));
 #if IMMER_USE_NVM
         NVM_PERSIST_NOW(new_set, sizeof(set));
         NVM_FINALIZE();
@@ -178,22 +164,18 @@ public:
      * Returns an @a transient form of this container, a
      * `immer::set_transient`.
      */
-    transient_type transient() const&
-    { return transient_type{ impl_ }; }
-    transient_type transient() &&
-    { return transient_type{ std::move(impl_) }; }
+    transient_type transient() const& { return transient_type{impl_}; }
+    transient_type transient() && { return transient_type{std::move(impl_)}; }
 
     // Semi-private
     const impl_t& impl() const { return impl_; }
 
-private:
+   private:
     friend transient_type;
 
-    set(impl_t impl)
-        : impl_(std::move(impl))
-    {}
+    set(impl_t impl) : impl_(std::move(impl)) {}
 
     impl_t impl_ = impl_t::empty();
 };
 
-} // namespace immer
+}  // namespace immer

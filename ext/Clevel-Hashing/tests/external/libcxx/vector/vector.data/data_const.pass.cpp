@@ -12,11 +12,11 @@
 // Modified to test pmem::obj containers
 //
 
-#include "helper_classes.hpp"
-#include "unittest.hpp"
-
 #include <libpmemobj++/experimental/vector.hpp>
 #include <libpmemobj++/make_persistent.hpp>
+
+#include "helper_classes.hpp"
+#include "unittest.hpp"
 
 namespace nvobj = pmem::obj;
 namespace pmem_exp = nvobj::experimental;
@@ -24,47 +24,44 @@ using v_type_1 = pmem_exp::vector<int>;
 using v_type_2 = pmem_exp::vector<failing_reference_operator>;
 
 struct root {
-	nvobj::persistent_ptr<const v_type_1> v1;
-	nvobj::persistent_ptr<const v_type_1> v2;
-	nvobj::persistent_ptr<const v_type_2> v3;
+    nvobj::persistent_ptr<const v_type_1> v1;
+    nvobj::persistent_ptr<const v_type_1> v2;
+    nvobj::persistent_ptr<const v_type_2> v3;
 };
 
-int
-main(int argc, char *argv[])
-{
-	START();
+int main(int argc, char *argv[]) {
+    START();
 
-	if (argc < 2) {
-		std::cerr << "usage: " << argv[0] << " file-name" << std::endl;
-		return 1;
-	}
+    if (argc < 2) {
+        std::cerr << "usage: " << argv[0] << " file-name" << std::endl;
+        return 1;
+    }
 
-	auto path = argv[1];
-	auto pop =
-		nvobj::pool<root>::create(path, "VectorTest: data_const.pass",
-					  PMEMOBJ_MIN_POOL, S_IWUSR | S_IRUSR);
+    auto path = argv[1];
+    auto pop = nvobj::pool<root>::create(path, "VectorTest: data_const.pass",
+                                         PMEMOBJ_MIN_POOL, S_IWUSR | S_IRUSR);
 
-	auto r = pop.root();
+    auto r = pop.root();
 
-	try {
-		nvobj::transaction::run(pop, [&] {
-			r->v1 = nvobj::make_persistent<v_type_1>();
-			r->v2 = nvobj::make_persistent<v_type_1>(100U);
-			r->v3 = nvobj::make_persistent<v_type_2>(100U);
-		});
-		UT_ASSERT(r->v1->data() == 0);
-		UT_ASSERT(r->v2->data() == std::addressof(r->v2->front()));
-		UT_ASSERT(r->v3->data() == std::addressof(r->v3->front()));
-		nvobj::transaction::run(pop, [&] {
-			nvobj::delete_persistent<const v_type_1>(r->v1);
-			nvobj::delete_persistent<const v_type_1>(r->v2);
-			nvobj::delete_persistent<const v_type_2>(r->v3);
-		});
-	} catch (std::exception &e) {
-		UT_FATALexc(e);
-	}
+    try {
+        nvobj::transaction::run(pop, [&] {
+            r->v1 = nvobj::make_persistent<v_type_1>();
+            r->v2 = nvobj::make_persistent<v_type_1>(100U);
+            r->v3 = nvobj::make_persistent<v_type_2>(100U);
+        });
+        UT_ASSERT(r->v1->data() == 0);
+        UT_ASSERT(r->v2->data() == std::addressof(r->v2->front()));
+        UT_ASSERT(r->v3->data() == std::addressof(r->v3->front()));
+        nvobj::transaction::run(pop, [&] {
+            nvobj::delete_persistent<const v_type_1>(r->v1);
+            nvobj::delete_persistent<const v_type_1>(r->v2);
+            nvobj::delete_persistent<const v_type_2>(r->v3);
+        });
+    } catch (std::exception &e) {
+        UT_FATALexc(e);
+    }
 
-	pop.close();
+    pop.close();
 
-	return 0;
+    return 0;
 }

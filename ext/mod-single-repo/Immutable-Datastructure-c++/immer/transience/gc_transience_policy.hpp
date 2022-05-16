@@ -8,11 +8,10 @@
 
 #pragma once
 
+#include <atomic>
 #include <immer/heap/tags.hpp>
-
 #include <memory>
 #include <utility>
-#include <atomic>
 
 namespace immer {
 
@@ -28,64 +27,48 @@ namespace immer {
  *
  * @endrst
  */
-struct gc_transience_policy
-{
+struct gc_transience_policy {
     template <typename HeapPolicy>
-    struct apply
-    {
-        struct type
-        {
+    struct apply {
+        struct type {
             using heap_ = typename HeapPolicy::type;
 
-            struct edit
-            {
+            struct edit {
                 void* v;
                 edit() = delete;
                 bool operator==(edit x) const { return v == x.v; }
                 bool operator!=(edit x) const { return v != x.v; }
             };
 
-            struct owner
-            {
-                void* make_token_()
-                {
+            struct owner {
+                void* make_token_() {
                     return heap_::allocate(1, norefs_tag{});
                 };
 
                 mutable std::atomic<void*> token_;
 
-                operator edit () { return { token_ }; }
+                operator edit() { return {token_}; }
 
-                owner()
-                    : token_{make_token_()}
-                {}
-                owner(const owner& o)
-                    : token_{make_token_()}
-                {
+                owner() : token_{make_token_()} {}
+                owner(const owner& o) : token_{make_token_()} {
                     o.token_ = make_token_();
                 }
-                owner(owner&& o) noexcept
-                    : token_{o.token_.load()}
-                {}
-                owner& operator=(const owner& o)
-                {
+                owner(owner&& o) noexcept : token_{o.token_.load()} {}
+                owner& operator=(const owner& o) {
                     o.token_ = make_token_();
-                    token_   = make_token_();
+                    token_ = make_token_();
                     return *this;
                 }
-                owner& operator=(owner&& o) noexcept
-                {
+                owner& operator=(owner&& o) noexcept {
                     token_ = o.token_.load();
                     return *this;
                 }
             };
 
-            struct ownee
-            {
-                edit token_ {nullptr};
+            struct ownee {
+                edit token_{nullptr};
 
-                ownee& operator=(edit e)
-                {
+                ownee& operator=(edit e) {
                     assert(e != noone);
                     // This would be a nice safety plug but it sadly
                     // does not hold during transient concatenation.
@@ -105,6 +88,6 @@ struct gc_transience_policy
 
 template <typename HP>
 typename gc_transience_policy::apply<HP>::type::owner
-gc_transience_policy::apply<HP>::type::noone = {};
+    gc_transience_policy::apply<HP>::type::noone = {};
 
-} // namespace immer
+}  // namespace immer

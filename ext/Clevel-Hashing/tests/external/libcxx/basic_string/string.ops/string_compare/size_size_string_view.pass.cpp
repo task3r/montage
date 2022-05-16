@@ -11,40 +11,29 @@
 
 // int compare(size_type pos1, size_type n1, basic_string_vew sv) const;
 
-#include <string>
-#include <stdexcept>
 #include <cassert>
+#include <stdexcept>
+#include <string>
 
 #include "min_allocator.h"
-
 #include "test_macros.h"
 
-int sign(int x)
-{
-    if (x == 0)
-        return 0;
-    if (x < 0)
-        return -1;
+int sign(int x) {
+    if (x == 0) return 0;
+    if (x < 0) return -1;
     return 1;
 }
 
 template <class S, class SV>
-void
-test(const S& s, typename S::size_type pos1, typename S::size_type n1,
-     SV sv, int x)
-{
-    if (pos1 <= s.size())
-        assert(sign(s.compare(pos1, n1, sv)) == sign(x));
+void test(const S& s, typename S::size_type pos1, typename S::size_type n1,
+          SV sv, int x) {
+    if (pos1 <= s.size()) assert(sign(s.compare(pos1, n1, sv)) == sign(x));
 #ifndef TEST_HAS_NO_EXCEPTIONS
-    else
-    {
-        try
-        {
+    else {
+        try {
             TEST_IGNORE_NODISCARD s.compare(pos1, n1, sv);
             assert(false);
-        }
-        catch (std::out_of_range&)
-        {
+        } catch (std::out_of_range&) {
             assert(pos1 > s.size());
         }
     }
@@ -52,8 +41,7 @@ test(const S& s, typename S::size_type pos1, typename S::size_type n1,
 }
 
 template <class S, class SV>
-void test0()
-{
+void test0() {
     test(S(""), 0, 0, SV(""), 0);
     test(S(""), 0, 0, SV("abcde"), -5);
     test(S(""), 0, 0, SV("abcdefghij"), -10);
@@ -157,8 +145,7 @@ void test0()
 }
 
 template <class S, class SV>
-void test1()
-{
+void test1() {
     test(S("abcde"), 6, 0, SV(""), 0);
     test(S("abcde"), 6, 0, SV("abcde"), 0);
     test(S("abcde"), 6, 0, SV("abcdefghij"), 0);
@@ -262,8 +249,7 @@ void test1()
 }
 
 template <class S, class SV>
-void test2()
-{
+void test2() {
     test(S("abcdefghijklmnopqrst"), 0, 0, SV(""), 0);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcde"), -5);
     test(S("abcdefghijklmnopqrst"), 0, 0, SV("abcdefghij"), -10);
@@ -362,22 +348,23 @@ void test2()
     test(S("abcdefghijklmnopqrst"), 21, 0, SV("abcdefghijklmnopqrst"), 0);
 }
 
-int main()
-{
+int main() {
     {
-    typedef std::string S;
-    typedef std::string_view SV;
-    test0<S, SV>();
-    test1<S, SV>();
-    test2<S, SV>();
+        typedef std::string S;
+        typedef std::string_view SV;
+        test0<S, SV>();
+        test1<S, SV>();
+        test2<S, SV>();
     }
 #if TEST_STD_VER >= 11
     {
-    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
-    typedef std::string_view SV;
-    test0<S, SV>();
-    test1<S, SV>();
-    test2<S, SV>();
+        typedef std::basic_string<char, std::char_traits<char>,
+                                  min_allocator<char>>
+            S;
+        typedef std::string_view SV;
+        test0<S, SV>();
+        test1<S, SV>();
+        test2<S, SV>();
     }
 #endif
 }

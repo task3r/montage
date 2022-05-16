@@ -11,32 +11,26 @@
 
 // size_type rfind(basic_string_view sv, size_type pos = npos) const;
 
-#include <string>
 #include <cassert>
+#include <string>
 
 #include "min_allocator.h"
 
 template <class S, class SV>
-void
-test(const S& s, SV sv, typename S::size_type pos, typename S::size_type x)
-{
+void test(const S& s, SV sv, typename S::size_type pos,
+          typename S::size_type x) {
     assert(s.rfind(sv, pos) == x);
-    if (x != S::npos)
-        assert(x <= pos && x + sv.size() <= s.size());
+    if (x != S::npos) assert(x <= pos && x + sv.size() <= s.size());
 }
 
 template <class S, class SV>
-void
-test(const S& s, SV sv, typename S::size_type x)
-{
+void test(const S& s, SV sv, typename S::size_type x) {
     assert(s.rfind(sv) == x);
-    if (x != S::npos)
-        assert(0 <= x && x + sv.size() <= s.size());
+    if (x != S::npos) assert(0 <= x && x + sv.size() <= s.size());
 }
 
 template <class S, class SV>
-void test0()
-{
+void test0() {
     test(S(""), SV(""), 0, 0);
     test(S(""), SV("abcde"), 0, S::npos);
     test(S(""), SV("abcdeabcde"), 0, S::npos);
@@ -120,8 +114,7 @@ void test0()
 }
 
 template <class S, class SV>
-void test1()
-{
+void test1() {
     test(S(""), SV(""), 0);
     test(S(""), SV("abcde"), S::npos);
     test(S(""), SV("abcdeabcde"), S::npos);
@@ -140,20 +133,21 @@ void test1()
     test(S("abcdeabcdeabcdeabcde"), SV("abcdeabcdeabcdeabcde"), 0);
 }
 
-int main()
-{
+int main() {
     {
-    typedef std::string S;
-    typedef std::string_view SV;
-    test0<S, SV>();
-    test1<S, SV>();
+        typedef std::string S;
+        typedef std::string_view SV;
+        test0<S, SV>();
+        test1<S, SV>();
     }
 #if TEST_STD_VER >= 11
     {
-    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
-    typedef std::string_view SV;
-    test0<S, SV>();
-    test1<S, SV>();
+        typedef std::basic_string<char, std::char_traits<char>,
+                                  min_allocator<char>>
+            S;
+        typedef std::string_view SV;
+        test0<S, SV>();
+        test1<S, SV>();
     }
 #endif
 }

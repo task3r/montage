@@ -12,52 +12,50 @@
 // Modified to test pmem::obj containers
 //
 
-#include "unittest.hpp"
-
 #include <libpmemobj++/experimental/string.hpp>
 #include <libpmemobj++/make_persistent.hpp>
 #include <libpmemobj++/persistent_ptr.hpp>
 #include <libpmemobj++/pool.hpp>
 #include <libpmemobj++/transaction.hpp>
 
+#include "unittest.hpp"
+
 namespace nvobj = pmem::obj;
 namespace pmem_exp = pmem::obj::experimental;
 using C = pmem_exp::string;
 
 struct root {
-	nvobj::persistent_ptr<C> s;
+    nvobj::persistent_ptr<C> s;
 };
 
-int
-main(int argc, char *argv[])
-{
-	START();
+int main(int argc, char *argv[]) {
+    START();
 
-	if (argc < 2) {
-		std::cerr << "usage: " << argv[0] << " file-name" << std::endl;
-		return 1;
-	}
+    if (argc < 2) {
+        std::cerr << "usage: " << argv[0] << " file-name" << std::endl;
+        return 1;
+    }
 
-	auto path = argv[1];
-	auto pop = nvobj::pool<root>::create(
-		path, "string_test", PMEMOBJ_MIN_POOL, S_IWUSR | S_IRUSR);
+    auto path = argv[1];
+    auto pop = nvobj::pool<root>::create(path, "string_test", PMEMOBJ_MIN_POOL,
+                                         S_IWUSR | S_IRUSR);
 
-	auto r = pop.root();
+    auto r = pop.root();
 
-	try {
-		nvobj::transaction::run(
-			pop, [&] { r->s = nvobj::make_persistent<C>(); });
+    try {
+        nvobj::transaction::run(pop,
+                                [&] { r->s = nvobj::make_persistent<C>(); });
 
-		*r->s = {'a', 'b', 'c'};
-		UT_ASSERT(*r->s == "abc");
+        *r->s = {'a', 'b', 'c'};
+        UT_ASSERT(*r->s == "abc");
 
-		nvobj::transaction::run(
-			pop, [&] { nvobj::delete_persistent<C>(r->s); });
-	} catch (std::exception &e) {
-		UT_FATALexc(e);
-	}
+        nvobj::transaction::run(pop,
+                                [&] { nvobj::delete_persistent<C>(r->s); });
+    } catch (std::exception &e) {
+        UT_FATALexc(e);
+    }
 
-	pop.close();
+    pop.close();
 
-	return 0;
+    return 0;
 }

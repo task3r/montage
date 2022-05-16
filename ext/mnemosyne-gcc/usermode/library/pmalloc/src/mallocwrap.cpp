@@ -26,7 +26,7 @@
 
 */
 
-//TODO: 
+// TODO:
 #error "What C++ keywords to wrap for persistent allocator?"
 
 #include <stdlib.h>
@@ -35,41 +35,28 @@
 #endif
 
 #if 1
-extern "C" void * malloc (size_t);
-extern "C" void free (void *);
-extern "C" void * calloc (size_t, size_t);
-extern "C" void * realloc (void *, size_t);
-extern "C" size_t malloc_usable_size (void *);
+extern "C" void *malloc(size_t);
+extern "C" void free(void *);
+extern "C" void *calloc(size_t, size_t);
+extern "C" void *realloc(void *, size_t);
+extern "C" size_t malloc_usable_size(void *);
 #endif
 
+void *operator new(size_t size) { return malloc(size); }
 
-void * operator new (size_t size)
-{
-  return malloc (size);
-}
-
-void operator delete (void * ptr)
-{
-  free (ptr);
-}
+void operator delete(void *ptr) { free(ptr); }
 
 #if !defined(__SUNPRO_CC) || __SUNPRO_CC > 0x420
 
-void * operator new (size_t size, const std::nothrow_t&) throw() {
-  return malloc (size);
-} 
-
-void * operator new[] (size_t size) throw(std::bad_alloc)
-{
-  return malloc (size);
+void *operator new(size_t size, const std::nothrow_t &) throw() {
+    return malloc(size);
 }
 
-void * operator new[] (size_t size, const std::nothrow_t&) throw() {
-  return malloc (size);
-} 
+void *operator new[](size_t size) throw(std::bad_alloc) { return malloc(size); }
 
-void operator delete[] (void * ptr) throw()
-{
-  free (ptr);
+void *operator new[](size_t size, const std::nothrow_t &) throw() {
+    return malloc(size);
 }
+
+void operator delete[](void *ptr) throw() { free(ptr); }
 #endif

@@ -38,16 +38,13 @@
 #ifndef LIBPMEMOBJ_CPP_P_HPP
 #define LIBPMEMOBJ_CPP_P_HPP
 
-#include <memory>
-
 #include <libpmemobj++/detail/common.hpp>
 #include <libpmemobj++/detail/specialization.hpp>
+#include <memory>
 
-namespace pmem
-{
+namespace pmem {
 
-namespace obj
-{
+namespace obj {
 /**
  * Resides on pmem class.
  *
@@ -62,122 +59,102 @@ namespace obj
  */
 template <typename T>
 class p {
-	typedef p<T> this_type;
+    typedef p<T> this_type;
 
-public:
-	/**
-	 * Value constructor.
-	 *
-	 * Directly assigns a value to the underlying storage.
-	 *
-	 * @param _val const reference to the value to be assigned.
-	 */
-	p(const T &_val) noexcept : val{_val}
-	{
-	}
-	p(const p &_p) noexcept : val{_p.val}
-	{
-	}
+   public:
+    /**
+     * Value constructor.
+     *
+     * Directly assigns a value to the underlying storage.
+     *
+     * @param _val const reference to the value to be assigned.
+     */
+    p(const T &_val) noexcept : val{_val} {}
+    p(const p &_p) noexcept : val{_p.val} {}
 
-	/**
-	 * Defaulted constructor.
-	 */
-	p() = default;
+    /**
+     * Defaulted constructor.
+     */
+    p() = default;
 
-	/**
-	 * Assignment operator.
-	 *
-	 * The p<> class property assignment within a transaction
-	 * automatically registers this operation so that a rollback
-	 * is possible.
-	 *
-	 * @throw pmem::transaction_error when adding the object to the
-	 *	transaction failed.
-	 */
-	p &
-	operator=(const p &rhs)
-	{
-		this_type(rhs).swap(*this);
+    /**
+     * Assignment operator.
+     *
+     * The p<> class property assignment within a transaction
+     * automatically registers this operation so that a rollback
+     * is possible.
+     *
+     * @throw pmem::transaction_error when adding the object to the
+     *	transaction failed.
+     */
+    p &operator=(const p &rhs) {
+        this_type(rhs).swap(*this);
 
-		return *this;
-	}
+        return *this;
+    }
 
-	/**
-	 * Converting assignment operator from a different p<>.
-	 *
-	 * Available only for convertible types.
-	 * Just like regular assignment, also automatically registers
-	 * itself in a transaction.
-	 *
-	 * @throw pmem::transaction_error when adding the object to the
-	 *	transaction failed.
-	 */
-	template <typename Y,
-		  typename = typename std::enable_if<
-			  std::is_convertible<Y, T>::value>::type>
-	p &
-	operator=(const p<Y> &rhs)
-	{
-		this_type(rhs).swap(*this);
+    /**
+     * Converting assignment operator from a different p<>.
+     *
+     * Available only for convertible types.
+     * Just like regular assignment, also automatically registers
+     * itself in a transaction.
+     *
+     * @throw pmem::transaction_error when adding the object to the
+     *	transaction failed.
+     */
+    template <typename Y, typename = typename std::enable_if<
+                              std::is_convertible<Y, T>::value>::type>
+    p &operator=(const p<Y> &rhs) {
+        this_type(rhs).swap(*this);
 
-		return *this;
-	}
+        return *this;
+    }
 
-	/**
-	 * Conversion operator back to the underlying type.
-	 */
-	operator T() const noexcept
-	{
-		return this->val;
-	}
+    /**
+     * Conversion operator back to the underlying type.
+     */
+    operator T() const noexcept { return this->val; }
 
-	/**
-	 * Retrieves read-write reference of the object.
-	 *
-	 * The entire object is automatically added to the transaction.
-	 *
-	 * @return a reference to the object.
-	 *
-	 * @throw pmem::transaction_error when adding the object to the
-	 *	transaction failed.
-	 */
-	T &
-	get_rw()
-	{
-		detail::conditional_add_to_tx(this);
+    /**
+     * Retrieves read-write reference of the object.
+     *
+     * The entire object is automatically added to the transaction.
+     *
+     * @return a reference to the object.
+     *
+     * @throw pmem::transaction_error when adding the object to the
+     *	transaction failed.
+     */
+    T &get_rw() {
+        detail::conditional_add_to_tx(this);
 
-		return this->val;
-	}
+        return this->val;
+    }
 
-	/**
-	 * Retrieves read-only const reference of the object.
-	 *
-	 * This method has no transaction side effects.
-	 *
-	 * @return a const reference to the object.
-	 */
-	const T &
-	get_ro() const noexcept
-	{
-		return this->val;
-	}
+    /**
+     * Retrieves read-only const reference of the object.
+     *
+     * This method has no transaction side effects.
+     *
+     * @return a const reference to the object.
+     */
+    const T &get_ro() const noexcept { return this->val; }
 
-	/**
-	 * Swaps two p objects of the same type.
-	 *
-	 * @throw pmem::transaction_error when adding the object to the
-	 *	transaction failed.
-	 */
-	void
-	swap(p &other)
-	{
-		detail::conditional_add_to_tx(this);
-		detail::conditional_add_to_tx(&other);
-		std::swap(this->val, other.val);
-	}
+    /**
+     * Swaps two p objects of the same type.
+     *
+     * @throw pmem::transaction_error when adding the object to the
+     *	transaction failed.
+     */
+    void swap(p &other) {
+        detail::conditional_add_to_tx(this);
+        detail::conditional_add_to_tx(&other);
+        std::swap(this->val, other.val);
+    }
 
-private:
-	T val;
+   private:
+    T val;
 };
 
 /**
@@ -187,10 +164,8 @@ private:
  * en.cppreference.com/w/cpp/concept/Swappable
  */
 template <class T>
-inline void
-swap(p<T> &a, p<T> &b)
-{
-	a.swap(b);
+inline void swap(p<T> &a, p<T> &b) {
+    a.swap(b);
 }
 
 } /* namespace obj */

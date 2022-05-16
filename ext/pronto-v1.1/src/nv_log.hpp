@@ -1,7 +1,7 @@
 #pragma once
-#include <stdlib.h>
 #include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 /*
  * checksum: to check if the log is initialized
@@ -17,7 +17,7 @@ typedef struct RedoLog {
     uint64_t head;
     uint64_t tail;
     uint64_t last_commit;
-    uint64_t snapshot_lock; // temporary value
+    uint64_t snapshot_lock;  // temporary value
 } SavitarLog;
 
 typedef struct SavitarVector {

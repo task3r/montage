@@ -2,9 +2,10 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <experimental/filesystem>
 #include <iostream>
 #include <vector>
-#include <experimental/filesystem>
 
 using namespace std;
 class NVManager;
@@ -23,11 +24,11 @@ typedef struct {
 } snapshot_header_t;
 
 namespace {
-    class SnapshotTestSuite;
+class SnapshotTestSuite;
 }
 
 class Snapshot {
-public:
+   public:
     Snapshot(const char *);
     ~Snapshot();
     static Snapshot *getInstance();
@@ -39,7 +40,7 @@ public:
     void pageFaultHandler(void *);
     uint32_t lastSnapshotID();
 
-protected:
+   protected:
     void loadSnapshot(uint32_t);
     void prepareSnapshot();
     void blockNewTransactions();
@@ -52,10 +53,10 @@ protected:
     void markPagesReadOnly();
     void nonTemporalPageCopy(char *, char *);
     void nonTemporalCacheLineCopy(char *, char *);
-    void getExistingSnapshots(std::vector<uint32_t>&);
+    void getExistingSnapshots(std::vector<uint32_t> &);
     void waitForFaultHandlers(size_t);
 
-private:
+   private:
     static Snapshot *instance;
     experimental::filesystem::path rootPath;
     int fd;
@@ -64,12 +65,12 @@ private:
 
     friend class ::SnapshotTestSuite;
 
-public:
+   public:
     const size_t SnapshotThreads = 4;
     const uint64_t UsedHugePage = 0xAAAAAAAAAAAAAAAA;
     const uint64_t FreeHugePage = 0xFFFFFFFFFFFFFFFF;
     const uint64_t LockedHugePage = 0xAFAFAFAFAFAFAFAF;
     const uint64_t SavedHugePage = 0x0000000000000000;
     static_assert(sizeof(snapshot_header_t) == 64,
-            "Snapshot header is not cache-aligned!");
+                  "Snapshot header is not cache-aligned!");
 };

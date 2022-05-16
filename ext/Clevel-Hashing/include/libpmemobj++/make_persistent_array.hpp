@@ -40,6 +40,9 @@
 #ifndef LIBPMEMOBJ_CPP_MAKE_PERSISTENT_ARRAY_HPP
 #define LIBPMEMOBJ_CPP_MAKE_PERSISTENT_ARRAY_HPP
 
+#include <libpmemobj/tx_base.h>
+
+#include <cassert>
 #include <libpmemobj++/allocation_flag.hpp>
 #include <libpmemobj++/detail/array_traits.hpp>
 #include <libpmemobj++/detail/check_persistent_ptr_array.hpp>
@@ -47,16 +50,11 @@
 #include <libpmemobj++/detail/life.hpp>
 #include <libpmemobj++/detail/variadic.hpp>
 #include <libpmemobj++/pexceptions.hpp>
-#include <libpmemobj/tx_base.h>
-
-#include <cassert>
 #include <limits>
 
-namespace pmem
-{
+namespace pmem {
 
-namespace obj
-{
+namespace obj {
 
 /**
  * Transactionally allocate and construct an array of objects of type T.
@@ -75,55 +73,54 @@ namespace obj
  * @throw rethrow exception from T constructor
  */
 template <typename T>
-typename detail::pp_if_array<T>::type
-make_persistent(std::size_t N, allocation_flag flag = allocation_flag::none())
-{
-	typedef typename detail::pp_array_type<T>::type I;
+typename detail::pp_if_array<T>::type make_persistent(
+    std::size_t N, allocation_flag flag = allocation_flag::none()) {
+    typedef typename detail::pp_array_type<T>::type I;
 
-	/*
-	 * Allowing N greater than ptrdiff_t max value would cause problems
-	 * with accessing array and calculating address difference between two
-	 * elements placed further apart than ptrdiff_t max value
-	 */
-	assert(N <=
-	       static_cast<std::size_t>(std::numeric_limits<ptrdiff_t>::max()));
+    /*
+     * Allowing N greater than ptrdiff_t max value would cause problems
+     * with accessing array and calculating address difference between two
+     * elements placed further apart than ptrdiff_t max value
+     */
+    assert(N <=
+           static_cast<std::size_t>(std::numeric_limits<ptrdiff_t>::max()));
 
-	if (pmemobj_tx_stage() != TX_STAGE_WORK)
-		throw pmem::transaction_scope_error(
-			"refusing to allocate memory outside of transaction scope");
+    if (pmemobj_tx_stage() != TX_STAGE_WORK)
+        throw pmem::transaction_scope_error(
+            "refusing to allocate memory outside of transaction scope");
 
-	persistent_ptr<T> ptr = pmemobj_tx_xalloc(
-		sizeof(I) * N, detail::type_num<I>(), flag.value);
+    persistent_ptr<T> ptr =
+        pmemobj_tx_xalloc(sizeof(I) * N, detail::type_num<I>(), flag.value);
 
-	if (ptr == nullptr) {
-		if (errno == ENOMEM)
-			throw pmem::transaction_out_of_memory(
-				"Failed to allocate persistent memory array")
-				.with_pmemobj_errormsg();
-		else
-			throw pmem::transaction_alloc_error(
-				"Failed to allocate persistent memory array")
-				.with_pmemobj_errormsg();
-	}
+    if (ptr == nullptr) {
+        if (errno == ENOMEM)
+            throw pmem::transaction_out_of_memory(
+                "Failed to allocate persistent memory array")
+                .with_pmemobj_errormsg();
+        else
+            throw pmem::transaction_alloc_error(
+                "Failed to allocate persistent memory array")
+                .with_pmemobj_errormsg();
+    }
 
-	/*
-	 * cache raw pointer to data - using persistent_ptr.get() in a loop
-	 * is expensive.
-	 */
-	auto data = ptr.get();
+    /*
+     * cache raw pointer to data - using persistent_ptr.get() in a loop
+     * is expensive.
+     */
+    auto data = ptr.get();
 
-	/*
-	 * When an exception is thrown from one of the constructors
-	 * we don't perform any cleanup - i.e. we don't call destructors
-	 * (unlike new[] operator), we only rely on transaction abort.
-	 * This approach was taken to ensure consistent behaviour for
-	 * case when transaction is aborted after make_persistent completes and
-	 * we have no way to call destructors.
-	 */
-	for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(N); ++i)
-		detail::create<I>(data + i);
+    /*
+     * When an exception is thrown from one of the constructors
+     * we don't perform any cleanup - i.e. we don't call destructors
+     * (unlike new[] operator), we only rely on transaction abort.
+     * This approach was taken to ensure consistent behaviour for
+     * case when transaction is aborted after make_persistent completes and
+     * we have no way to call destructors.
+     */
+    for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(N); ++i)
+        detail::create<I>(data + i);
 
-	return ptr;
+    return ptr;
 }
 
 /**
@@ -142,48 +139,47 @@ make_persistent(std::size_t N, allocation_flag flag = allocation_flag::none())
  * @throw rethrow exception from T constructor
  */
 template <typename T>
-typename detail::pp_if_size_array<T>::type
-make_persistent(allocation_flag flag = allocation_flag::none())
-{
-	typedef typename detail::pp_array_type<T>::type I;
-	enum { N = detail::pp_array_elems<T>::elems };
+typename detail::pp_if_size_array<T>::type make_persistent(
+    allocation_flag flag = allocation_flag::none()) {
+    typedef typename detail::pp_array_type<T>::type I;
+    enum { N = detail::pp_array_elems<T>::elems };
 
-	if (pmemobj_tx_stage() != TX_STAGE_WORK)
-		throw pmem::transaction_scope_error(
-			"refusing to allocate memory outside of transaction scope");
+    if (pmemobj_tx_stage() != TX_STAGE_WORK)
+        throw pmem::transaction_scope_error(
+            "refusing to allocate memory outside of transaction scope");
 
-	persistent_ptr<T> ptr = pmemobj_tx_xalloc(
-		sizeof(I) * N, detail::type_num<I>(), flag.value);
+    persistent_ptr<T> ptr =
+        pmemobj_tx_xalloc(sizeof(I) * N, detail::type_num<I>(), flag.value);
 
-	if (ptr == nullptr) {
-		if (errno == ENOMEM)
-			throw pmem::transaction_out_of_memory(
-				"Failed to allocate persistent memory array")
-				.with_pmemobj_errormsg();
-		else
-			throw pmem::transaction_alloc_error(
-				"Failed to allocate persistent memory array")
-				.with_pmemobj_errormsg();
-	}
+    if (ptr == nullptr) {
+        if (errno == ENOMEM)
+            throw pmem::transaction_out_of_memory(
+                "Failed to allocate persistent memory array")
+                .with_pmemobj_errormsg();
+        else
+            throw pmem::transaction_alloc_error(
+                "Failed to allocate persistent memory array")
+                .with_pmemobj_errormsg();
+    }
 
-	/*
-	 * cache raw pointer to data - using persistent_ptr.get() in a loop
-	 * is expensive.
-	 */
-	auto data = ptr.get();
+    /*
+     * cache raw pointer to data - using persistent_ptr.get() in a loop
+     * is expensive.
+     */
+    auto data = ptr.get();
 
-	/*
-	 * When an exception is thrown from one of the constructors
-	 * we don't perform any cleanup - i.e. we don't call destructors
-	 * (unlike new[] operator), we only rely on transaction abort.
-	 * This approach was taken to ensure consistent behaviour for
-	 * case when transaction is aborted after make_persistent completes and
-	 * we have no way to call destructors.
-	 */
-	for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(N); ++i)
-		detail::create<I>(data + i);
+    /*
+     * When an exception is thrown from one of the constructors
+     * we don't perform any cleanup - i.e. we don't call destructors
+     * (unlike new[] operator), we only rely on transaction abort.
+     * This approach was taken to ensure consistent behaviour for
+     * case when transaction is aborted after make_persistent completes and
+     * we have no way to call destructors.
+     */
+    for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(N); ++i)
+        detail::create<I>(data + i);
 
-	return ptr;
+    return ptr;
 }
 
 /**
@@ -202,32 +198,29 @@ make_persistent(allocation_flag flag = allocation_flag::none())
  * @throw transaction_free_error on transactional free failure.
  */
 template <typename T>
-void
-delete_persistent(typename detail::pp_if_array<T>::type ptr, std::size_t N)
-{
-	typedef typename detail::pp_array_type<T>::type I;
+void delete_persistent(typename detail::pp_if_array<T>::type ptr,
+                       std::size_t N) {
+    typedef typename detail::pp_array_type<T>::type I;
 
-	if (pmemobj_tx_stage() != TX_STAGE_WORK)
-		throw pmem::transaction_scope_error(
-			"refusing to free memory outside of transaction scope");
+    if (pmemobj_tx_stage() != TX_STAGE_WORK)
+        throw pmem::transaction_scope_error(
+            "refusing to free memory outside of transaction scope");
 
-	if (ptr == nullptr)
-		return;
+    if (ptr == nullptr) return;
 
-	/*
-	 * cache raw pointer to data - using persistent_ptr.get() in a loop
-	 * is expensive.
-	 */
-	auto data = ptr.get();
+    /*
+     * cache raw pointer to data - using persistent_ptr.get() in a loop
+     * is expensive.
+     */
+    auto data = ptr.get();
 
-	for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(N); ++i)
-		detail::destroy<I>(
-			data[static_cast<std::ptrdiff_t>(N) - 1 - i]);
+    for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(N); ++i)
+        detail::destroy<I>(data[static_cast<std::ptrdiff_t>(N) - 1 - i]);
 
-	if (pmemobj_tx_free(*ptr.raw_ptr()) != 0)
-		throw pmem::transaction_free_error(
-			"failed to delete persistent memory object")
-			.with_pmemobj_errormsg();
+    if (pmemobj_tx_free(*ptr.raw_ptr()) != 0)
+        throw pmem::transaction_free_error(
+            "failed to delete persistent memory object")
+            .with_pmemobj_errormsg();
 }
 
 /**
@@ -245,33 +238,29 @@ delete_persistent(typename detail::pp_if_array<T>::type ptr, std::size_t N)
  * @throw transaction_free_error on transactional free failure.
  */
 template <typename T>
-void
-delete_persistent(typename detail::pp_if_size_array<T>::type ptr)
-{
-	typedef typename detail::pp_array_type<T>::type I;
-	enum { N = detail::pp_array_elems<T>::elems };
+void delete_persistent(typename detail::pp_if_size_array<T>::type ptr) {
+    typedef typename detail::pp_array_type<T>::type I;
+    enum { N = detail::pp_array_elems<T>::elems };
 
-	if (pmemobj_tx_stage() != TX_STAGE_WORK)
-		throw pmem::transaction_scope_error(
-			"refusing to free memory outside of transaction scope");
+    if (pmemobj_tx_stage() != TX_STAGE_WORK)
+        throw pmem::transaction_scope_error(
+            "refusing to free memory outside of transaction scope");
 
-	if (ptr == nullptr)
-		return;
+    if (ptr == nullptr) return;
 
-	/*
-	 * cache raw pointer to data - using persistent_ptr.get() in a loop
-	 * is expensive.
-	 */
-	auto data = ptr.get();
+    /*
+     * cache raw pointer to data - using persistent_ptr.get() in a loop
+     * is expensive.
+     */
+    auto data = ptr.get();
 
-	for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(N); ++i)
-		detail::destroy<I>(
-			data[static_cast<std::ptrdiff_t>(N) - 1 - i]);
+    for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(N); ++i)
+        detail::destroy<I>(data[static_cast<std::ptrdiff_t>(N) - 1 - i]);
 
-	if (pmemobj_tx_free(*ptr.raw_ptr()) != 0)
-		throw pmem::transaction_free_error(
-			"failed to delete persistent memory object")
-			.with_pmemobj_errormsg();
+    if (pmemobj_tx_free(*ptr.raw_ptr()) != 0)
+        throw pmem::transaction_free_error(
+            "failed to delete persistent memory object")
+            .with_pmemobj_errormsg();
 }
 
 } /* namespace obj */

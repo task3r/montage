@@ -68,26 +68,24 @@
 #define LAYOUT_NAME "DEFAULT_LAYOUT_NAME"
 #define DEFAULT_POOLFILE_NAME "DEFAULT_FILENAME"
 
-static inline sf::Font
-getFont()
-{
-	std::string font_path = "";
+static inline sf::Font getFont() {
+    std::string font_path = "";
 #ifdef LIBPMEMOBJ_CPP_PMPONG_FONT_PATH
-	font_path = LIBPMEMOBJ_CPP_PMPONG_FONT_PATH;
+    font_path = LIBPMEMOBJ_CPP_PMPONG_FONT_PATH;
 #endif
 
-	auto env = getenv("LIBPMEMOBJ_CPP_PMPONG_FONT_PATH");
-	if (env != nullptr)
-		font_path = env;
+    auto env = getenv("LIBPMEMOBJ_CPP_PMPONG_FONT_PATH");
+    if (env != nullptr) font_path = env;
 
-	sf::Font font;
-	if (!font.loadFromFile(font_path)) {
-		throw std::runtime_error(
-			"Cannot find fonts. Please set environmental variable LIBPMEMOBJ_CPP_PMPONG_FONT_PATH"
-			" to path to existing font file");
-	}
+    sf::Font font;
+    if (!font.loadFromFile(font_path)) {
+        throw std::runtime_error(
+            "Cannot find fonts. Please set environmental variable "
+            "LIBPMEMOBJ_CPP_PMPONG_FONT_PATH"
+            " to path to existing font file");
+    }
 
-	return font;
+    return font;
 }
 
 #endif /* LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_GAMECONSTANTS_HPP */

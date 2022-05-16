@@ -18,19 +18,15 @@ namespace immer {
  * equal to `Size` and `BigHeap` otherwise.
  */
 template <std::size_t Size, typename SmallHeap, typename BigHeap>
-struct split_heap
-{
+struct split_heap {
     template <typename... Tags>
-    static void* allocate(std::size_t size, Tags... tags)
-    {
-        return size <= Size
-            ? SmallHeap::allocate(size, tags...)
-            : BigHeap::allocate(size, tags...);
+    static void* allocate(std::size_t size, Tags... tags) {
+        return size <= Size ? SmallHeap::allocate(size, tags...)
+                            : BigHeap::allocate(size, tags...);
     }
 
     template <typename... Tags>
-    static void deallocate(std::size_t size, void* data, Tags... tags)
-    {
+    static void deallocate(std::size_t size, void* data, Tags... tags) {
         if (size <= Size)
             SmallHeap::deallocate(size, data, tags...);
         else
@@ -38,4 +34,4 @@ struct split_heap
     }
 };
 
-} // namespace immer
+}  // namespace immer

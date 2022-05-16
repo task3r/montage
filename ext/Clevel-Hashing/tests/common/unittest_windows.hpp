@@ -43,41 +43,36 @@
 /*
  * ut_toUTF8 -- convert WCS to UTF-8 string
  */
-char *
-ut_toUTF8(const wchar_t *wstr)
-{
-	int size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, -1,
-				       nullptr, 0, nullptr, nullptr);
-	if (size == 0) {
-		UT_FATAL("!ut_toUTF8");
-	}
+char *ut_toUTF8(const wchar_t *wstr) {
+    int size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, -1,
+                                   nullptr, 0, nullptr, nullptr);
+    if (size == 0) {
+        UT_FATAL("!ut_toUTF8");
+    }
 
-	char *str = new char[size];
+    char *str = new char[size];
 
-	if (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, -1, str,
-				size, nullptr, nullptr) == 0) {
-		UT_FATAL("!ut_toUTF8");
-	}
+    if (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, -1, str, size,
+                            nullptr, nullptr) == 0) {
+        UT_FATAL("!ut_toUTF8");
+    }
 
-	return str;
+    return str;
 }
 
 /*
  * ut_statw -- statw that never returns -1
  */
-int
-ut_statw(const char *file, int line, const char *func, const wchar_t *path,
-	 os_stat_t *st)
-{
-	int ret = _wstat64(path, st);
+int ut_statw(const char *file, int line, const char *func, const wchar_t *path,
+             os_stat_t *st) {
+    int ret = _wstat64(path, st);
 
-	if (ret < 0)
-		UT_FATAL("%s:%d %s - !stat: %S", file, line, func, path);
+    if (ret < 0) UT_FATAL("%s:%d %s - !stat: %S", file, line, func, path);
 
-	/* clear unused bits to avoid confusion */
-	st->st_mode &= 0600;
+    /* clear unused bits to avoid confusion */
+    st->st_mode &= 0600;
 
-	return ret;
+    return ret;
 }
 
 #define STATW(path, st) ut_statw(__FILE__, __LINE__, __func__, path, st)

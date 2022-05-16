@@ -40,23 +40,19 @@
 
 #include <iterator>
 
-namespace pmem
-{
+namespace pmem {
 
-namespace detail
-{
+namespace detail {
 
 template <typename T, typename U, typename C = void>
-struct has_iterator_category_convertible_to : std::false_type {
-};
+struct has_iterator_category_convertible_to : std::false_type {};
 
 template <typename T, typename U>
 struct has_iterator_category_convertible_to<
-	T, U,
-	typename std::enable_if<std::is_convertible<
-		typename std::iterator_traits<T>::iterator_category,
-		U>::value>::type> : std::true_type {
-};
+    T, U,
+    typename std::enable_if<std::is_convertible<
+        typename std::iterator_traits<T>::iterator_category, U>::value>::type>
+    : std::true_type {};
 
 /**
  * Type trait to determine if a given parameter type satisfies requirements of
@@ -83,8 +79,7 @@ struct is_input_iterator
 template <typename T>
 struct is_forward_iterator
     : public has_iterator_category_convertible_to<T,
-						  std::forward_iterator_tag> {
-};
+                                                  std::forward_iterator_tag> {};
 
 /**
  * Type trait to determine if a given parameter type satisfies requirements of
@@ -92,8 +87,7 @@ struct is_forward_iterator
  */
 template <typename T>
 struct is_bidirectional_iterator : public has_iterator_category_convertible_to<
-					   T, std::bidirectional_iterator_tag> {
-};
+                                       T, std::bidirectional_iterator_tag> {};
 
 /**
  * Type trait to determine if a given parameter type satisfies requirements of
@@ -101,8 +95,7 @@ struct is_bidirectional_iterator : public has_iterator_category_convertible_to<
  */
 template <typename T>
 struct is_random_access_iterator : public has_iterator_category_convertible_to<
-					   T, std::random_access_iterator_tag> {
-};
+                                       T, std::random_access_iterator_tag> {};
 
 } /* namespace detail */
 

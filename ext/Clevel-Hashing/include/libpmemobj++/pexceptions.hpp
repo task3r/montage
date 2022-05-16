@@ -38,30 +38,26 @@
 #ifndef LIBPMEMOBJ_CPP_PEXCEPTIONS_HPP
 #define LIBPMEMOBJ_CPP_PEXCEPTIONS_HPP
 
+#include <libpmemobj/base.h>
+
 #include <stdexcept>
 #include <system_error>
 
-#include <libpmemobj/base.h>
+namespace pmem {
 
-namespace pmem
-{
-
-namespace detail
-{
+namespace detail {
 
 /**
  * Return last libpmemobj error message as a std::string.
  */
-inline std::string
-errormsg(void)
-{
+inline std::string errormsg(void) {
 #ifdef _WIN32
-	return std::string(pmemobj_errormsgU());
+    return std::string(pmemobj_errormsgU());
 #else
-	return std::string(pmemobj_errormsg());
+    return std::string(pmemobj_errormsg());
 #endif
 }
-}
+}  // namespace detail
 
 /**
  * Custom pool error class.
@@ -70,16 +66,13 @@ errormsg(void)
  * pool.
  */
 class pool_error : public std::runtime_error {
-public:
-	using std::runtime_error::runtime_error;
+   public:
+    using std::runtime_error::runtime_error;
 
-	pool_error &
-	with_pmemobj_errormsg()
-	{
-		(*this) = pool_error(what() + std::string(": ") +
-				     detail::errormsg());
-		return *this;
-	}
+    pool_error& with_pmemobj_errormsg() {
+        (*this) = pool_error(what() + std::string(": ") + detail::errormsg());
+        return *this;
+    }
 };
 
 /**
@@ -88,16 +81,14 @@ public:
  * Thrown when there is a runtime problem with a transaction.
  */
 class transaction_error : public std::runtime_error {
-public:
-	using std::runtime_error::runtime_error;
+   public:
+    using std::runtime_error::runtime_error;
 
-	transaction_error &
-	with_pmemobj_errormsg()
-	{
-		(*this) = transaction_error(what() + std::string(": ") +
-					    detail::errormsg());
-		return *this;
-	}
+    transaction_error& with_pmemobj_errormsg() {
+        (*this) =
+            transaction_error(what() + std::string(": ") + detail::errormsg());
+        return *this;
+    }
 };
 
 /**
@@ -107,17 +98,14 @@ public:
  * on a lock.
  */
 class lock_error : public std::system_error {
-public:
-	using std::system_error::system_error;
+   public:
+    using std::system_error::system_error;
 
-	lock_error &
-	with_pmemobj_errormsg()
-	{
-		(*this) = lock_error(code(),
-				     what() + std::string(": ") +
-					     detail::errormsg());
-		return *this;
-	}
+    lock_error& with_pmemobj_errormsg() {
+        (*this) =
+            lock_error(code(), what() + std::string(": ") + detail::errormsg());
+        return *this;
+    }
 };
 
 /**
@@ -126,16 +114,14 @@ public:
  * Thrown when there is a transactional allocation error.
  */
 class transaction_alloc_error : public transaction_error {
-public:
-	using transaction_error::transaction_error;
+   public:
+    using transaction_error::transaction_error;
 
-	transaction_alloc_error &
-	with_pmemobj_errormsg()
-	{
-		(*this) = transaction_alloc_error(what() + std::string(": ") +
-						  detail::errormsg());
-		return *this;
-	}
+    transaction_alloc_error& with_pmemobj_errormsg() {
+        (*this) = transaction_alloc_error(what() + std::string(": ") +
+                                          detail::errormsg());
+        return *this;
+    }
 };
 
 /**
@@ -144,19 +130,17 @@ public:
  * Thrown when there is out of memory error inside of transaction.
  */
 class transaction_out_of_memory : public transaction_alloc_error,
-				  public std::bad_alloc {
-public:
-	using transaction_alloc_error::transaction_alloc_error;
-	using transaction_alloc_error::what;
+                                  public std::bad_alloc {
+   public:
+    using transaction_alloc_error::transaction_alloc_error;
+    using transaction_alloc_error::what;
 
-	transaction_out_of_memory &
-	with_pmemobj_errormsg()
-	{
-		(*this) = transaction_out_of_memory(
-			transaction_alloc_error::what() + std::string(": ") +
-			detail::errormsg());
-		return *this;
-	}
+    transaction_out_of_memory& with_pmemobj_errormsg() {
+        (*this) =
+            transaction_out_of_memory(transaction_alloc_error::what() +
+                                      std::string(": ") + detail::errormsg());
+        return *this;
+    }
 };
 
 /**
@@ -165,16 +149,14 @@ public:
  * Thrown when there is a transactional free error.
  */
 class transaction_free_error : public transaction_alloc_error {
-public:
-	using transaction_alloc_error::transaction_alloc_error;
+   public:
+    using transaction_alloc_error::transaction_alloc_error;
 
-	transaction_free_error &
-	with_pmemobj_errormsg()
-	{
-		(*this) = transaction_free_error(what() + std::string(": ") +
-						 detail::errormsg());
-		return *this;
-	}
+    transaction_free_error& with_pmemobj_errormsg() {
+        (*this) = transaction_free_error(what() + std::string(": ") +
+                                         detail::errormsg());
+        return *this;
+    }
 };
 
 /**
@@ -183,8 +165,8 @@ public:
  * Thrown when there is an error with the scope of the transaction.
  */
 class transaction_scope_error : public std::logic_error {
-public:
-	using std::logic_error::logic_error;
+   public:
+    using std::logic_error::logic_error;
 };
 
 /**
@@ -193,8 +175,8 @@ public:
  * Thrown on manual transaction abort.
  */
 class manual_tx_abort : public std::runtime_error {
-public:
-	using std::runtime_error::runtime_error;
+   public:
+    using std::runtime_error::runtime_error;
 };
 
 /**
@@ -203,16 +185,13 @@ public:
  * Thrown on ctl_[get|set|exec] failure.
  */
 class ctl_error : public std::runtime_error {
-public:
-	using std::runtime_error::runtime_error;
+   public:
+    using std::runtime_error::runtime_error;
 
-	ctl_error &
-	with_pmemobj_errormsg()
-	{
-		(*this) = ctl_error(what() + std::string(": ") +
-				    detail::errormsg());
-		return *this;
-	}
+    ctl_error& with_pmemobj_errormsg() {
+        (*this) = ctl_error(what() + std::string(": ") + detail::errormsg());
+        return *this;
+    }
 };
 
 } /* namespace pmem */

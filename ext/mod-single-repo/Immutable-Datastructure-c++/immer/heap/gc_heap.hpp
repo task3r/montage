@@ -32,23 +32,21 @@ namespace immer {
 
 namespace detail {
 
-template <int Dummy=0>
-struct gc_initializer
-{
+template <int Dummy = 0>
+struct gc_initializer {
     gc_initializer() { GC_init(); }
     static gc_initializer init;
 };
 
 template <int D>
-gc_initializer<D> gc_initializer<D>::init {};
+gc_initializer<D> gc_initializer<D>::init{};
 
-inline void gc_initializer_guard()
-{
+inline void gc_initializer_guard() {
     static gc_initializer<> init_ = gc_initializer<>::init;
-    (void) init_;
+    (void)init_;
 }
 
-} // namespace detail
+}  // namespace detail
 
 #define IMMER_GC_INIT_GUARD_ ::immer::detail::gc_initializer_guard()
 
@@ -56,7 +54,7 @@ inline void gc_initializer_guard()
 
 #define IMMER_GC_INIT_GUARD_
 
-#endif // IMMER_GC_REQUIRE_INIT
+#endif  // IMMER_GC_REQUIRE_INIT
 
 /*!
  * Heap that uses a tracing garbage collector.
@@ -95,36 +93,27 @@ inline void gc_initializer_guard()
  *
  * @endrst
  */
-class gc_heap
-{
-public:
-    static void* allocate(std::size_t n)
-    {
+class gc_heap {
+   public:
+    static void* allocate(std::size_t n) {
         IMMER_GC_INIT_GUARD_;
         auto p = GC_malloc(n);
-        if (IMMER_UNLIKELY(!p))
-            throw std::bad_alloc{};
+        if (IMMER_UNLIKELY(!p)) throw std::bad_alloc{};
         return p;
     }
 
-    static void* allocate(std::size_t n, norefs_tag)
-    {
+    static void* allocate(std::size_t n, norefs_tag) {
         IMMER_GC_INIT_GUARD_;
         auto p = GC_malloc_atomic(n);
-        if (IMMER_UNLIKELY(!p))
-            throw std::bad_alloc{};
+        if (IMMER_UNLIKELY(!p)) throw std::bad_alloc{};
         return p;
     }
 
-    static void deallocate(std::size_t, void* data)
-    {
-        GC_free(data);
-    }
+    static void deallocate(std::size_t, void* data) { GC_free(data); }
 
-    static void deallocate(std::size_t, void* data, norefs_tag)
-    {
+    static void deallocate(std::size_t, void* data, norefs_tag) {
         GC_free(data);
     }
 };
 
-} // namespace immer
+}  // namespace immer

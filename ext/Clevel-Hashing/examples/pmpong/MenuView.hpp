@@ -33,23 +33,24 @@
 #ifndef LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_MENUVIEW_HPP
 #define LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_MENUVIEW_HPP
 
+#include <SFML/Graphics.hpp>
+
 #include "GameConstants.hpp"
 #include "PongGameStatus.hpp"
 #include "View.hpp"
-#include <SFML/Graphics.hpp>
 
 enum menu_items { NEW_GAME, RESUME, SIMULATION, EXIT };
 
 class MenuView : public View {
-public:
-	MenuView(sf::Font &font);
-	~MenuView();
+   public:
+    MenuView(sf::Font &font);
+    ~MenuView();
 
-	virtual void prepareView(PongGameStatus &gameStatus);
-	virtual void displayView(sf::RenderWindow *gameWindow);
+    virtual void prepareView(PongGameStatus &gameStatus);
+    virtual void displayView(sf::RenderWindow *gameWindow);
 
-private:
-	sf::Text menuItems[MENU_ITEMS];
+   private:
+    sf::Text menuItems[MENU_ITEMS];
 };
 
 #endif /* LIBPMEMOBJ_CPP_EXAMPLES_PMPONG_MENUVIEW_HPP */

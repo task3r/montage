@@ -14,29 +14,28 @@ namespace immer {
 namespace detail {
 namespace hamts {
 
-using bits_t   = std::uint32_t;
+using bits_t = std::uint32_t;
 using bitmap_t = std::uint32_t;
-using count_t  = std::uint32_t;
-using shift_t  = std::uint32_t;
-using size_t   = std::size_t;
-using hash_t   = std::size_t;
+using count_t = std::uint32_t;
+using shift_t = std::uint32_t;
+using size_t = std::size_t;
+using hash_t = std::size_t;
 
-template <bits_t B, typename T=count_t>
+template <bits_t B, typename T = count_t>
 constexpr T branches = T{1} << B;
 
-template <bits_t B, typename T=size_t>
+template <bits_t B, typename T = size_t>
 constexpr T mask = branches<B, T> - 1;
 
-template <bits_t B, typename T=count_t>
+template <bits_t B, typename T = count_t>
 constexpr T max_depth = (sizeof(hash_t) * 8 + B - 1) / B;
 
-template <bits_t B, typename T=count_t>
-constexpr T max_shift = max_depth<B, count_t> * B;
+template <bits_t B, typename T = count_t>
+constexpr T max_shift = max_depth<B, count_t>* B;
 
 #define IMMER_HAS_BUILTIN_POPCOUNT 1
 
-inline count_t popcount(bitmap_t x)
-{
+inline count_t popcount(bitmap_t x) {
 #if IMMER_HAS_BUILTIN_POPCOUNT
     return __builtin_popcount(x);
 #else
@@ -50,6 +49,6 @@ inline count_t popcount(bitmap_t x)
 #endif
 }
 
-} // namespace hamts
-} // namespace detail
-} // namespace immer
+}  // namespace hamts
+}  // namespace detail
+}  // namespace immer

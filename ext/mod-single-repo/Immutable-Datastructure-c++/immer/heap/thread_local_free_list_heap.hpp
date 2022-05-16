@@ -14,24 +14,21 @@ namespace immer {
 namespace detail {
 
 template <typename Heap>
-struct thread_local_free_list_storage
-{
-    struct head_t
-    {
+struct thread_local_free_list_storage {
+    struct head_t {
         free_list_node* data;
         std::size_t count;
 
         ~head_t() { Heap::clear(); }
     };
 
-    static head_t& head()
-    {
+    static head_t& head() {
         thread_local static head_t head_{nullptr, 0};
         return head_;
     }
 };
 
-} // namespace detail
+}  // namespace detail
 
 /*!
  * Adaptor that does not release the memory to the parent heap but
@@ -45,11 +42,8 @@ struct thread_local_free_list_storage
  * @tparam Base  Type of the parent heap.
  */
 template <std::size_t Size, std::size_t Limit, typename Base>
-struct thread_local_free_list_heap : detail::unsafe_free_list_heap_impl<
-    detail::thread_local_free_list_storage,
-    Size,
-    Limit,
-    Base>
-{};
+struct thread_local_free_list_heap
+    : detail::unsafe_free_list_heap_impl<detail::thread_local_free_list_storage,
+                                         Size, Limit, Base> {};
 
-} // namespace immer
+}  // namespace immer

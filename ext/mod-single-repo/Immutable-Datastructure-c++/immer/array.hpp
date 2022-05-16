@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include <immer/memory_policy.hpp>
 #include <immer/detail/arrays/with_capacity.hpp>
+#include <immer/memory_policy.hpp>
 
 namespace immer {
 
@@ -42,38 +42,35 @@ class array_transient;
  * @endrst
  */
 template <typename T, typename MemoryPolicy = default_memory_policy>
-class array
-{
-    using impl_t = std::conditional_t<
-        MemoryPolicy::use_transient_rvalues,
-        detail::arrays::with_capacity<T, MemoryPolicy>,
-        detail::arrays::no_capacity<T, MemoryPolicy>>;
+class array {
+    using impl_t =
+        std::conditional_t<MemoryPolicy::use_transient_rvalues,
+                           detail::arrays::with_capacity<T, MemoryPolicy>,
+                           detail::arrays::no_capacity<T, MemoryPolicy>>;
 
     using move_t =
         std::integral_constant<bool, MemoryPolicy::use_transient_rvalues>;
 
-public:
+   public:
     using value_type = T;
     using reference = const T&;
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
     using const_reference = const T&;
 
-    using iterator         = const T*;
-    using const_iterator   = iterator;
+    using iterator = const T*;
+    using const_iterator = iterator;
     using reverse_iterator = std::reverse_iterator<iterator>;
 
-    using memory_policy  = MemoryPolicy;
+    using memory_policy = MemoryPolicy;
     using transient_type = array_transient<T, MemoryPolicy>;
 
-    using memory      = MemoryPolicy;
+    using memory = MemoryPolicy;
     using heap_policy = typename memory::heap;
-    using heap = typename heap_policy::template
-        optimized<2*sizeof(impl_t)>::type;
+    using heap =
+        typename heap_policy::template optimized<2 * sizeof(impl_t)>::type;
 
-    void* operator new(size_t size) {
-        return heap::allocate(size);
-    }
+    void* operator new(size_t size) { return heap::allocate(size); }
 
     void operator delete(void* data) {
         heap::deallocate(sizeof(array<T>), data);
@@ -93,28 +90,23 @@ public:
      * Constructs an array containing the elements in `values`.
      */
     array(std::initializer_list<T> values)
-        : impl_{impl_t::from_initializer_list(values)}
-    {}
+        : impl_{impl_t::from_initializer_list(values)} {}
 
     /*!
      * Constructs a array containing the elements in the range
      * defined by the forward iterator `first` and range sentinel `last`.
      */
     template <typename Iter, typename Sent,
-              std::enable_if_t
-              <detail::compatible_sentinel_v<Iter, Sent>
-               && detail::is_forward_iterator_v<Iter>, bool> = true>
-    array(Iter first, Sent last)
-        : impl_{impl_t::from_range(first, last)}
-    {}
+              std::enable_if_t<detail::compatible_sentinel_v<Iter, Sent> &&
+                                   detail::is_forward_iterator_v<Iter>,
+                               bool> = true>
+    array(Iter first, Sent last) : impl_{impl_t::from_range(first, last)} {}
 
     /*!
      * Constructs a array containing the element `val` repeated `n`
      * times.
      */
-    array(size_type n, T v = {})
-        : impl_{impl_t::from_fill(n, v)}
-    {}
+    array(size_type n, T v = {}) : impl_{impl_t::from_fill(n, v)} {}
 
     /*!
      * Returns an iterator pointing at the first element of the
@@ -127,7 +119,7 @@ public:
      * Returns an iterator pointing just after the last element of the
      * collection. It does not allocate and its complexity is @f$ O(1) @f$.
      */
-    iterator end()   const { return impl_.data() + impl_.size; }
+    iterator end() const { return impl_.data() + impl_.size; }
 
     /*!
      * Returns an iterator that traverses the collection backwards,
@@ -141,7 +133,7 @@ public:
      * pointing after the last element of the reversed collection. It
      * does not allocate memory and its complexity is @f$ O(1) @f$.
      */
-    reverse_iterator rend()   const { return reverse_iterator{begin()}; }
+    reverse_iterator rend() const { return reverse_iterator{begin()}; }
 
     /*!
      * Returns the number of elements in the container.  It does
@@ -176,8 +168,7 @@ public:
      * allocate memory and its complexity is *effectively* @f$ O(1)
      * @f$.
      */
-    reference operator[] (size_type index) const
-    { return impl_.get(index); }
+    reference operator[](size_type index) const { return impl_.get(index); }
 
     /*!
      * Returns a `const` reference to the element at position
@@ -185,16 +176,15 @@ public:
      * index \geq size() @f$.  It does not allocate memory and its
      * complexity is *effectively* @f$ O(1) @f$.
      */
-    reference at(size_type index) const
-    { return impl_.get_check(index); }
+    reference at(size_type index) const { return impl_.get_check(index); }
 
     /*!
      * Returns whether the vectors are equal.
      */
-    bool operator==(const array& other) const
-    { return impl_.equals(other.impl_); }
-    bool operator!=(const array& other) const
-    { return !(*this == other); }
+    bool operator==(const array& other) const {
+        return impl_.equals(other.impl_);
+    }
+    bool operator!=(const array& other) const { return !(*this == other); }
 
     /*!
      * Returns an array with `value` inserted at the end.  It may
@@ -211,11 +201,13 @@ public:
      *
      * @endrst
      */
-    array push_back(value_type value) const&
-    { return impl_.push_back(std::move(value)); }
+    array push_back(value_type value) const& {
+        return impl_.push_back(std::move(value));
+    }
 
-    decltype(auto) push_back(value_type value) &&
-    { return push_back_move(move_t{}, std::move(value)); }
+    decltype(auto) push_back(value_type value) && {
+        return push_back_move(move_t{}, std::move(value));
+    }
 
     /*!
      * Returns an array containing value `value` at position `idx`.
@@ -233,19 +225,20 @@ public:
      *
      * @endrst
      */
-    array set(std::size_t index, value_type value) const&
-    { return impl_.assoc(index, std::move(value)); }
-
-    array* set_ptr(std::size_t index, value_type value) const&
-    {
-       array *new_array = new array(impl_.assoc(index, std::move(value)));
-       NOTE("new_array:%p\n", new_array);
-       NVM_PERSIST(new_array, sizeof(array));
-       return new_array;
+    array set(std::size_t index, value_type value) const& {
+        return impl_.assoc(index, std::move(value));
     }
-    
-    decltype(auto) set(size_type index, value_type value) &&
-    { return set_move(move_t{}, index, std::move(value)); }
+
+    array* set_ptr(std::size_t index, value_type value) const& {
+        array* new_array = new array(impl_.assoc(index, std::move(value)));
+        NOTE("new_array:%p\n", new_array);
+        NVM_PERSIST(new_array, sizeof(array));
+        return new_array;
+    }
+
+    decltype(auto) set(size_type index, value_type value) && {
+        return set_move(move_t{}, index, std::move(value));
+    }
 
     /*!
      * Returns an array containing the result of the expression
@@ -265,12 +258,14 @@ public:
      * @endrst
      */
     template <typename FnT>
-    array update(std::size_t index, FnT&& fn) const&
-    { return impl_.update(index, std::forward<FnT>(fn)); }
+    array update(std::size_t index, FnT&& fn) const& {
+        return impl_.update(index, std::forward<FnT>(fn));
+    }
 
     template <typename FnT>
-    decltype(auto) update(size_type index, FnT&& fn) &&
-    { return update_move(move_t{}, index, std::forward<FnT>(fn)); }
+    decltype(auto) update(size_type index, FnT&& fn) && {
+        return update_move(move_t{}, index, std::forward<FnT>(fn));
+    }
 
     /*!
      * Returns a array containing only the first `min(elems, size())`
@@ -288,23 +283,20 @@ public:
      *
      * @endrst
      */
-    array take(size_type elems) const&
-    { return impl_.take(elems); }
+    array take(size_type elems) const& { return impl_.take(elems); }
 
-    decltype(auto) take(size_type elems) &&
-    { return take_move(move_t{}, elems); }
+    decltype(auto) take(size_type elems) && {
+        return take_move(move_t{}, elems);
+    }
 
     /*!
      * Returns an @a transient form of this container, an
      * `immer::array_transient`.
      */
-    transient_type transient() const&
-    { return transient_type{ impl_ }; }
-    transient_type transient() &&
-    { return transient_type{ std::move(impl_) }; }
+    transient_type transient() const& { return transient_type{impl_}; }
+    transient_type transient() && { return transient_type{std::move(impl_)}; }
 
-    transient_type* transient_ptr()
-    { 
+    transient_type* transient_ptr() {
         auto* transient_array = new transient_type(impl_);
         NVM_PERSIST(transient_array, sizeof(impl_t));
         return transient_array;
@@ -313,32 +305,44 @@ public:
     // Semi-private
     const impl_t& impl() const { return impl_; }
 
-private:
+   private:
     friend transient_type;
 
     array(impl_t impl) : impl_(std::move(impl)) {}
 
-    array&& push_back_move(std::true_type, value_type value)
-    { impl_.push_back_mut({}, std::move(value)); return std::move(*this); }
-    array push_back_move(std::false_type, value_type value)
-    { return impl_.push_back(std::move(value)); }
+    array&& push_back_move(std::true_type, value_type value) {
+        impl_.push_back_mut({}, std::move(value));
+        return std::move(*this);
+    }
+    array push_back_move(std::false_type, value_type value) {
+        return impl_.push_back(std::move(value));
+    }
 
-    array&& set_move(std::true_type, size_type index, value_type value)
-    { impl_.assoc_mut({}, index, std::move(value)); return std::move(*this); }
-    array set_move(std::false_type, size_type index, value_type value)
-    { return impl_.assoc(index, std::move(value)); }
+    array&& set_move(std::true_type, size_type index, value_type value) {
+        impl_.assoc_mut({}, index, std::move(value));
+        return std::move(*this);
+    }
+    array set_move(std::false_type, size_type index, value_type value) {
+        return impl_.assoc(index, std::move(value));
+    }
 
     template <typename Fn>
-    array&& update_move(std::true_type, size_type index, Fn&& fn)
-    { impl_.update_mut({}, index, std::forward<Fn>(fn)); return std::move(*this); }
+    array&& update_move(std::true_type, size_type index, Fn&& fn) {
+        impl_.update_mut({}, index, std::forward<Fn>(fn));
+        return std::move(*this);
+    }
     template <typename Fn>
-    array update_move(std::false_type, size_type index, Fn&& fn)
-    { return impl_.update(index, std::forward<Fn>(fn)); }
+    array update_move(std::false_type, size_type index, Fn&& fn) {
+        return impl_.update(index, std::forward<Fn>(fn));
+    }
 
-    array&& take_move(std::true_type, size_type elems)
-    { impl_.take_mut({}, elems); return std::move(*this); }
-    array take_move(std::false_type, size_type elems)
-    { return impl_.take(elems); }
+    array&& take_move(std::true_type, size_type elems) {
+        impl_.take_mut({}, elems);
+        return std::move(*this);
+    }
+    array take_move(std::false_type, size_type elems) {
+        return impl_.take(elems);
+    }
 
     impl_t impl_ = impl_t::empty();
 };

@@ -11,24 +11,21 @@
 
 // size_type find(const charT* s, size_type pos, size_type n) const;
 
-#include <string>
 #include <cassert>
+#include <string>
 
 #include "min_allocator.h"
 
 template <class S>
-void
-test(const S& s, const typename S::value_type* str, typename S::size_type pos,
-     typename S::size_type n, typename S::size_type x)
-{
+void test(const S& s, const typename S::value_type* str,
+          typename S::size_type pos, typename S::size_type n,
+          typename S::size_type x) {
     assert(s.find(str, pos, n) == x);
-    if (x != S::npos)
-        assert(pos <= x && x + n <= s.size());
+    if (x != S::npos) assert(pos <= x && x + n <= s.size());
 }
 
 template <class S>
-void test0()
-{
+void test0() {
     test(S(""), "", 0, 0, 0);
     test(S(""), "abcde", 0, 0, 0);
     test(S(""), "abcde", 0, 1, S::npos);
@@ -132,8 +129,7 @@ void test0()
 }
 
 template <class S>
-void test1()
-{
+void test1() {
     test(S("abcde"), "abcde", 5, 4, S::npos);
     test(S("abcde"), "abcde", 5, 5, S::npos);
     test(S("abcde"), "abcdeabcde", 5, 0, 5);
@@ -237,8 +233,7 @@ void test1()
 }
 
 template <class S>
-void test2()
-{
+void test2() {
     test(S("abcdeabcde"), "abcdeabcde", 10, 5, S::npos);
     test(S("abcdeabcde"), "abcdeabcde", 10, 9, S::npos);
     test(S("abcdeabcde"), "abcdeabcde", 10, 10, S::npos);
@@ -342,8 +337,7 @@ void test2()
 }
 
 template <class S>
-void test3()
-{
+void test3() {
     test(S("abcdeabcdeabcdeabcde"), "abcdeabcdeabcdeabcde", 20, 1, S::npos);
     test(S("abcdeabcdeabcdeabcde"), "abcdeabcdeabcdeabcde", 20, 10, S::npos);
     test(S("abcdeabcdeabcdeabcde"), "abcdeabcdeabcdeabcde", 20, 19, S::npos);
@@ -366,22 +360,23 @@ void test3()
     test(S("abcdeabcdeabcdeabcde"), "abcdeabcdeabcdeabcde", 21, 20, S::npos);
 }
 
-int main()
-{
+int main() {
     {
-    typedef std::string S;
-    test0<S>();
-    test1<S>();
-    test2<S>();
-    test3<S>();
+        typedef std::string S;
+        test0<S>();
+        test1<S>();
+        test2<S>();
+        test3<S>();
     }
 #if TEST_STD_VER >= 11
     {
-    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
-    test0<S>();
-    test1<S>();
-    test2<S>();
-    test3<S>();
+        typedef std::basic_string<char, std::char_traits<char>,
+                                  min_allocator<char>>
+            S;
+        test0<S>();
+        test1<S>();
+        test2<S>();
+        test3<S>();
     }
 #endif
 }

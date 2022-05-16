@@ -23,23 +23,23 @@
    SOFTWARE.
 */
 
-#include <util_log.h>
 #include "os_thread.h"
+
+#include <util_log.h>
 
 namespace ulib {
 
-void *thread::_thread(void *param)
-{
-	thread *ctx = (thread *) param;
+void *thread::_thread(void *param) {
+    thread *ctx = (thread *)param;
 
-	int ret = ctx->setup();
-	if (ret) {
-		ULIB_DEBUG("thread initialization failed, setup() returned %d", ret);
-		return (void *)(unsigned long)-1;
-	}
-	ret = ctx->run();
-	ctx->cleanup();
-	return NULL;
+    int ret = ctx->setup();
+    if (ret) {
+        ULIB_DEBUG("thread initialization failed, setup() returned %d", ret);
+        return (void *)(unsigned long)-1;
+    }
+    ret = ctx->run();
+    ctx->cleanup();
+    return NULL;
 }
 
 }  // namespace ulib

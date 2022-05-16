@@ -8,11 +8,10 @@
 
 #pragma once
 
-#include <immer/heap/with_data.hpp>
-#include <immer/heap/free_list_node.hpp>
-
 #include <atomic>
 #include <cassert>
+#include <immer/heap/free_list_node.hpp>
+#include <immer/heap/with_data.hpp>
 
 namespace immer {
 
@@ -25,13 +24,11 @@ namespace immer {
  * @tparam Base Type of the parent heap.
  */
 template <std::size_t Size, std::size_t Limit, typename Base>
-struct free_list_heap : Base
-{
+struct free_list_heap : Base {
     using base_t = Base;
 
     template <typename... Tags>
-    static void* allocate(std::size_t size, Tags...)
-    {
+    static void* allocate(std::size_t size, Tags...) {
         assert(size <= sizeof(free_list_node) + Size);
         assert(size >= sizeof(free_list_node));
 
@@ -48,8 +45,7 @@ struct free_list_heap : Base
     }
 
     template <typename... Tags>
-    static void deallocate(std::size_t size, void* data, Tags...)
-    {
+    static void deallocate(std::size_t size, void* data, Tags...) {
         assert(size <= sizeof(free_list_node) + Size);
         assert(size >= sizeof(free_list_node));
 
@@ -66,18 +62,16 @@ struct free_list_heap : Base
         }
     }
 
-private:
-    struct head_t
-    {
+   private:
+    struct head_t {
         std::atomic<free_list_node*> data;
         std::atomic<std::size_t> count;
     };
 
-    static head_t& head()
-    {
+    static head_t& head() {
         static head_t head_{{nullptr}, {0}};
         return head_;
     }
 };
 
-} // namespace immer
+}  // namespace immer

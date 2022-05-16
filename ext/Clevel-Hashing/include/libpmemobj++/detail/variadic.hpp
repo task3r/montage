@@ -38,11 +38,9 @@
 #ifndef LIBPMEMOBJ_CPP_VARIADIC_HPP
 #define LIBPMEMOBJ_CPP_VARIADIC_HPP
 
-namespace pmem
-{
+namespace pmem {
 
-namespace detail
-{
+namespace detail {
 
 /*
  * Checks if T is the same type as first type in Args.
@@ -50,7 +48,7 @@ namespace detail
  */
 template <class T, class... Args>
 struct is_first_arg_same {
-	static constexpr bool value = false;
+    static constexpr bool value = false;
 };
 
 /*
@@ -59,7 +57,7 @@ struct is_first_arg_same {
  */
 template <class T, class FirstArg, class... Args>
 struct is_first_arg_same<T, FirstArg, Args...> {
-	static constexpr bool value = std::is_same<T, FirstArg>::value;
+    static constexpr bool value = std::is_same<T, FirstArg>::value;
 };
 
 } /* namespace detail */

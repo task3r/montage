@@ -20,24 +20,21 @@ namespace immer {
  * @tparam Base Type of the parent heap.
  */
 template <typename T, typename Base>
-struct with_data : Base
-{
+struct with_data : Base {
     using base_t = Base;
 
     template <typename... Tags>
-    static void* allocate(std::size_t size, Tags... tags)
-    {
+    static void* allocate(std::size_t size, Tags... tags) {
         auto p = base_t::allocate(size + sizeof(T), tags...);
         return new (p) T{} + 1;
     }
 
     template <typename... Tags>
-    static void deallocate(std::size_t size, void* p, Tags... tags)
-    {
+    static void deallocate(std::size_t size, void* p, Tags... tags) {
         auto dp = static_cast<T*>(p) - 1;
         dp->~T();
         base_t::deallocate(size + sizeof(T), dp, tags...);
     }
 };
 
-} // namespace immer
+}  // namespace immer

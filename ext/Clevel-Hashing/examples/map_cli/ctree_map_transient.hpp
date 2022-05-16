@@ -43,8 +43,7 @@
 
 #define BIT_IS_SET(n, i) (!!((n) & (1ULL << (i))))
 
-namespace examples
-{
+namespace examples {
 
 /**
  * C++ implementation of a volatile ctree.
@@ -53,367 +52,318 @@ namespace examples
  */
 template <typename K, typename T>
 class ctree_map_transient {
-public:
-	/** Convenience typedef for the key type. */
-	typedef K key_type;
+   public:
+    /** Convenience typedef for the key type. */
+    typedef K key_type;
 
-	/** Convenience typedef for the value type. */
-	typedef T *value_type;
+    /** Convenience typedef for the value type. */
+    typedef T *value_type;
 
-	/** Convenience typedef for the callback function. */
-	typedef std::function<int(key_type, value_type, void *)> callback;
+    /** Convenience typedef for the callback function. */
+    typedef std::function<int(key_type, value_type, void *)> callback;
 
-	/**
-	 * Default constructor.
-	 */
-	ctree_map_transient() : root(new entry())
-	{
-	}
+    /**
+     * Default constructor.
+     */
+    ctree_map_transient() : root(new entry()) {}
 
-	ctree_map_transient(const ctree_map_transient &other) = delete;
+    ctree_map_transient(const ctree_map_transient &other) = delete;
 
-	ctree_map_transient &
-	operator=(const ctree_map_transient &other) = delete;
+    ctree_map_transient &operator=(const ctree_map_transient &other) = delete;
 
-	/**
-	 * Insert or update the given value under the given key.
-	 *
-	 * The map takes ownership of the value.
-	 *
-	 * @param key The key to insert under.
-	 * @param value The value to be inserted.
-	 *
-	 * @return 0 on success, negative values on error.
-	 */
-	int
-	insert(uint64_t key, value_type value)
-	{
-		auto dest_entry = root;
-		while (dest_entry->inode != nullptr) {
-			auto n = dest_entry->inode;
-			dest_entry = n->entries[BIT_IS_SET(key, n->diff)];
-		}
+    /**
+     * Insert or update the given value under the given key.
+     *
+     * The map takes ownership of the value.
+     *
+     * @param key The key to insert under.
+     * @param value The value to be inserted.
+     *
+     * @return 0 on success, negative values on error.
+     */
+    int insert(uint64_t key, value_type value) {
+        auto dest_entry = root;
+        while (dest_entry->inode != nullptr) {
+            auto n = dest_entry->inode;
+            dest_entry = n->entries[BIT_IS_SET(key, n->diff)];
+        }
 
-		entry e(key, value);
-		if (dest_entry->key == 0 || dest_entry->key == key) {
-			delete dest_entry->value;
-			*dest_entry = e;
-		} else {
-			insert_leaf(&e,
-				    ctree_map_transient::find_crit_bit(
-					    dest_entry->key, key));
-		}
+        entry e(key, value);
+        if (dest_entry->key == 0 || dest_entry->key == key) {
+            delete dest_entry->value;
+            *dest_entry = e;
+        } else {
+            insert_leaf(
+                &e, ctree_map_transient::find_crit_bit(dest_entry->key, key));
+        }
 
-		return 0;
-	}
+        return 0;
+    }
 
-	/**
-	 * Allocating insert.
-	 *
-	 * Creates a new value_type instance and inserts it into the tree.
-	 *
-	 * @param key The key to insert under.
-	 * @param args variadic template parameter for object construction
-	 *	arguments.
-	 *
-	 * @return 0 on success, negative values on error.
-	 */
-	template <typename... Args>
-	int
-	insert_new(key_type key, const Args &... args)
-	{
-		return insert(key, new T(args...));
-	}
+    /**
+     * Allocating insert.
+     *
+     * Creates a new value_type instance and inserts it into the tree.
+     *
+     * @param key The key to insert under.
+     * @param args variadic template parameter for object construction
+     *	arguments.
+     *
+     * @return 0 on success, negative values on error.
+     */
+    template <typename... Args>
+    int insert_new(key_type key, const Args &... args) {
+        return insert(key, new T(args...));
+    }
 
-	/**
-	 * Remove a value from the tree.
-	 *
-	 * The tree no longer owns the value.
-	 *
-	 * @param key The key for which the value will be removed.
-	 *
-	 * @return The value if it is in the tree, nullptr otherwise.
-	 */
-	value_type
-	remove(key_type key)
-	{
-		entry *parent = nullptr;
-		auto leaf = get_leaf(key, &parent);
+    /**
+     * Remove a value from the tree.
+     *
+     * The tree no longer owns the value.
+     *
+     * @param key The key for which the value will be removed.
+     *
+     * @return The value if it is in the tree, nullptr otherwise.
+     */
+    value_type remove(key_type key) {
+        entry *parent = nullptr;
+        auto leaf = get_leaf(key, &parent);
 
-		if (leaf == nullptr)
-			return nullptr;
+        if (leaf == nullptr) return nullptr;
 
-		auto ret = leaf->value;
+        auto ret = leaf->value;
 
-		if (parent == nullptr) {
-			leaf->key = 0;
-			leaf->value = nullptr;
-		} else {
-			auto n = parent->inode;
-			*parent = *(n->entries[parent->inode->entries[0]->key ==
-					       leaf->key]);
+        if (parent == nullptr) {
+            leaf->key = 0;
+            leaf->value = nullptr;
+        } else {
+            auto n = parent->inode;
+            *parent =
+                *(n->entries[parent->inode->entries[0]->key == leaf->key]);
 
-			/* cleanup both entries and the unnecessary node */
-			delete n->entries[0];
-			delete n->entries[1];
-			delete n;
-		}
+            /* cleanup both entries and the unnecessary node */
+            delete n->entries[0];
+            delete n->entries[1];
+            delete n;
+        }
 
-		return ret;
-	}
+        return ret;
+    }
 
-	/**
-	 * Remove entry from tree and deallocate it.
-	 *
-	 * @param key The key denoting the entry to be removed.
-	 *
-	 * @return 0 on success, negative values on error.
-	 */
-	int
-	remove_free(key_type key)
-	{
-		delete remove(key);
-		return 0;
-	}
+    /**
+     * Remove entry from tree and deallocate it.
+     *
+     * @param key The key denoting the entry to be removed.
+     *
+     * @return 0 on success, negative values on error.
+     */
+    int remove_free(key_type key) {
+        delete remove(key);
+        return 0;
+    }
 
-	/**
-	 * Clear the tree and deallocate all entries.
-	 */
-	int
-	clear()
-	{
-		if (root->inode) {
-			root->inode->clear();
-			delete root->inode;
-			root->inode = nullptr;
-		}
+    /**
+     * Clear the tree and deallocate all entries.
+     */
+    int clear() {
+        if (root->inode) {
+            root->inode->clear();
+            delete root->inode;
+            root->inode = nullptr;
+        }
 
-		delete root->value;
-		root->value = nullptr;
-		root->key = 0;
-		return 0;
-	}
+        delete root->value;
+        root->value = nullptr;
+        root->key = 0;
+        return 0;
+    }
 
-	/**
-	 * Return the value from the tree for the given key.
-	 *
-	 * @param key The key for which the value will be returned.
-	 *
-	 * @return The value if it is in the tree, nullptr otherwise.
-	 */
-	value_type
-	get(key_type key)
-	{
-		auto ret = get_leaf(key, nullptr);
+    /**
+     * Return the value from the tree for the given key.
+     *
+     * @param key The key for which the value will be returned.
+     *
+     * @return The value if it is in the tree, nullptr otherwise.
+     */
+    value_type get(key_type key) {
+        auto ret = get_leaf(key, nullptr);
 
-		return ret ? ret->value : nullptr;
-	}
+        return ret ? ret->value : nullptr;
+    }
 
-	/**
-	 * Check if an entry for the given key is in the tree.
-	 *
-	 * @param key The key to check.
-	 *
-	 * @return 0 on
-	 */
-	int
-	lookup(key_type key) const
-	{
-		return get(key) != nullptr;
-	}
+    /**
+     * Check if an entry for the given key is in the tree.
+     *
+     * @param key The key to check.
+     *
+     * @return 0 on
+     */
+    int lookup(key_type key) const { return get(key) != nullptr; }
 
-	/**
-	 * Call clb for each element in the tree.
-	 *
-	 * @param clb The callback to be called.
-	 * @param args The arguments forwarded to the callback.
-	 *
-	 * @return 0 if tree empty, clb return value otherwise.
-	 */
-	int foreach (callback clb, void *args)
-	{
-		if (is_empty())
-			return 0;
+    /**
+     * Call clb for each element in the tree.
+     *
+     * @param clb The callback to be called.
+     * @param args The arguments forwarded to the callback.
+     *
+     * @return 0 if tree empty, clb return value otherwise.
+     */
+    int foreach (callback clb, void *args) {
+        if (is_empty()) return 0;
 
-		return foreach_node(root, clb, args);
-	}
+        return foreach_node(root, clb, args);
+    }
 
-	/**
-	 * Check if tree is empty.
-	 *
-	 * @return 1 if empty, 0 otherwise.
-	 */
-	int
-	is_empty() const
-	{
-		return root->value == nullptr && root->inode == nullptr;
-	}
+    /**
+     * Check if tree is empty.
+     *
+     * @return 1 if empty, 0 otherwise.
+     */
+    int is_empty() const {
+        return root->value == nullptr && root->inode == nullptr;
+    }
 
-	/**
-	 * Check tree consistency.
-	 *
-	 * @return 0 on success, negative values on error.
-	 */
-	int
-	check() const
-	{
-		return 0;
-	}
+    /**
+     * Check tree consistency.
+     *
+     * @return 0 on success, negative values on error.
+     */
+    int check() const { return 0; }
 
-	/**
-	 * Destructor.
-	 */
-	~ctree_map_transient()
-	{
-		clear();
-		delete root;
-	}
+    /**
+     * Destructor.
+     */
+    ~ctree_map_transient() {
+        clear();
+        delete root;
+    }
 
-private:
-	struct node;
+   private:
+    struct node;
 
-	/*
-	 * Entry holding the value.
-	 */
-	struct entry {
-		entry() : key(0), inode(nullptr), value(nullptr)
-		{
-		}
+    /*
+     * Entry holding the value.
+     */
+    struct entry {
+        entry() : key(0), inode(nullptr), value(nullptr) {}
 
-		entry(key_type _key, value_type _value)
-		    : key(_key), inode(nullptr), value(_value)
-		{
-		}
+        entry(key_type _key, value_type _value)
+            : key(_key), inode(nullptr), value(_value) {}
 
-		key_type key;
-		node *inode;
-		value_type value;
+        key_type key;
+        node *inode;
+        value_type value;
 
-		/*
-		 * Clear the entry.
-		 */
-		void
-		clear()
-		{
-			if (inode) {
-				inode->clear();
-				delete inode;
-			}
-			delete value;
-		}
-	};
+        /*
+         * Clear the entry.
+         */
+        void clear() {
+            if (inode) {
+                inode->clear();
+                delete inode;
+            }
+            delete value;
+        }
+    };
 
-	/*
-	 * Internal node pointing to two entries.
-	 */
-	struct node {
-		node() : diff(0)
-		{
-			entries[0] = nullptr;
-			entries[1] = nullptr;
-		}
+    /*
+     * Internal node pointing to two entries.
+     */
+    struct node {
+        node() : diff(0) {
+            entries[0] = nullptr;
+            entries[1] = nullptr;
+        }
 
-		int diff; /* most significant differing bit */
-		entry *entries[2];
+        int diff; /* most significant differing bit */
+        entry *entries[2];
 
-		/*
-		 * Clear the node.
-		 */
-		void
-		clear()
-		{
-			if (entries[0]) {
-				entries[0]->clear();
-				delete entries[0];
-			}
-			if (entries[1]) {
-				entries[1]->clear();
-				delete entries[1];
-			}
-		}
-	};
+        /*
+         * Clear the node.
+         */
+        void clear() {
+            if (entries[0]) {
+                entries[0]->clear();
+                delete entries[0];
+            }
+            if (entries[1]) {
+                entries[1]->clear();
+                delete entries[1];
+            }
+        }
+    };
 
-	/*
-	 * Find critical bit.
-	 */
-	static int
-	find_crit_bit(key_type lhs, key_type rhs)
-	{
-		return find_last_set_64(lhs ^ rhs);
-	}
+    /*
+     * Find critical bit.
+     */
+    static int find_crit_bit(key_type lhs, key_type rhs) {
+        return find_last_set_64(lhs ^ rhs);
+    }
 
-	/*
-	 * Insert leaf into the tree.
-	 */
-	void
-	insert_leaf(const entry *e, int diff)
-	{
-		auto new_node = new node();
-		new_node->diff = diff;
+    /*
+     * Insert leaf into the tree.
+     */
+    void insert_leaf(const entry *e, int diff) {
+        auto new_node = new node();
+        new_node->diff = diff;
 
-		int d = BIT_IS_SET(e->key, new_node->diff);
-		new_node->entries[d] = new entry(*e);
+        int d = BIT_IS_SET(e->key, new_node->diff);
+        new_node->entries[d] = new entry(*e);
 
-		auto dest_entry = root;
-		while (dest_entry->inode != nullptr) {
-			auto n = dest_entry->inode;
-			if (n->diff < new_node->diff)
-				break;
+        auto dest_entry = root;
+        while (dest_entry->inode != nullptr) {
+            auto n = dest_entry->inode;
+            if (n->diff < new_node->diff) break;
 
-			dest_entry = n->entries[BIT_IS_SET(e->key, n->diff)];
-		}
+            dest_entry = n->entries[BIT_IS_SET(e->key, n->diff)];
+        }
 
-		new_node->entries[!d] = new entry(*dest_entry);
-		dest_entry->key = 0;
-		dest_entry->inode = new_node;
-		dest_entry->value = nullptr;
-	}
+        new_node->entries[!d] = new entry(*dest_entry);
+        dest_entry->key = 0;
+        dest_entry->inode = new_node;
+        dest_entry->value = nullptr;
+    }
 
-	/*
-	 * Fetch leaf from the tree.
-	 */
-	entry *
-	get_leaf(uint64_t key, entry **parent)
-	{
-		auto n = root;
-		entry *p = nullptr;
+    /*
+     * Fetch leaf from the tree.
+     */
+    entry *get_leaf(uint64_t key, entry **parent) {
+        auto n = root;
+        entry *p = nullptr;
 
-		while (n->inode != nullptr) {
-			p = n;
-			n = n->inode->entries[BIT_IS_SET(key, n->inode->diff)];
-		}
+        while (n->inode != nullptr) {
+            p = n;
+            n = n->inode->entries[BIT_IS_SET(key, n->inode->diff)];
+        }
 
-		if (n->key == key) {
-			if (parent)
-				*parent = p;
+        if (n->key == key) {
+            if (parent) *parent = p;
 
-			return n;
-		}
+            return n;
+        }
 
-		return nullptr;
-	}
+        return nullptr;
+    }
 
-	/*
-	 * Recursive foreach on nodes.
-	 */
-	int
-	foreach_node(const entry *e, callback clb, void *arg)
-	{
-		int ret = 0;
+    /*
+     * Recursive foreach on nodes.
+     */
+    int foreach_node(const entry *e, callback clb, void *arg) {
+        int ret = 0;
 
-		if (e->inode != nullptr) {
-			auto n = e->inode;
-			if (foreach_node(n->entries[0], clb, arg) == 0)
-				foreach_node(n->entries[1], clb, arg);
-		} else {
-			ret = clb(e->key, e->value, arg);
-		}
+        if (e->inode != nullptr) {
+            auto n = e->inode;
+            if (foreach_node(n->entries[0], clb, arg) == 0)
+                foreach_node(n->entries[1], clb, arg);
+        } else {
+            ret = clb(e->key, e->value, arg);
+        }
 
-		return ret;
-	}
+        return ret;
+    }
 
-	/* Tree root */
-	entry *root;
+    /* Tree root */
+    entry *root;
 };
 
 } /* namespace examples */
