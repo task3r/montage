@@ -82,6 +82,7 @@
 #include "SyncTest.hpp"
 #include "YCSBTest.hpp"
 #ifndef MNEMOSYNE
+#include "ActualRecoveryTest.hpp"
 #include "GraphRecoveryTest.hpp"
 #include "RecoverVerifyTest.hpp"
 #include "TGraphConstructionTest.hpp"
@@ -101,7 +102,8 @@ int main(int argc, char *argv[]) {
     /* queues */
 
 #if !defined(MNEMOSYNE) and !defined(PRONTO)
-    gtc.addRideableOption(new MSQueueFactory<string>(), "MSQueue");  // transient
+    gtc.addRideableOption(new MSQueueFactory<string>(),
+                          "MSQueue");                              // transient
     gtc.addRideableOption(new NVMMSQueueFactory(), "NVMMSQueue");  // transient
     gtc.addRideableOption(new FriedmanQueueFactory(),
                           "FriedmanQueue");  // comparison
@@ -233,6 +235,8 @@ int main(int argc, char *argv[]) {
     gtc.addTestOption(new RecoverVerifyTest<string, string>(),
                       "RecoverVerifyTest");
 
+    gtc.addTestOption(new ActualRecoveryTest<string, string>(),
+                      "ActualRecoveryTest");
     gtc.addTestOption(
         new GraphTest(numVertices, meanEdgesPerVertex, vertexLoad, 8000),
         "GraphTest:80edge20vertex:degree32");
