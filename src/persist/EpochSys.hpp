@@ -431,7 +431,7 @@ class EpochSys {
         if (!gtc->checkEnv("HeapName")) {
             int esys_id = esys_num.fetch_add(1);
             assert(esys_id <= 0xfffff);
-            char* heap_prefix = (char*)malloc(L_cuserid + 10);
+            char* heap_prefix = (char*)malloc(L_cuserid + 12);
             cuserid(heap_prefix);
             char* heap_suffix = (char*)malloc(12);
             sprintf(heap_suffix, "_mon_%06X", esys_id);
