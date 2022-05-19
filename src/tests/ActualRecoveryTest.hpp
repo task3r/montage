@@ -15,7 +15,7 @@
 template <class K, class V>
 class ActualRecoveryTest : public Test {
    public:
-    RMap<K, V>* m;
+    Rideable* rideable;
     Recoverable* rec;
     size_t ins_cnt = 1000000;
     size_t range = ins_cnt * 10;
@@ -34,17 +34,13 @@ class ActualRecoveryTest : public Test {
 template <class K, class V>
 void ActualRecoveryTest<K, V>::parInit(GlobalTestConfig* gtc,
                                        LocalTestConfig* ltc) {
-    m->init_thread(gtc, ltc);
+    rideable->init_thread(gtc, ltc);
 }
 
 template <class K, class V>
 void ActualRecoveryTest<K, V>::init(GlobalTestConfig* gtc) {
-    Rideable* ptr = gtc->allocRideable();
-    m = dynamic_cast<RMap<K, V>*>(ptr);
-    if (!m) {
-        errexit("ActualRecoveryTest must be run on RMap<K,V> type object.");
-    }
-    rec = dynamic_cast<Recoverable*>(ptr);
+    rideable = gtc->allocRideable();
+    rec = dynamic_cast<Recoverable*>(rideable);
     if (!rec) {
         errexit("ActualRecoveryTest must be run on Recoverable type object.");
     }
@@ -78,7 +74,7 @@ int ActualRecoveryTest<K, V>::execute(GlobalTestConfig* gtc,
 
 template <class K, class V>
 void ActualRecoveryTest<K, V>::cleanup(GlobalTestConfig* gtc) {
-    delete m;
+    delete rideable;
 }
 
 #endif
