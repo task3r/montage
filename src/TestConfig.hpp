@@ -35,7 +35,8 @@ class RideableFactory;
 
 class GlobalTestConfig {
    public:
-    int task_num = 4;  // number of threads
+    // int task_num = 4;  // number of threads
+    int task_num = 1;  // number of threads
     std::chrono::time_point<std::chrono::high_resolution_clock> start,
         finish;                 // timing structures
     double interval = 2.0;      // number of seconds to run test

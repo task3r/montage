@@ -12,8 +12,8 @@ COPY Makefile /root/Montage/Makefile
 RUN make
 
 # generate all relevant configs
-ARG RIDEABLES="8 9 10 11 12 16 17 18 19 24"
-ARG MODES="2 3 4 5 6 7 8 9"
+ARG RIDEABLES="8 9 10 11 12 16 17 18 19 23"
+ARG MODES="8"
 RUN mkdir -p /configs
 COPY template.cfg /root/Montage/template.cfg
 RUN for tool in bfi dofta; do \

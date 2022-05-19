@@ -18,7 +18,6 @@
 // #include "MCASRBTree.hpp"
 // #include "MCASLinkList.hpp"
 // #include "MCASHMap.hpp"
-#include "CLevelHashTable.hpp"
 #include "MODQueue.hpp"
 #include "MSQueue.hpp"
 #include "MontageMSQueue.hpp"
@@ -131,7 +130,6 @@ int main(int argc, char *argv[]) {
     gtc.addRideableOption(new MODHashTableFactory<string>(), "MODHashTable");
     gtc.addRideableOption(new NVMSOFTHashTableFactory<string>(), "NVMSOFT");
     gtc.addRideableOption(new NVTHashTableFactory(), "NVTraverseHashTable");
-    gtc.addRideableOption(new CLevelHashFactory(), "CLevelHashTable");
     gtc.addRideableOption(new SSHashTableFactory<std::string>(), "SSHashTable");
     gtc.addRideableOption(new MontageSSHashTableFactory<std::string>(),
                           "MontageSSHashTable");
@@ -216,6 +214,9 @@ int main(int argc, char *argv[]) {
     gtc.addTestOption(
         new MapTest<string, string>(90, 0, 5, 5, 1000000, 500000, 10000000),
         "MapTest<string>:g90p0i5rm5:range=1000000:prefill=500000:op=10000000");
+    gtc.addTestOption(
+        new MapTest<string, string>(25, 25, 25, 25, 1000000, 0, 1000),
+        "MapTest<string>:g25p25i25rm25:range=1000000:prefill=0:op=100000");
     gtc.addTestOption(
         new MapSyncTest<string, string>(0, 0, 50, 50, 1000000, 500000),
         "MapSyncTest<string>:g0p0i50rm50:range=1000000:prefill=500000");
