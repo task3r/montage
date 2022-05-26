@@ -223,16 +223,16 @@ void parallelWork(GlobalTestConfig* gtc) {
     for (i = 0; i < task_num; i++) pthread_join(threads[i], NULL);
 #else
     // Spawn worker threads and reuse this main thread as worker, too
-    for (i = 1; i < task_num; i++) {
-        pthread_create(&threads[i], &attr, thread_main, &ctcs[i]);
-    }
+    //    for (i = 1; i < task_num; i++) {
+    //        pthread_create(&threads[i], &attr, thread_main, &ctcs[i]);
+    //    }
     // pthread_key_create(&thread_id_ptr, NULL);
     thread_main(&ctcs[0]);  // start working also
 
     // All threads working here... ( in thread_main() )
 
     // join threads ------------------
-    for (i = 1; i < task_num; i++) pthread_join(threads[i], NULL);
+    // for (i = 1; i < task_num; i++) pthread_join(threads[i], NULL);
 #endif
 
     for (i = 0; i < task_num; i++) {

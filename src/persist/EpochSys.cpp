@@ -455,231 +455,215 @@ std::unordered_map<uint64_t, PBlk*>* EpochSys::recover(const int rec_thd) {
     std::unordered_set<uint64_t> deleted_ids;
     auto begin = chrono::high_resolution_clock::now();
     auto end = begin;
-    for (int rec_tid = 0; rec_tid < rec_thd; rec_tid++) {
-        workers.emplace_back(std::thread([&, rec_tid]() {
-            hwloc_set_cpubind(gtc->topology, gtc->affinities[rec_tid]->cpuset,
-                              HWLOC_CPUBIND_THREAD);
-            thread_local uint64_t max_epoch_local = 0;
-            thread_local std::unordered_multimap<uint64_t, PBlk*>
-                anti_nodes_local;
-            thread_local std::unordered_set<uint64_t> deleted_ids_local;
-            // make the first whole pass thorugh all blocks, find the epoch
-            // block and help Ralloc fully recover by completing the pass.
-            for (; !itr_raw[rec_tid].is_last(); ++itr_raw[rec_tid]) {
-                PBlk* curr_blk = (PBlk*)*itr_raw[rec_tid];
-                if (curr_blk->blktype == EPOCH) {
-                    epoch_container = (Epoch*)curr_blk;
-                    global_epoch = &epoch_container->global_epoch;
-                    max_epoch_local =
-                        std::max(global_epoch->load(), max_epoch_local);
-                } else if (curr_blk->blktype == DELETE) {
-                    if (clean_start) {
-                        errexit("delete node appears after a clean exit.");
-                    }
-                    anti_nodes_local.insert({curr_blk->get_epoch(), curr_blk});
-                    if (curr_blk->get_epoch() != NULL_EPOCH) {
-                        deleted_ids_local.insert(curr_blk->get_id());
-                    }
-                }
-                max_epoch_local =
-                    std::max(max_epoch_local, curr_blk->get_epoch());
+    int rec_tid = 0;
+    // for (int rec_tid = 0; rec_tid < rec_thd; rec_tid++) {
+    // workers.emplace_back(std::thread([&, rec_tid]() {
+    hwloc_set_cpubind(gtc->topology, gtc->affinities[rec_tid]->cpuset,
+                      HWLOC_CPUBIND_THREAD);
+    thread_local uint64_t max_epoch_local = 0;
+    thread_local std::unordered_multimap<uint64_t, PBlk*> anti_nodes_local;
+    thread_local std::unordered_set<uint64_t> deleted_ids_local;
+    // make the first whole pass thorugh all blocks, find the epoch
+    // block and help Ralloc fully recover by completing the pass.
+    for (; !itr_raw[rec_tid].is_last(); ++itr_raw[rec_tid]) {
+        PBlk* curr_blk = (PBlk*)*itr_raw[rec_tid];
+        if (curr_blk->blktype == EPOCH) {
+            epoch_container = (Epoch*)curr_blk;
+            global_epoch = &epoch_container->global_epoch;
+            max_epoch_local = std::max(global_epoch->load(), max_epoch_local);
+        } else if (curr_blk->blktype == DELETE) {
+            if (clean_start) {
+                errexit("delete node appears after a clean exit.");
             }
-            // report after the first pass:
-            // calculate the maximum epoch number as the current epoch.
-            pthread_barrier_wait(&sync_point);
-            if (!epoch_container) {
-                errexit("epoch container not found during recovery");
+            anti_nodes_local.insert({curr_blk->get_epoch(), curr_blk});
+            if (curr_blk->get_epoch() != NULL_EPOCH) {
+                deleted_ids_local.insert(curr_blk->get_id());
             }
-            while (curr_reporting.load() != rec_tid)
-                ;
-            if (rec_tid == 0) {
-                end = chrono::high_resolution_clock::now();
-                auto dur = end - begin;
-                std::cout
-                    << "Spent "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           dur)
-                           .count()
-                    << "ms in first pass" << std::endl;
-                begin = chrono::high_resolution_clock::now();
-            }
-            max_epoch = std::max(max_epoch, max_epoch_local);
-            if (rec_tid == rec_thd - 1) {
-                end = chrono::high_resolution_clock::now();
-                auto dur = end - begin;
-                std::cout
-                    << "Spent "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           dur)
-                           .count()
-                    << "ms in first merge" << std::endl;
-                begin = chrono::high_resolution_clock::now();
-            }
-            curr_reporting.store((rec_tid + 1) % rec_thd);
+        }
+        max_epoch_local = std::max(max_epoch_local, curr_blk->get_epoch());
+    }
+    // report after the first pass:
+    // calculate the maximum epoch number as the current epoch.
+    // pthread_barrier_wait(&sync_point);
+    if (!epoch_container) {
+        errexit("epoch container not found during recovery");
+    }
+    while (curr_reporting.load() != rec_tid)
+        ;
+    if (rec_tid == 0) {
+        end = chrono::high_resolution_clock::now();
+        auto dur = end - begin;
+        std::cout << "Spent "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(dur)
+                         .count()
+                  << "ms in first pass" << std::endl;
+        begin = chrono::high_resolution_clock::now();
+    }
+    max_epoch = std::max(max_epoch, max_epoch_local);
+    if (rec_tid == rec_thd - 1) {
+        end = chrono::high_resolution_clock::now();
+        auto dur = end - begin;
+        std::cout << "Spent "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(dur)
+                         .count()
+                  << "ms in first merge" << std::endl;
+        begin = chrono::high_resolution_clock::now();
+    }
+    curr_reporting.store((rec_tid + 1) % rec_thd);
 
-            pthread_barrier_wait(&sync_point);
-            // remove premature deleted_ids, and merge deleted_ids.
-            for (uint64_t e : std::vector<uint64_t>{max_epoch, max_epoch - 1}) {
-                auto immature = anti_nodes_local.equal_range(e);
-                for (auto itr = immature.first; itr != immature.second; itr++) {
-                    deleted_ids_local.erase(itr->second->get_id());
-                }
-            }
-            // merge the results of deleted_ids_local
-            pthread_barrier_wait(&sync_point);
-            while (curr_reporting.load() != rec_tid)
-                ;
-            deleted_ids.merge(deleted_ids_local);
-            curr_reporting.store((rec_tid + 1) % rec_thd);
-
-            // make a second pass through all pblks
-            pthread_barrier_wait(&sync_point);
-            if (rec_tid == 0) {
-                itr_raw = _ral->recover(rec_thd);
-            }
-            pthread_barrier_wait(&sync_point);
-            uint64_t epoch_cap = max_epoch - 2;
-            thread_local std::vector<PBlk*> not_in_use_local;
-            thread_local std::unordered_map<uint64_t, PBlk*> in_use_local;
-            thread_local int second_pass_blks = 0;
-            for (; !itr_raw[rec_tid].is_last(); ++itr_raw[rec_tid]) {
-                second_pass_blks++;
-                PBlk* curr_blk = (PBlk*)*itr_raw[rec_tid];
-                // put all premature pblks and those marked by
-                // deleted_ids in not_in_use
-                if (  // leave DESC blocks untouched for now.
-                    curr_blk->blktype != DESC &&
-                    // DELETE blocks are already put into anti_nodes_local.
-                    curr_blk->blktype != DELETE &&
-                    (
-                        // block without epoch number, probably just inited
-                        curr_blk->epoch == NULL_EPOCH ||
-                        // premature pblk
-                        curr_blk->epoch > epoch_cap ||
-                        // marked deleted by some anti-block
-                        deleted_ids.find(curr_blk->get_id()) !=
-                            deleted_ids.end())) {
-                    not_in_use_local.push_back(curr_blk);
-                } else {
-                    // put all others in in_use while resolve conflict
-                    switch (curr_blk->blktype) {
-                        case OWNED:
-                            errexit(
-                                "OWNED isn't a valid blktype in this "
-                                "version.");
-                            break;
-                        case ALLOC: {
-                            auto insert_res =
-                                in_use_local.insert({curr_blk->id, curr_blk});
-                            if (insert_res.second == false) {
-                                if (clean_start) {
-                                    errexit(
-                                        "more than one record with the "
-                                        "same id after a clean exit.");
-                                }
-                                not_in_use_local.push_back(curr_blk);
-                            }
-                        } break;
-                        case UPDATE: {
-                            auto search = in_use_local.find(curr_blk->id);
-                            if (search != in_use_local.end()) {
-                                if (clean_start) {
-                                    errexit(
-                                        "more than one record with the "
-                                        "same id after a clean exit.");
-                                }
-                                if (curr_blk->epoch > search->second->epoch) {
-                                    not_in_use_local.push_back(search->second);
-                                    search->second =
-                                        curr_blk;  // TODO: double-check if
-                                                   // this is right.
-                                } else {
-                                    not_in_use_local.push_back(curr_blk);
-                                }
-                            } else {
-                                in_use_local.insert({curr_blk->id, curr_blk});
-                            }
-                        } break;
-                        case DELETE:
-                        case EPOCH:
-                        case DESC:  // TODO: allocate DESC in DRAM instead of
-                                    // NVM
-                            break;
-                        default:
-                            errexit("wrong type of pblk discovered");
-                            break;
-                    }
-                }
-            }
-            // merge the results of in_use, resolve conflict
-            pthread_barrier_wait(&sync_point);
-            while (curr_reporting.load() != rec_tid)
-                ;
-            if (rec_tid == 0) {
-                end = chrono::high_resolution_clock::now();
-                auto dur = end - begin;
-                std::cout
-                    << "Spent "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           dur)
-                           .count()
-                    << "ms in second pass" << std::endl;
-                begin = chrono::high_resolution_clock::now();
-            }
-            std::cout << "second pass blk count:" << second_pass_blks
-                      << std::endl;
-            for (auto itr : in_use_local) {
-                auto found = in_use->find(itr.first);
-                if (found == in_use->end()) {
-                    in_use->insert({itr.first, itr.second});
-                } else if (found->second->get_epoch() <
-                           itr.second->get_epoch()) {
-                    not_in_use_local.push_back(found->second);
-                    found->second = itr.second;
-                } else {
-                    not_in_use_local.push_back(itr.second);
-                }
-            }
-            if (rec_tid == rec_thd - 1) {
-                end = chrono::high_resolution_clock::now();
-                auto dur = end - begin;
-                std::cout
-                    << "Spent "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           dur)
-                           .count()
-                    << "ms in second merge" << std::endl;
-                begin = chrono::high_resolution_clock::now();
-            }
-            curr_reporting.store((rec_tid + 1) % rec_thd);
-            // clean up not_in_use and anti-nodes
-            for (auto itr : not_in_use_local) {
-                itr->set_epoch(NULL_EPOCH);
-                _ral->deallocate(itr, rec_tid);
-            }
-            for (auto itr : anti_nodes_local) {
-                itr.second->set_epoch(NULL_EPOCH);
-                _ral->deallocate(itr.second, rec_tid);
-            }
-            pthread_barrier_wait(&sync_point);
-            if (rec_tid == rec_thd - 1) {
-                end = chrono::high_resolution_clock::now();
-                auto dur = end - begin;
-                std::cout
-                    << "Spent "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           dur)
-                           .count()
-                    << "ms in deallocation" << std::endl;
-                begin = chrono::high_resolution_clock::now();
-            }
-        }));  // workers.emplace_back()
-    }         // for (rec_thd)
-    for (auto& worker : workers) {
-        if (worker.joinable()) {
-            worker.join();
+    // pthread_barrier_wait(&sync_point);
+    // remove premature deleted_ids, and merge deleted_ids.
+    for (uint64_t e : std::vector<uint64_t>{max_epoch, max_epoch - 1}) {
+        auto immature = anti_nodes_local.equal_range(e);
+        for (auto itr = immature.first; itr != immature.second; itr++) {
+            deleted_ids_local.erase(itr->second->get_id());
         }
     }
+    // merge the results of deleted_ids_local
+    // pthread_barrier_wait(&sync_point);
+    while (curr_reporting.load() != rec_tid)
+        ;
+    deleted_ids.merge(deleted_ids_local);
+    curr_reporting.store((rec_tid + 1) % rec_thd);
+
+    // make a second pass through all pblks
+    // pthread_barrier_wait(&sync_point);
+    if (rec_tid == 0) {
+        itr_raw = _ral->recover(rec_thd);
+    }
+    // pthread_barrier_wait(&sync_point);
+    uint64_t epoch_cap = max_epoch - 2;
+    thread_local std::vector<PBlk*> not_in_use_local;
+    thread_local std::unordered_map<uint64_t, PBlk*> in_use_local;
+    thread_local int second_pass_blks = 0;
+    for (; !itr_raw[rec_tid].is_last(); ++itr_raw[rec_tid]) {
+        second_pass_blks++;
+        PBlk* curr_blk = (PBlk*)*itr_raw[rec_tid];
+        // put all premature pblks and those marked by
+        // deleted_ids in not_in_use
+        if (  // leave DESC blocks untouched for now.
+            curr_blk->blktype != DESC &&
+            // DELETE blocks are already put into anti_nodes_local.
+            curr_blk->blktype != DELETE &&
+            (
+                // block without epoch number, probably just inited
+                curr_blk->epoch == NULL_EPOCH ||
+                // premature pblk
+                curr_blk->epoch > epoch_cap ||
+                // marked deleted by some anti-block
+                deleted_ids.find(curr_blk->get_id()) != deleted_ids.end())) {
+            not_in_use_local.push_back(curr_blk);
+        } else {
+            // put all others in in_use while resolve conflict
+            switch (curr_blk->blktype) {
+                case OWNED:
+                    errexit(
+                        "OWNED isn't a valid blktype in this "
+                        "version.");
+                    break;
+                case ALLOC: {
+                    auto insert_res =
+                        in_use_local.insert({curr_blk->id, curr_blk});
+                    if (insert_res.second == false) {
+                        if (clean_start) {
+                            errexit(
+                                "more than one record with the "
+                                "same id after a clean exit.");
+                        }
+                        not_in_use_local.push_back(curr_blk);
+                    }
+                } break;
+                case UPDATE: {
+                    auto search = in_use_local.find(curr_blk->id);
+                    if (search != in_use_local.end()) {
+                        if (clean_start) {
+                            errexit(
+                                "more than one record with the "
+                                "same id after a clean exit.");
+                        }
+                        if (curr_blk->epoch > search->second->epoch) {
+                            not_in_use_local.push_back(search->second);
+                            search->second = curr_blk;  // TODO: double-check if
+                                                        // this is right.
+                        } else {
+                            not_in_use_local.push_back(curr_blk);
+                        }
+                    } else {
+                        in_use_local.insert({curr_blk->id, curr_blk});
+                    }
+                } break;
+                case DELETE:
+                case EPOCH:
+                case DESC:  // TODO: allocate DESC in DRAM instead of
+                            // NVM
+                    break;
+                default:
+                    errexit("wrong type of pblk discovered");
+                    break;
+            }
+        }
+    }
+    // merge the results of in_use, resolve conflict
+    // pthread_barrier_wait(&sync_point);
+    while (curr_reporting.load() != rec_tid)
+        ;
+    if (rec_tid == 0) {
+        end = chrono::high_resolution_clock::now();
+        auto dur = end - begin;
+        std::cout << "Spent "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(dur)
+                         .count()
+                  << "ms in second pass" << std::endl;
+        begin = chrono::high_resolution_clock::now();
+    }
+    std::cout << "second pass blk count:" << second_pass_blks << std::endl;
+    for (auto itr : in_use_local) {
+        auto found = in_use->find(itr.first);
+        if (found == in_use->end()) {
+            in_use->insert({itr.first, itr.second});
+        } else if (found->second->get_epoch() < itr.second->get_epoch()) {
+            not_in_use_local.push_back(found->second);
+            found->second = itr.second;
+        } else {
+            not_in_use_local.push_back(itr.second);
+        }
+    }
+    if (rec_tid == rec_thd - 1) {
+        end = chrono::high_resolution_clock::now();
+        auto dur = end - begin;
+        std::cout << "Spent "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(dur)
+                         .count()
+                  << "ms in second merge" << std::endl;
+        begin = chrono::high_resolution_clock::now();
+    }
+    curr_reporting.store((rec_tid + 1) % rec_thd);
+    // clean up not_in_use and anti-nodes
+    for (auto itr : not_in_use_local) {
+        itr->set_epoch(NULL_EPOCH);
+        _ral->deallocate(itr, rec_tid);
+    }
+    for (auto itr : anti_nodes_local) {
+        itr.second->set_epoch(NULL_EPOCH);
+        _ral->deallocate(itr.second, rec_tid);
+    }
+    // pthread_barrier_wait(&sync_point);
+    if (rec_tid == rec_thd - 1) {
+        end = chrono::high_resolution_clock::now();
+        auto dur = end - begin;
+        std::cout << "Spent "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(dur)
+                         .count()
+                  << "ms in deallocation" << std::endl;
+        begin = chrono::high_resolution_clock::now();
+    }
+    // }));  // workers.emplace_back()
+    // }  // for (rec_thd)
+    // for (auto& worker : workers) {
+    //     if (worker.joinable()) {
+    //         worker.join();
+    //     }
+    // }
 
     // set system mode back to online
     sys_mode = ONLINE;
