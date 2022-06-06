@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (C) 2019 University of Rochester. All rights reserved.
  * Licenced under the MIT licence. See LICENSE file in the project root for
@@ -291,6 +292,7 @@ uint32_t BaseMeta::compute_idx(char* superblock, char* block, size_t sc_idx) {
     (void)sc_block_size; // suppress unused var warning
 
     assert(block >= superblock);
+    std::cerr << "block: " << (uint64_t) block << " < superblock: " << (uint64_t) superblock << " + sc->sb_size: " << (uint64_t) sc->sb_size << std::endl;
     assert(block < superblock + sc->sb_size);
     // optimize integer division by allowing the compiler to create 
     //  a jump table using size class index
@@ -335,6 +337,7 @@ void BaseMeta::fill_cache(size_t sc_idx, TCacheBin* cache) {
 }
 
 void BaseMeta::flush_cache(size_t sc_idx, TCacheBin* cache) {
+    std::cerr << "[flush_cache start] sc_idx: "  << sc_idx << std::endl;
     ProcHeap* heap = &heaps[sc_idx];
     const SizeClassData* sc = get_sizeclass_by_idx(sc_idx);
     uint32_t const sb_size = sc->sb_size;
@@ -348,6 +351,7 @@ void BaseMeta::flush_cache(size_t sc_idx, TCacheBin* cache) {
     // in the normal case, we should be able to return several
     //  blocks with a single CAS
     while (cache->get_block_num() > 0) {
+        std::cerr << "cache->get_block_num: " << cache->get_block_num() << std::endl;
         char* head = cache->peek_block();
         char* tail = head;
         Descriptor* desc = desc_lookup(head);
@@ -384,6 +388,7 @@ void BaseMeta::flush_cache(size_t sc_idx, TCacheBin* cache) {
 
             newanchor = oldanchor;
             newanchor.avail = idx;
+            std::cerr << "[before] newanchor.count: " << newanchor.count << std::endl;
             // state updates
             // don't set SB_PARTIAL if state == SB_ACTIVE
             if (oldanchor.state == SB_FULL)
@@ -391,19 +396,25 @@ void BaseMeta::flush_cache(size_t sc_idx, TCacheBin* cache) {
             // this can't happen with SB_ACTIVE
             // because of reserved blocks
             assert(oldanchor.count < desc->maxcount);
+            std::cerr << "oldanchor.count: " << oldanchor.count << " + block_count: " << block_count << " == desc->maxcount: " << desc->maxcount << std::endl;
             if (oldanchor.count + block_count == desc->maxcount) {
                 newanchor.count = desc->maxcount - 1;
                 newanchor.state = SB_EMPTY; // can free superblock
             }
             else
                 newanchor.count += block_count;
+
+            std::cerr << "[after] newanchor.count: " << newanchor.count << std::endl;
         }
         while (!desc->anchor.compare_exchange_weak(oldanchor, newanchor));
 
         // after last CAS, can't reliably read any desc fields
         // as desc might have become empty and been concurrently reused
+        std::cerr << "oldanchor.avail: " << oldanchor.avail << " < maxcount: " << maxcount << " | oldanchor.state: " << oldanchor.state << " = SB_FULL (1)" << std::endl;
         assert(oldanchor.avail < maxcount || oldanchor.state == SB_FULL);
+        std::cerr << "newanchor.avail: " << newanchor.avail << std::endl;
         assert(newanchor.avail < maxcount);
+        std::cerr << "newanchor.count: " << newanchor.count << " < maxcount: " << maxcount << std::endl;
         assert(newanchor.count < maxcount);
 
         // CAS success
@@ -417,6 +428,7 @@ void BaseMeta::flush_cache(size_t sc_idx, TCacheBin* cache) {
             }
         }
     }
+    std::cerr << "[flush_cache end]" << std::endl;
 }
 
 Descriptor* BaseMeta::desc_lookup(const char* ptr){

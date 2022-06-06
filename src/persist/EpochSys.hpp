@@ -390,6 +390,7 @@ class EpochSys {
             last_epochs[i].ui = NULL_EPOCH;
             assert(local_descs[i] != nullptr);
             persist_func::clwb_range_nofence(local_descs[i], sizeof(sc_desc_t));
+            // NOTE: recovery bug starts here
         }
         persist_func::sfence();
         reset();  // TODO: change to recover() later on.

@@ -78,6 +78,7 @@
 #include "QueueChurnTest.hpp"
 #include "QueueTest.hpp"
 #include "SetChurnTest.hpp"
+#include "SmallMapTest.hpp"
 #include "SyncTest.hpp"
 #include "YCSBTest.hpp"
 #ifndef MNEMOSYNE
@@ -216,7 +217,7 @@ int main(int argc, char *argv[]) {
         "MapTest<string>:g90p0i5rm5:range=1000000:prefill=500000:op=10000000");
     gtc.addTestOption(
         new MapTest<string, string>(25, 25, 25, 25, 1000000, 0, 1000),
-        "MapTest<string>:g25p25i25rm25:range=1000000:prefill=0:op=100000");
+        "MapTest<string>:g25p25i25rm25:range=1000000:prefill=0:op=1000");
     gtc.addTestOption(
         new MapSyncTest<string, string>(0, 0, 50, 50, 1000000, 500000),
         "MapSyncTest<string>:g0p0i50rm50:range=1000000:prefill=500000");
@@ -236,8 +237,7 @@ int main(int argc, char *argv[]) {
     gtc.addTestOption(new RecoverVerifyTest<string, string>(),
                       "RecoverVerifyTest");
 
-    gtc.addTestOption(new ActualRecoveryTest<string, string>(),
-                      "ActualRecoveryTest");
+    gtc.addTestOption(new ActualRecoveryTest(), "ActualRecoveryTest");
     gtc.addTestOption(
         new GraphTest(numVertices, meanEdgesPerVertex, vertexLoad, 8000),
         "GraphTest:80edge20vertex:degree32");
@@ -259,6 +259,8 @@ int main(int argc, char *argv[]) {
                       "AllocTest-Ralloc");
     gtc.addTestOption(new AllocTest(1024 * 1024, DO_MONTAGE_ALLOC),
                       "AllocTest-Montage");
+    gtc.addTestOption(new SmallMapTest(1000),
+                      "SmallMapTest<string>:i100:op=1000");
 
     gtc.parseCommandLine(argc, argv);
     omp_set_num_threads(gtc.task_num);

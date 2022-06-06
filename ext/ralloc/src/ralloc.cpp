@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (C) 2019 University of Rochester. All rights reserved.
  * Licenced under the MIT licence. See LICENSE file in the project root for
@@ -68,6 +69,7 @@ Ralloc::~Ralloc(){
         _rgs->flush_region(SB_IDX);
         // #endif
         base_md->writeback();
+        // NOTE: recovery bug ends here
         initialized = false;
         delete _rgs;
     }

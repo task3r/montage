@@ -7,74 +7,81 @@
 
 #include <unordered_map>
 
-#include "AllocatorMacro.hpp"
-#include "Persistent.hpp"
+#include "MontageHashTable.hpp"
+#include "RMap.hpp"
 #include "Recoverable.hpp"
 #include "TestConfig.hpp"
 
-template <class K, class V>
 class ActualRecoveryTest : public Test {
    public:
     Rideable* rideable;
     Recoverable* rec;
-    size_t ins_cnt = 1000000;
-    size_t range = ins_cnt * 10;
-    size_t key_size = TESTS_KEY_SIZE;
-    size_t val_size = TESTS_VAL_SIZE;
-    pthread_barrier_t sync_point;
+    MontageHashTable<string, string>* m;
+    bool extra_recovery = false;
+    uint64_t total_ops = 1000;
     ActualRecoveryTest() {}
-    void init(GlobalTestConfig* gtc);
-    void parInit(GlobalTestConfig* gtc, LocalTestConfig* ltc);
-    int execute(GlobalTestConfig* gtc, LocalTestConfig* ltc);
-    void cleanup(GlobalTestConfig* gtc);
 
-    inline K fromInt(uint64_t v);
+    void parInit(GlobalTestConfig* gtc, LocalTestConfig* ltc) {
+        rideable->init_thread(gtc, ltc);
+    }
+
+    void init(GlobalTestConfig* gtc) {
+        rideable = gtc->allocRideable();
+        rec = dynamic_cast<Recoverable*>(rideable);
+        if (!rec) {
+            errexit(
+                "ActualRecoveryTest must be run on Recoverable type object.");
+        }
+        m = dynamic_cast<MontageHashTable<string, string>*>(rideable);
+        if (!m) {
+            errexit("SmallMapTest must be run on a MontageHashTable");
+        }
+        if (gtc->checkEnv("Verify")) {
+            extra_recovery = true;
+            if (gtc->checkEnv("N")) {
+                total_ops = stoll(gtc->getEnv("N"));
+            }
+        }
+    }
+
+    inline string fromInt(uint64_t v) { return std::to_string(v); }
+
+    int execute(GlobalTestConfig* gtc, LocalTestConfig* ltc) {
+        m->recover(false);
+        if (extra_recovery) {
+            int tid = ltc->tid;
+            bool stopped = false;
+            string stopped_at;
+            for (size_t i = 0; i < total_ops; i++) {
+                string key = fromInt(i);
+                optional<string> value = m->get(key, tid);
+                if (!value.has_value()) {
+                    if (!stopped) {
+                        stopped = true;
+                        stopped_at = key;
+                    }
+                } else if (stopped) {
+                    std::cout << "found key:" << key
+                              << " after missing from key: " << stopped_at
+                              << std::endl;
+                    exit(1);
+                } else {
+                    assert(value.value() == key);
+                }
+            }
+            if (!stopped) {
+                std::cout << "recovery complete, found everything" << std::endl;
+            } else {
+                std::cout << "recovery complete, missed from key: "
+                          << stopped_at << " onwards" << std::endl;
+            }
+        }
+        return 1;
+    }
+
+    void cleanup(GlobalTestConfig* gtc) {
+        // delete rideable;
+    }
 };
-
-template <class K, class V>
-void ActualRecoveryTest<K, V>::parInit(GlobalTestConfig* gtc,
-                                       LocalTestConfig* ltc) {
-    rideable->init_thread(gtc, ltc);
-}
-
-template <class K, class V>
-void ActualRecoveryTest<K, V>::init(GlobalTestConfig* gtc) {
-    rideable = gtc->allocRideable();
-    rec = dynamic_cast<Recoverable*>(rideable);
-    if (!rec) {
-        errexit("ActualRecoveryTest must be run on Recoverable type object.");
-    }
-    if (gtc->checkEnv("InsCnt")) {
-        ins_cnt = stoll(gtc->getEnv("InsCnt"));
-        range = ins_cnt * 10;
-    }
-
-    /* set interval to inf so this won't be killed by timeout */
-    gtc->interval = numeric_limits<double>::max();
-    pthread_barrier_init(&sync_point, NULL, gtc->task_num);
-}
-
-template <class K, class V>
-inline K ActualRecoveryTest<K, V>::fromInt(uint64_t v) {
-    return (K)v;
-}
-
-template <>
-inline std::string ActualRecoveryTest<std::string, std::string>::fromInt(
-    uint64_t v) {
-    auto _key = std::to_string(v);
-    return "user" + std::string(key_size - _key.size() - 4, '0') + _key;
-}
-
-template <class K, class V>
-int ActualRecoveryTest<K, V>::execute(GlobalTestConfig* gtc,
-                                      LocalTestConfig* ltc) {
-    return rec->recover(false);
-}
-
-template <class K, class V>
-void ActualRecoveryTest<K, V>::cleanup(GlobalTestConfig* gtc) {
-    delete rideable;
-}
 
 #endif
