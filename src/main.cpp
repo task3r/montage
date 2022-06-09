@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
 	gtc.addTestOption(new AllocTest(1024 * 1024, DO_RALLOC_ALLOC), "AllocTest-Ralloc");
 	gtc.addTestOption(new AllocTest(1024 * 1024, DO_MONTAGE_ALLOC), "AllocTest-Montage");
 	gtc.addTestOption(new ActualRecoveryTest(), "ActualRecoveryTest");
-    gtc.addTestOption(new SmallMapTest(1000), "SmallMapTest<string>:i100:op=1000");
+    gtc.addTestOption(new SmallMapTest(), "SmallMapTest<string>:i33:p33:r33:op=1000000");
 	gtc.parseCommandLine(argc, argv);
     gtc.task_num = 1;
         omp_set_num_threads(gtc.task_num);
