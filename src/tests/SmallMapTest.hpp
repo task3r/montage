@@ -16,7 +16,7 @@ class SmallMapTest : public Test {
    public:
     RMap<string, string>* m;
     uint64_t total_ops;
-    SmallMapTest(int op = 10000000) { total_ops = op; }
+    SmallMapTest(int op = 1000000) { total_ops = op; }
 
     void parInit(GlobalTestConfig* gtc, LocalTestConfig* ltc) {
         m->init_thread(gtc, ltc);
@@ -36,10 +36,22 @@ class SmallMapTest : public Test {
 
     int execute(GlobalTestConfig* gtc, LocalTestConfig* ltc) {
         int tid = ltc->tid;
-        for (size_t i = 0; i < total_ops; i++) {
+        for (size_t i = 1; i <= total_ops; i++) {
             string key = this->fromInt(i);
-            m->put(key, key, tid);
+            m->insert(key, key, tid);
         }
+
+        for (size_t i = total_ops; i > 0; i--) {
+            string key = this->fromInt(i);
+            string value = this->fromInt(i * 2);
+            m->put(key, value, tid);
+        }
+
+        for (size_t i = 1; i <= total_ops; i++) {
+            string key = this->fromInt(i);
+            m->remove(key, tid);
+        }
+
         return total_ops;
     }
 
