@@ -7,3 +7,5 @@ obj
 *.swp
 *.csv
 *.pdf
+.cache
+compile_commands.json
