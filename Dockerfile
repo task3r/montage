@@ -22,3 +22,5 @@ COPY ext /root/Montage/ext
 COPY src /root/Montage/src
 COPY Makefile /root/Montage/Makefile
 RUN make
+
+COPY mumak_configs /configs
